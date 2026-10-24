@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 import tempfile
@@ -49,7 +50,8 @@ class CheckTextTest(unittest.TestCase):
                 (root / name).write_text("bad " + chr(0x2014) + "\n", encoding="utf-8")
             subprocess.run(["git", "init", "-q"], cwd=root, check=True)
             subprocess.run(["git", "add", "-A"], cwd=root, check=True)
-            out = subprocess.run([sys.executable, "scripts/check_text.py"], cwd=root, capture_output=True, text=True)
+            out = subprocess.run([sys.executable, "scripts/check_text.py"], cwd=root, capture_output=True, text=True,
+                                 env={**os.environ, "HOME": d})
         self.assertEqual(out.returncode, 1)
         self.assertIn("notes 1.md: line 1", out.stdout)
         self.assertIn("été.md: line 1", out.stdout)
