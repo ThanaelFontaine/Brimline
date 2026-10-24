@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18" fill="currentColor" role="img" aria-label="Sightglass">
+  <!-- Glyphe gabarit de la barre des menus (géométrie 2x de SightglassGlyph.swift), niveau 60 %. -->
+  <rect x="3" y="1" width="12" height="1.5" rx="0.5"/>
+  <rect x="3" y="15.5" width="12" height="1.5" rx="0.5"/>
+  <rect x="4.5" y="2.5" width="1.5" height="13"/>
+  <rect x="12" y="2.5" width="1.5" height="13"/>
+  <rect x="7" y="7.9" width="4" height="6.6"/>
+</svg>

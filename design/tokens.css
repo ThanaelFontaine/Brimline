@@ -1,0 +1,101 @@
+/* Sightglass : jetons de la direction artistique (source : tokens.json).
+   Clair par défaut, sombre par prefers-color-scheme. Pile de polices système : aucune requête externe. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Couleurs, clair */
+  --sg-bg: #F5F6F7;
+  --sg-surface: #FFFFFF;
+  --sg-text: #15191D;          /* 16.3:1 sur fond */
+  --sg-text-2: #56606A;        /* 5.9:1 sur fond */
+  --sg-border: #D3D8DD;
+  --sg-track: #E7EAED;
+  --sg-accent: #0B6E7A;        /* 5.5:1 sur fond */
+  --sg-gauge-ok: #127A82;      /* marge, moins de 70 % */
+  --sg-gauge-warn: #9A5800;    /* attention, 70 à moins de 90 % */
+  --sg-gauge-crit: #C0302B;    /* critique, 90 % et plus */
+  --sg-gauge-muted: rgb(86 96 106 / 0.55); /* expiré */
+
+  /* Typographie */
+  --sg-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --sg-font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --sg-text-xs: 0.8125rem;   /* 13 px : notes, légendes */
+  --sg-text-s: 0.9375rem;    /* 15 px : interface, tableaux */
+  --sg-text-m: 1.0625rem;    /* 17 px : corps */
+  --sg-text-l: 1.375rem;     /* 22 px : intertitres */
+  --sg-text-xl: 2rem;        /* 32 px : titres de section */
+  --sg-text-xxl: clamp(2.5rem, 6vw, 4rem); /* titre d'accueil */
+  --sg-leading: 1.55;
+  --sg-leading-tight: 1.15;
+
+  /* Espacements (grille de 4) */
+  --sg-space-xxs: 2px;
+  --sg-space-xs: 4px;
+  --sg-space-s: 8px;
+  --sg-space-m: 12px;
+  --sg-space-l: 16px;
+  --sg-space-xl: 24px;
+  --sg-space-xxl: 32px;
+  --sg-space-3xl: 48px;
+  --sg-space-4xl: 64px;
+
+  /* Rayons */
+  --sg-radius-control: 6px;
+  --sg-radius-card: 10px;
+  --sg-radius-window: 12px;
+  --sg-radius-page: 16px;
+
+  /* Mesures */
+  --sg-gauge-h: 8px;
+  --sg-gauge-h-hero: 10px;
+  --sg-max: 1080px;
+  --sg-measure: 680px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sg-bg: #111315;
+    --sg-surface: #1B1E21;
+    --sg-text: #ECEFF2;        /* 16.1:1 sur fond */
+    --sg-text-2: #9BA5AF;      /* 7.4:1 sur fond */
+    --sg-border: #30353A;
+    --sg-track: #2B3035;
+    --sg-accent: #5CC8D0;      /* 9.4:1 sur fond */
+    --sg-gauge-ok: #3BBDC2;
+    --sg-gauge-warn: #EFA63A;
+    --sg-gauge-crit: #FF6F64;
+    --sg-gauge-muted: rgb(155 165 175 / 0.55);
+  }
+}
+
+/* Jauge de référence pour le site :
+   <div class="sg-gauge" data-level="warn" style="--value: .72" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72" aria-label="Semaine"></div>
+   data-level : ok | warn | crit | expired | unavailable | empty (0 %, aucun liquide). Le pourcentage s'écrit toujours en texte à côté. */
+.sg-gauge {
+  position: relative;
+  height: var(--sg-gauge-h);
+  border-radius: 999px;
+  background:
+    linear-gradient(var(--sg-border), var(--sg-border)) calc(70% - 0.5px) 0 / 1px 100% no-repeat,
+    linear-gradient(var(--sg-border), var(--sg-border)) calc(90% - 0.5px) 0 / 1px 100% no-repeat,
+    var(--sg-track);
+  box-shadow: inset 0 0 0 0.5px var(--sg-border);
+  overflow: hidden;
+}
+.sg-gauge::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: max(var(--sg-gauge-h), calc(var(--value, 0) * 100%));
+  border-radius: inherit;
+  background: var(--sg-gauge-ok);
+}
+.sg-gauge[data-level="warn"]::after { background: var(--sg-gauge-warn); }
+.sg-gauge[data-level="crit"]::after { background: var(--sg-gauge-crit); }
+.sg-gauge[data-level="expired"]::after { background: var(--sg-gauge-muted); }
+.sg-gauge[data-level="empty"]::after,
+.sg-gauge[data-level="unavailable"]::after { display: none; }
+.sg-gauge[data-level="unavailable"] { background: transparent; box-shadow: none; outline: 1px dashed var(--sg-border); outline-offset: -1px; }
+
+.sg-num { font-variant-numeric: tabular-nums; font-weight: 600; }
