@@ -1,0 +1,34 @@
+# Checks on every push and pull request: text rules (no em or en dash, no personal data) and the
+# tests of the repository scripts. The app's own build and tests join this workflow when the app
+# code lands. The release workflow starts only after a green run of this one on main.
+#
+# Runner: the maintainer's Mac (self-hosted) while the repository is private. Before it becomes
+# public, switch to GitHub's runners (macos-latest): a self-hosted runner must not serve a public
+# repository, since anyone can open a pull request.
+
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Text rules
+        run: python3 scripts/check_text.py
+
+      - name: Script tests
+        run: python3 -m unittest discover -s tests -v
