@@ -9,16 +9,16 @@
 
 Avec plusieurs comptes Claude (ou Claude et ChatGPT, Gemini, Grok), les indicateurs intégrés montrent un compte à la fois, sans dire lequel. Sightglass les met côte à côte : limite de session de 5 heures, limite de la semaine, limite de la semaine par modèle, et l'heure où chacune repart.
 
-```
-you@example.com    5 h             ███░░░░░░░   34 %   repart à 02:59
-                   Fable, semaine  ░░░░░░░░░░    0 %   repart lun. 02:00
-team@example.org   5 h             ██████████  100 %   repart à 00:19
-                   semaine         █████░░░░░   49 %   repart lun. 11:59
-```
+<p align="center">
+  <img src="docs/images/panel-fr-light.png" width="364" alt="La fenêtre de Sightglass : trois comptes avec leurs limites de session, de semaine et par modèle">
+  <img src="docs/images/panel-fr-dark.png" width="364" alt="La même fenêtre en mode sombre">
+</p>
 
 Les mêmes chiffres sont lisibles par tes agents (une commande à sortie JSON et un serveur MCP local) : un agent peut choisir le compte qui a encore de la marge.
 
-> **État :** en développement, pas encore publié. Ce README décrit le but ; le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
+> **État :** en développement, pas encore publié. La version 0.1 fonctionne avec Claude (par Claude Code) ; le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
+
+Un *sight glass*, c'est le voyant de niveau d'une cuve : le tube de verre qui montre d'un coup d'œil ce qu'il reste, sans rien ouvrir.
 
 ## Principes
 
@@ -32,7 +32,48 @@ Pourquoi un outil de plus, quand de bons existent (CodexBar, ClaudeBar, Claude U
 
 ## Installer
 
-Pas encore disponible.
+Il n'y a pas encore d'app notariée à télécharger : tu construis Sightglass sur ton Mac, avec les Command Line Tools d'Apple (ni Xcode, ni compte Apple).
+
+```bash
+git clone https://github.com/ThanaelFontaine/Sightglass.git
+cd Sightglass
+scripts/build_app.sh     # construit build/Sightglass.app
+scripts/install.sh       # la copie dans ~/Applications, relie la commande, ouvre l'app
+```
+
+Prérequis, ce que montre macOS, mise à jour et désinstallation : [docs/install.md](docs/install.md) (en anglais).
+
+## Utiliser
+
+1. **Associe tes comptes.** Chaque compte Claude est un dossier de configuration de Claude Code (`~/.claude`, `~/.claude-work`, ...), choisi avec `CLAUDE_CONFIG_DIR` et connecté une fois avec `/login`. Sightglass les trouve seul. Pas à pas : [docs/accounts.fr.md](docs/accounts.fr.md).
+2. **Clique sur le glyphe dans la barre des menus.** Son niveau suit le compte le plus proche d'une limite. Chaque carte montre l'adresse, puis une jauge par limite avec son pourcentage et son heure de remise à zéro (« repart dans 2 h 10 (14:30) »).
+3. **Réglages** (depuis la fenêtre, ou en rouvrant l'app) : masquer un compte, lui donner un libellé, ajouter un dossier, changer l'intervalle d'actualisation (2 à 15 minutes), afficher le pourcentage à côté du glyphe, ouvrir à la connexion.
+
+L'app suit la langue du Mac (anglais ou français). Chaque état est dit en mots, jamais par la seule couleur :
+
+<p align="center">
+  <img src="docs/images/panel-states-light.png" width="364" alt="États : données d'il y a 25 minutes, session expirée avec les dernières valeurs connues, fournisseur indisponible, pas de limite hebdomadaire globale">
+  <img src="docs/images/settings-accounts-fr-light.png" width="520" alt="Réglages, onglet Comptes">
+</p>
+
+## Pour les agents
+
+```bash
+sightglass status --json                               # chaque compte, chaque limite, avec l'âge des données
+claude mcp add sightglass -- ~/.local/bin/sightglass mcp   # outils MCP : list_accounts, get_usage, best_account
+```
+
+Les deux lisent le cache écrit par l'app et ne voient jamais de jeton. Détails et format JSON : [docs/agents.md](docs/agents.md) (en anglais).
+
+## Documentation
+
+- [Associer vos comptes](docs/accounts.fr.md) ([in English](docs/accounts.md))
+- [Installer](docs/install.md) (en anglais)
+- [Agents : commande et serveur MCP](docs/agents.md) (en anglais)
+- [FAQ](docs/faq.md) (en anglais)
+- [Pourquoi Sightglass](docs/why.md) (en anglais)
+- [Modèle de sécurité](SECURITY.md) (en anglais)
+- [Direction artistique : couleurs, glyphe, icône](design/DA.md)
 
 ## Licence
 

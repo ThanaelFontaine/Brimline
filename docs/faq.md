@@ -1,0 +1,62 @@
+# FAQ
+
+## Which providers does Sightglass support?
+
+Claude, through Claude Code sign-ins, in this version. ChatGPT, Gemini and Grok are planned: the settings list them as "Coming soon". Each provider will be a small plugin that reads the sign-in its official tool already keeps.
+
+## Where do the numbers come from?
+
+From the endpoint Claude Code itself uses to show your limits: `https://api.anthropic.com/api/oauth/usage`, asked with each account's own sign-in. As far as we know (October 2026), Anthropic does not document it. It can change without notice. When its answer stops making sense, Sightglass shows the account as **Unavailable** ("answer not understood") instead of a wrong number.
+
+## Are the percentages what is used, or what is left?
+
+What is used, as Anthropic reports it, so you can compare with what Claude shows. The gauge fills up toward the limit; the empty part is what you have left. Each gauge also writes its percentage in text: color is never the only signal.
+
+## Why does an account say "Session expired"?
+
+Claude Code's access tokens last a limited time and Claude Code renews them when you use it. Sightglass never renews a token (renewing can rotate the sign-in and log the official tool out), so an account you have not used for a while shows "Session expired" with its last numbers in grey. Open Claude Code with that account and it is back at the next refresh.
+
+## Does Sightglass slow down or rate limit my accounts?
+
+It asks once per account every 5 minutes by default (2, 5, 10 or 15 in the settings), plus when you click Refresh. After a failure it waits longer each time (2, 4, 8, 16, 32 then 60 minutes), and it follows Anthropic's `Retry-After` when there is one.
+
+## Does anything leave my Mac?
+
+Only the usage requests, sent to Anthropic with each account's own token. There is no Sightglass server, no telemetry, no analytics. The cache, the settings and the command's output stay on your Mac and never contain a token.
+
+## What exactly is stored on disk?
+
+In `~/Library/Application Support/Sightglass/`:
+
+- `usage.json`: the last numbers of each account (percentages, reset times, status, the account's address and folder). No token, ever: the type that is written has no field for one, and a test checks the file.
+- `settings.json`: your preferences (refresh interval, hidden accounts, labels, folders added by hand).
+
+Both are readable by your user only.
+
+## My account is not listed
+
+Sightglass finds `~/.claude` and every `~/.claude-*` folder that contains a `.claude.json`. If your folder has another name, add it in **Settings, Accounts, Add a Claude Code folder…**. If it is listed as **Not signed in**, run Claude Code with that folder and sign in. See [accounts.md](accounts.md).
+
+## I signed in over SSH and Sightglass says "Not signed in"
+
+When the Keychain is locked (for example in an SSH session), Claude Code keeps the sign-in in a `.credentials.json` file inside the folder instead ([Claude Code documentation](https://code.claude.com/docs/en/authentication#credential-management)). Sightglass v0.1 reads the Keychain only. Claude Code's documentation explains how to move the sign-in back to the Keychain ([recovery steps](https://code.claude.com/docs/en/troubleshoot-install#not-logged-in-or-token-expired)).
+
+## Can my agents use it?
+
+Yes: a command with JSON output and a local MCP server, both reading the app's cache. See [agents.md](agents.md).
+
+## Why is there no Dock icon?
+
+Sightglass is a menu bar app. To open the settings, use **Settings…** in its window, or open the app again from Finder or Spotlight.
+
+## Why isn't there a downloadable app?
+
+Distributing a Mac app outside the App Store without warnings needs an Apple Developer ID and notarization. Sightglass is built on your Mac instead, in a few minutes: see [install.md](install.md).
+
+## Is Sightglass open source?
+
+Its source code is public, under the [PolyForm Shield 1.0.0](../LICENSE) license: you can use it, modify it and share it, at work too; you cannot offer a product that competes with it. It is not open source in the OSI sense.
+
+## How do I report a bug or a security problem?
+
+A bug: open an issue (never paste a token or private data). A security problem: see [SECURITY.md](../SECURITY.md), privately.
