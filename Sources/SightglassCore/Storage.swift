@@ -32,13 +32,48 @@ enum JSONCoding {
         return d
     }
 
-    /// Writes atomically, readable by the user only.
+    /// Writes atomically, readable by the user only, with no wider window: the folder is put back
+    /// to 0700 and the temporary file is opened with `open(2)` in mode 0600 (`O_EXCL`, so never an
+    /// existing file or a link), fixed with `fchmod` against the umask, then filled, synced and renamed.
+    /// Any failure removes the temporary file and is thrown.
     static func write(_ data: Data, to url: URL) throws {
         let fm = FileManager.default
-        try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true,
+        let directory = url.deletingLastPathComponent()
+        try fm.createDirectory(at: directory, withIntermediateDirectories: true,
                                attributes: [.posixPermissions: 0o700])
-        try data.write(to: url, options: [.atomic])
-        try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
+        let temporary = directory.appendingPathComponent(".\(url.lastPathComponent).\(UUID().uuidString).tmp")
+        let descriptor = open(temporary.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
+        guard descriptor >= 0 else { throw posixError(errno) }
+        var closed = false
+        func fail(_ code: Int32) -> POSIXError {
+            if !closed { close(descriptor); closed = true }
+            unlink(temporary.path)
+            return posixError(code)
+        }
+        if fchmod(descriptor, 0o600) != 0 { throw fail(errno) }
+        var failure: Int32?
+        data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
+            var offset = 0
+            while offset < buffer.count {
+                let written = Darwin.write(descriptor, buffer.baseAddress! + offset, buffer.count - offset)
+                if written < 0 {
+                    if errno == EINTR { continue }
+                    failure = errno
+                    return
+                }
+                offset += written
+            }
+        }
+        if let failure { throw fail(failure) }
+        if fsync(descriptor) != 0 { throw fail(errno) }
+        closed = true
+        if close(descriptor) != 0 { throw fail(errno) }
+        if rename(temporary.path, url.path) != 0 { throw fail(errno) }
+    }
+
+    private static func posixError(_ code: Int32) -> POSIXError {
+        POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)
     }
 }
 

@@ -22,12 +22,34 @@ public struct MCPServer: Sendable {
         self.now = now
     }
 
+    /// Largest message accepted on one line.
+    public static let maxLineBytes = 1024 * 1024
+
     /// Reads lines from the standard input and writes answers to `output` until the input closes.
-    public func run(output: FileHandle = .standardOutput) {
-        while let line = readLine(strippingNewline: true) {
-            guard let answer = handle(line: line) else { continue }
-            output.write(Data((answer + "\n").utf8))
+    /// A line longer than `maxLineBytes` is dropped up to its newline and answered with -32600.
+    public func run(input: FileHandle = .standardInput, output: FileHandle = .standardOutput) {
+        var splitter = BoundedLineSplitter(maxBytes: Self.maxLineBytes)
+        func answer(_ items: [BoundedLineSplitter.Item]) {
+            for item in items {
+                let reply: String?
+                switch item {
+                case .line(let line): reply = handle(line: line)
+                case .tooLong: reply = Self.encode(["jsonrpc": "2.0", "id": NSNull(), "error": ["code": -32600, "message": "Invalid Request"]])
+                }
+                if let reply { output.write(Data((reply + "\n").utf8)) }
+            }
         }
+        // read(2) returns as soon as some bytes are there; FileHandle.read(upToCount:) would wait for
+        // 64 KiB or the end of the input on a pipe, and a client that keeps stdin open would get no answer.
+        var buffer = [UInt8](repeating: 0, count: 64 * 1024)
+        let descriptor = input.fileDescriptor
+        while true {
+            let count = buffer.withUnsafeMutableBytes { read(descriptor, $0.baseAddress, $0.count) }
+            if count < 0 && errno == EINTR { continue }
+            guard count > 0 else { break }
+            answer(splitter.push(Data(buffer[0..<count])))
+        }
+        answer(splitter.finish())
     }
 
     /// Handles one message. Returns the answer line, or nil for a notification.
@@ -216,5 +238,57 @@ public struct MCPServer: Sendable {
             return #"{"jsonrpc":"2.0","id":null,"error":{"code":-32603,"message":"Internal error"}}"#
         }
         return String(decoding: data, as: UTF8.self)
+    }
+}
+
+/// Splits a byte stream into lines without ever holding more than `maxBytes` of one line.
+struct BoundedLineSplitter {
+    enum Item: Equatable {
+        case line(String)
+        case tooLong
+    }
+
+    let maxBytes: Int
+    private var buffer = Data()
+    private var discarding = false
+
+    init(maxBytes: Int) { self.maxBytes = maxBytes }
+
+    mutating func push(_ chunk: Data) -> [Item] {
+        var items: [Item] = []
+        var rest = chunk[...]
+        while !rest.isEmpty {
+            if let newline = rest.firstIndex(of: 0x0A) {
+                let head = rest[rest.startIndex..<newline]
+                rest = rest[rest.index(after: newline)...]
+                if discarding {
+                    discarding = false
+                } else if buffer.count + head.count > maxBytes {
+                    items.append(.tooLong)
+                } else {
+                    items.append(.line(String(decoding: buffer + head, as: UTF8.self)))
+                }
+                buffer.removeAll(keepingCapacity: true)
+            } else {
+                if !discarding {
+                    if buffer.count + rest.count > maxBytes {
+                        discarding = true
+                        buffer.removeAll()
+                        items.append(.tooLong)
+                    } else {
+                        buffer.append(contentsOf: rest)
+                    }
+                }
+                rest = rest[rest.endIndex...]
+            }
+        }
+        return items
+    }
+
+    /// The last line when the input closes without a final newline.
+    mutating func finish() -> [Item] {
+        defer { buffer.removeAll(); discarding = false }
+        guard !discarding, !buffer.isEmpty else { return [] }
+        return [.line(String(decoding: buffer, as: UTF8.self))]
     }
 }

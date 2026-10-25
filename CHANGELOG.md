@@ -27,6 +27,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 - The Keychain read is stopped after 60 seconds if `security` never answers, so refreshing never stays stuck.
 - **Tests**: Swift Testing suites for discovery, Keychain service names, credential and usage parsing (anonymized real answers), service states and backoff, cache, ranking, time formatting and the MCP server. The CI now also runs `swift build`, `swift test` and `scripts/build_app.sh`.
 
+### Security
+
+- Hardening of what Sightglass reads and writes: redirects from the usage request are refused, its body is limited to 256 KiB, an MCP message is limited to 1 MiB per line (longer ones are dropped and answered with an error), and the cache and settings are written through a temporary file created in 0600 inside a 0700 folder.
+
 ### Fixed
 
 - The text check test now runs with a temporary `HOME` while keeping the rest of the environment, so it passes on any Mac.
