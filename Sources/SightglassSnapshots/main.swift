@@ -7,13 +7,18 @@ import SwiftUI
 // the menu bar window and each settings tab, light and dark, English (and the panel, its states and
 // the Accounts tab in French).
 //
-//   swift run sightglass-snapshots [output folder]     (default: docs/images)
+//   swift run sightglass-snapshots [--with-percent] [output folder]     (default: docs/images)
+//
+// By default the settings are the app's defaults for the menu bar (icon only, no percentage);
+// --with-percent turns the percentage on, for the older image.
 //
 // Views are hosted in an off-screen window and drawn with cacheDisplay at 2x. SwiftUI's
 // ImageRenderer cannot draw the AppKit-backed controls of the settings (switches, text fields,
 // pickers, tabs): it leaves placeholders, so it is not used here.
 
-let output = URL(fileURLWithPath: CommandLine.arguments.dropFirst().first ?? "docs/images", isDirectory: true)
+let arguments = Array(CommandLine.arguments.dropFirst())
+let withPercent = arguments.contains("--with-percent")
+let output = URL(fileURLWithPath: arguments.first { $0 != "--with-percent" } ?? "docs/images", isDirectory: true)
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
 
 // A fixed moment: Monday 27 October 2026, 12:20 in Paris.
@@ -74,7 +79,9 @@ let stateAccounts: [AccountUsage] = [
 var settings = SightglassSettings()
 settings.extraFolders = [unavailable.configDir]
 settings.labels = [long.id: "Research lab"]
-settings.showPercentInMenuBar = true
+if withPercent { settings.showPercentInMenuBar = true }
+// The default captures follow the app's default: no percentage in the menu bar.
+precondition(withPercent || !settings.showPercentInMenuBar, "default captures must have the percentage off")
 
 let icon = NSImage(contentsOf: root.appendingPathComponent("design/icons/AppIcon.icns"))
 
