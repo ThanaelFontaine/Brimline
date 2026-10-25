@@ -16,14 +16,29 @@ struct UsageTests {
     }
 
     @Test("The request carries the documented headers and a 15 second timeout")
-    func request() {
+    func request() throws {
         let r = ClaudeUsageAPI.request(accessToken: "fake")
         #expect(r.url?.absoluteString == "https://api.anthropic.com/api/oauth/usage")
         #expect(r.httpMethod == "GET")
         #expect(r.value(forHTTPHeaderField: "Authorization") == "Bearer fake")
         #expect(r.value(forHTTPHeaderField: "anthropic-beta") == "oauth-2025-04-20")
-        #expect(r.value(forHTTPHeaderField: "User-Agent") == "claude-cli/2.1.0 (external, cli)")
+        let agent = try #require(r.value(forHTTPHeaderField: "User-Agent"))
+        #expect(agent.hasPrefix("Sightglass/"))
+        #expect(agent.hasSuffix("(+https://github.com/ThanaelFontaine/Sightglass)"))
+        #expect(!agent.lowercased().contains("claude"))
         #expect(r.timeoutInterval == 15)
+    }
+
+    @Test("A Keychain tool that never ends is stopped at the timeout")
+    func credentialTimeout() throws {
+        let home = try TemporaryHome()
+        try home.write("slow-security", "#!/bin/sh\nexec /bin/sleep 30\n")
+        let tool = home.url.appendingPathComponent("slow-security").path
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: tool)
+        let reader = SecurityToolCredentialReader(timeout: 0.5, toolPath: tool)
+        let start = Date()
+        #expect(throws: CredentialError.toolFailed(-2)) { try reader.readCredential(service: "Claude Code-credentials") }
+        #expect(Date().timeIntervalSince(start) < 5)
     }
 
     @Test("Fixtures hold no address and no token")

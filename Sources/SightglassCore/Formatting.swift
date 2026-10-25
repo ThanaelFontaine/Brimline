@@ -201,7 +201,6 @@ public struct Strings: Sendable {
         t("Your AI subscription limits, account by account, in the menu bar.",
           "Les limites de vos abonnements IA, compte par compte, dans la barre des menus.")
     }
-    public var website: String { t("Website", "Site") }
     public var documentation: String { t("Documentation", "Documentation") }
     public var readOnlyNote: String {
         t("Read only: Sightglass never refreshes, rewrites or moves a token.",
@@ -215,7 +214,11 @@ public struct Strings: Sendable {
     public func valueFrom(_ age: String) -> String { t("value from \(age)", "valeur d'\(age)") }
     public var unavailableShort: String { t("Unavailable", "Indisponible") }
     public var expiredShort: String { t("expired", "expiré") }
-    public func percentText(_ value: Double) -> String { "\(Int(value.rounded())) %" }
+    /// "72%" in English, "72 %" in French.
+    public func percentText(_ value: Double) -> String {
+        let n = Int(value.rounded())
+        return t("\(n)%", "\(n) %")
+    }
     public func accessibilityPercent(_ value: Double, expired: Bool) -> String {
         expired ? "\(percentText(value)), \(expiredShort)" : percentText(value)
     }
@@ -236,12 +239,15 @@ public struct Strings: Sendable {
     }
 }
 
-/// Fixed links. The documentation base is the single place to change when the site goes live.
+/// Fixed links. The documentation base is the single place to change when the site goes live;
+/// until then the app links to the documentation in the repository and shows no website link.
 public enum Links {
     public static let documentationBase = URL(string: "https://github.com/ThanaelFontaine/Sightglass/blob/main/docs/")!
-    public static var accountsDoc: URL { documentationBase.appendingPathComponent("accounts.md") }
+    /// The guide to linking an account, in French when the interface is in French.
+    public static func accountsDoc(_ language: Language) -> URL {
+        documentationBase.appendingPathComponent(language == .fr ? "accounts.fr.md" : "accounts.md")
+    }
     public static var agentsDoc: URL { documentationBase.appendingPathComponent("agents.md") }
     public static var faq: URL { documentationBase.appendingPathComponent("faq.md") }
     public static let repository = URL(string: "https://github.com/ThanaelFontaine/Sightglass")!
-    public static let website = URL(string: "https://sightglass.thanaelfontaine.eu")!
 }

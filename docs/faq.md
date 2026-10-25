@@ -22,7 +22,7 @@ It asks once per account every 5 minutes by default (2, 5, 10 or 15 in the setti
 
 ## Does anything leave my Mac?
 
-Only the usage requests, sent to Anthropic with each account's own token. There is no Sightglass server, no telemetry, no analytics. The cache, the settings and the command's output stay on your Mac and never contain a token.
+Only the usage requests, sent to Anthropic with each account's own token and the header `User-Agent: Sightglass/<version>`. There is no Sightglass server, no telemetry, no analytics. The cache, the settings and the command's output stay on your Mac and never contain a token.
 
 ## What exactly is stored on disk?
 
@@ -53,9 +53,13 @@ Sightglass is a menu bar app. To open the settings, use **Settings…** in its w
 
 Distributing a Mac app outside the App Store without warnings needs an Apple Developer ID and notarization. Sightglass is built on your Mac instead, in a few minutes: see [install.md](install.md).
 
-## Is Sightglass open source?
+## Is Sightglass's code public?
 
 Its source code is public, under the [PolyForm Shield 1.0.0](../LICENSE) license: you can use it, modify it and share it, at work too; you cannot offer a product that competes with it. It is not open source in the OSI sense.
+
+## Is this allowed by Anthropic?
+
+We do not know, and we do not claim it is. Anthropic's documentation ([Authentication and credential use](https://code.claude.com/docs/en/legal-and-compliance)) says OAuth sign-ins are meant for Claude Code and Anthropic's own apps, and that third-party developers may not collect, store or intermediate Claude.ai credentials or session tokens. Sightglass reads your own token on your own Mac, read only, never writes, renews or copies it, sends it only to Anthropic to ask for your own usage, and announces itself as Sightglass. It is not an official or endorsed product. Read the terms of your plan and judge for yourself.
 
 ## How do I report a bug or a security problem?
 

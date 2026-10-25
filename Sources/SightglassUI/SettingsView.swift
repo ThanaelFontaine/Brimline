@@ -95,7 +95,7 @@ struct AccountsTab: View {
                     Text(s.accountsIntro)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Link(destination: Links.accountsDoc) {
+                    Link(destination: Links.accountsDoc(s.language)) {
                         Label(s.howToLink, systemImage: "questionmark.circle")
                     }
                     .foregroundStyle(SGTheme.accent)
@@ -351,7 +351,6 @@ struct AboutTab: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: SGTheme.Space.l) {
-                Link(s.website, destination: Links.website)
                 Link("GitHub", destination: Links.repository)
                 Link(s.documentation, destination: Links.documentationBase)
             }

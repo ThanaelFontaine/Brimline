@@ -22,10 +22,10 @@ A *sight glass* is the glass tube on the side of a tank that shows its level at 
 
 ## Principles
 
-- **Read only.** Sightglass reads the sign-in tokens your AI tools already store on your Mac (for Claude Code, the macOS Keychain). It never refreshes, rewrites or moves them, so it can never sign you out of a tool. An expired token is shown as "sign in again", not repaired behind your back.
+- **Read only.** Sightglass reads the sign-in tokens your AI tools already store on your Mac (for Claude Code, the macOS Keychain). It never refreshes, rewrites or moves them, so it can never sign you out of a tool. An expired token is shown as "Session expired", not repaired behind your back.
 - **Nothing leaves your Mac**, except the usage requests to each provider. No server, no telemetry, no token ever written to a log.
 - **One account, one line, one address.** Several accounts per provider are a first-class case, not an afterthought.
-- **Open to any provider.** Each provider is a small plugin: Claude first, then ChatGPT, Gemini and Grok.
+- **Open to any provider.** Each provider will be a small plugin: Claude first, then ChatGPT, Gemini and Grok.
 - **Honest about fragility.** As far as we know (October 2026), no provider documents an endpoint for subscription limits. Sightglass uses the same internal endpoints as the official tools, which can change without notice. When one breaks, Sightglass says so instead of showing a wrong number.
 
 Why another tool, when good ones exist (CodexBar, ClaudeBar, Claude Usage Tracker)? See [docs/why.md](docs/why.md).
@@ -40,6 +40,8 @@ cd Sightglass
 scripts/build_app.sh     # builds build/Sightglass.app
 scripts/install.sh       # copies it to ~/Applications, links the command, opens the app
 ```
+
+Add `--login` to `install.sh` to also open Sightglass at login (or turn it on later in **Settings, General**).
 
 Requirements, what macOS shows, updating and uninstalling: [docs/install.md](docs/install.md).
 
@@ -63,7 +65,13 @@ sightglass status --json                               # every account, every li
 claude mcp add sightglass -- ~/.local/bin/sightglass mcp   # MCP tools: list_accounts, get_usage, best_account
 ```
 
-Both read the cache written by the app and never see a token. Details and JSON format: [docs/agents.md](docs/agents.md).
+Both read the cache written by the app and never see a token (only `sightglass status --live` reads the Keychain, like the app). Details and JSON format: [docs/agents.md](docs/agents.md).
+
+## Anthropic's terms
+
+Sightglass is an independent project: it is not made, endorsed or supported by Anthropic. Anthropic's documentation ([Legal and compliance, Authentication and credential use](https://code.claude.com/docs/en/legal-and-compliance)) says that OAuth sign-ins are meant for Claude Code and Anthropic's own apps, and that third-party developers may not offer Claude.ai login in their apps, route requests through subscription credentials on behalf of their users, or collect, store or intermediate Claude.ai credentials or session tokens.
+
+What Sightglass does, so you can judge for yourself: it runs on your own Mac and reads the sign-in Claude Code already stored there, read only. It never signs you in, never writes, renews or copies the token, and sends it only to Anthropic, to ask for your own usage numbers, under its own name (`User-Agent: Sightglass/<version>`). It sends no prompts and uses no model. We do not claim Anthropic allows this use: read the terms that apply to your plan and decide.
 
 ## Documentation
 

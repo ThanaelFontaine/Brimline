@@ -30,7 +30,9 @@ public enum Ranking {
     ///
     /// Only accounts with numbers are ranked. Accounts whose sign-in was refused or is missing
     /// are left out; an expired token stays in (the official tool renews it when it is used),
-    /// with the age of its numbers. Ties go to the freshest numbers.
+    /// with the age of its numbers. Unavailable accounts (their numbers may be old) come after
+    /// every other account. An account that has none of the limits asked for is judged on its
+    /// tightest limit, so a full session never reads as 100% room. Ties go to the freshest numbers.
     public static func rank(_ accounts: [AccountUsage], window: UsageWindow, model: String?,
                             now: Date) -> [AccountChoice] {
         let wanted = model?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -45,11 +47,14 @@ public enum Ranking {
                     return limit.model?.lowercased() == wanted
                 }
             }
-            let binding = considered.max { $0.effectivePercent(at: now) < $1.effectivePercent(at: now) }
+            let pool = considered.isEmpty ? usage.limits : considered
+            let binding = pool.max { $0.effectivePercent(at: now) < $1.effectivePercent(at: now) }
             let headroom = 100 - (binding?.effectivePercent(at: now) ?? 0)
             return AccountChoice(usage: usage, headroom: headroom, bindingLimit: binding)
         }
         return choices.sorted { a, b in
+            let aUnavailable = a.usage.status == .unavailable, bUnavailable = b.usage.status == .unavailable
+            if aUnavailable != bUnavailable { return bUnavailable }
             if a.headroom != b.headroom { return a.headroom > b.headroom }
             return (a.usage.fetchedAt ?? .distantPast) > (b.usage.fetchedAt ?? .distantPast)
         }

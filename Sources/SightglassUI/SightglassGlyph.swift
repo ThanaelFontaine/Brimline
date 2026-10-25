@@ -1,34 +1,35 @@
 // SightglassGlyph.swift
-// Glyphe de la barre des menus de Sightglass : le voyant de niveau.
-// Image gabarit monochrome (noir et transparence) de 18 x 18 pt ; macOS la teinte.
-// Le niveau (0 à 1) est la part consommée de la limite la plus proche :
-// le liquide monte vers la bride du haut, qui figure la limite.
+// The menu bar glyph of Sightglass: the level sight glass.
+// A monochrome template image (black and transparency), 18 x 18 pt; macOS tints it.
+// The level (0 to 1) is the share used of the closest limit:
+// the liquid rises toward the top flange, which stands for the limit.
 //
-// Géométrie (en points, origine en bas à gauche, cadre 18 x 18) :
-//   brides      x 3 à 15 ; 2x : 1,5 pt d'épaisseur (y 1 à 2,5 et 15,5 à 17) ; 1x : 1 pt (y 1 à 2 et 16 à 17)
-//   parois      de part et d'autre d'une cavité x 6 à 12 ; 1,5 pt en 2x, 1 pt en 1x
-//   liquide     x 7 à 11, 1 pt au-dessus de la bride du bas, monte jusqu'à 1 pt sous la bride du haut
-// Tout est aligné sur la grille de pixels en 1x et en 2x pour rester net.
+// Geometry (in points, origin at the bottom left, 18 x 18 frame):
+//   flanges     x 3 to 15; 2x: 1.5 pt thick (y 1 to 2.5 and 15.5 to 17); 1x: 1 pt (y 1 to 2 and 16 to 17)
+//   walls       on each side of a cavity x 6 to 12; 1.5 pt at 2x, 1 pt at 1x
+//   liquid      x 7 to 11, 1 pt above the bottom flange, rises to 1 pt under the top flange
+// Everything sits on the pixel grid at 1x and 2x to stay sharp.
 
 import AppKit
+import SightglassCore
 
 public enum SightglassGlyph {
 
-    /// Taille du glyphe en points.
+    /// Size of the glyph in points.
     public static let size = NSSize(width: 18, height: 18)
 
-    /// Opacité du glyphe quand les données sont expirées ou indisponibles.
+    /// Opacity of the glyph when the numbers are expired or unavailable.
     public static let dimmedAlpha: CGFloat = 0.45
 
-    /// Renvoie une image gabarit 18 x 18 pt pour un niveau de 0 à 1.
+    /// Returns an 18 x 18 pt template image for a level from 0 to 1.
     /// - Parameters:
-    ///   - level: part consommée, de 0 (vide) à 1 (limite atteinte). `nil` : niveau inconnu, tube vide.
-    ///   - dimmed: vrai si les données sont expirées ou indisponibles (glyphe atténué).
+    ///   - level: share used, from 0 (empty) to 1 (limit reached). `nil`: unknown level, empty tube.
+    ///   - dimmed: true when the numbers are expired or unavailable (dimmed glyph).
     public static func image(level: Double?, dimmed: Bool = false) -> NSImage {
         let lvl = level.map { min(max($0, 0), 1) }
         let image = NSImage(size: size, flipped: false) { rect in
             guard let ctx = NSGraphicsContext.current?.cgContext else { return false }
-            // Échelle réelle du support (1x ou 2x) pour aligner sur les pixels.
+            // Real scale of the surface (1x or 2x), to align on pixels.
             let scale = max(1, ctx.userSpaceToDeviceSpaceTransform.a)
             draw(level: lvl, in: ctx, origin: rect.origin, scale: scale,
                  color: NSColor.black.withAlphaComponent(dimmed ? dimmedAlpha : 1).cgColor)
@@ -39,14 +40,14 @@ public enum SightglassGlyph {
         return image
     }
 
-    /// Libellé VoiceOver par défaut (à localiser dans l'app).
+    /// Default VoiceOver label, in the language of the interface.
     public static func accessibilityLabel(level: Double?) -> String {
         guard let level else { return "Sightglass" }
-        return "Sightglass, \(Int((level * 100).rounded())) %"
+        return Strings().menuBarAccessibility(level * 100)
     }
 
-    /// Dessine le glyphe dans un contexte CoreGraphics (repère non retourné, 18 x 18 unités).
-    /// `scale` : pixels par point du support, pour aligner les bords.
+    /// Draws the glyph in a CoreGraphics context (unflipped, 18 x 18 units).
+    /// `scale`: pixels per point of the surface, to align the edges.
     public static func draw(level: Double?, in ctx: CGContext, origin: CGPoint = .zero,
                             scale: CGFloat, color: CGColor) {
         ctx.saveGState()
@@ -55,17 +56,17 @@ public enum SightglassGlyph {
 
         func snap(_ v: CGFloat) -> CGFloat { (v * scale).rounded() / scale }
 
-        // Mesures : 1x en pixels entiers, 2x et plus au demi-point.
+        // Sizes: whole pixels at 1x, half points at 2x and over.
         let hiDPI = scale >= 2
-        let flange: CGFloat = hiDPI ? 1.5 : 1        // épaisseur des brides
-        let wall: CGFloat = hiDPI ? 1.5 : 1          // épaisseur des parois
-        let bottomY: CGFloat = 1                     // bas de la bride du bas
-        let topY: CGFloat = 17                       // haut de la bride du haut
+        let flange: CGFloat = hiDPI ? 1.5 : 1        // flange thickness
+        let wall: CGFloat = hiDPI ? 1.5 : 1          // wall thickness
+        let bottomY: CGFloat = 1                     // bottom of the bottom flange
+        let topY: CGFloat = 17                       // top of the top flange
         let tubeMinY = bottomY + flange, tubeMaxY = topY - flange
         let liquidMinY = tubeMinY + 1, liquidMaxY = tubeMaxY - 1
-        let travel = liquidMaxY - liquidMinY         // 11 pt en 2x, 12 pt en 1x
+        let travel = liquidMaxY - liquidMinY         // 11 pt at 2x, 12 pt at 1x
 
-        // Brides (haut et bas) : la bride du haut figure la limite.
+        // Flanges (top and bottom): the top flange stands for the limit.
         let flangeRadius: CGFloat = hiDPI ? 0.5 : 0
         for y in [bottomY, tubeMaxY] {
             let r = CGRect(x: 3, y: y, width: 12, height: flange)
@@ -73,12 +74,12 @@ public enum SightglassGlyph {
         }
         ctx.fillPath()
 
-        // Parois du tube de verre, autour d'une cavité de x 6 à 12.
+        // Walls of the glass tube, around a cavity from x 6 to 12.
         ctx.fill(CGRect(x: 6 - wall, y: tubeMinY, width: wall, height: tubeMaxY - tubeMinY))
         ctx.fill(CGRect(x: 12, y: tubeMinY, width: wall, height: tubeMaxY - tubeMinY))
 
-        // Liquide : au moins 1 pt dès que le niveau dépasse 0 (1 % se voit) ;
-        // la course pleine est réservée à 100 %, pour que 99 % ne se confonde pas avec la limite.
+        // Liquid: at least 1 pt as soon as the level is above 0 (1% shows);
+        // the full travel is kept for 100%, so that 99% is never mistaken for the limit.
         if let level, level > 0 {
             var h = snap(CGFloat(level) * travel)
             h = max(h, 1)

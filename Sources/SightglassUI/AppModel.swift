@@ -240,8 +240,9 @@ public final class AppModel {
     /// Absolute path of the command: the ~/.local/bin link when install.sh made it, else the
     /// copy inside the app. Absolute, because MCP configuration files do not expand "~".
     public var commandPath: String {
-        guard service != nil else { return "/Applications/Sightglass.app/Contents/Helpers/sightglass" }
         let link = home.appendingPathComponent(".local/bin/sightglass").path
+        // The images show the link install.sh creates, in the fictitious home folder.
+        guard service != nil else { return link }
         if FileManager.default.fileExists(atPath: link) { return link }
         return Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/sightglass").path
     }

@@ -30,6 +30,14 @@ struct FormattingTests {
         #expect(f.duration(0) == "less than a minute")
     }
 
+    @Test("Percentages: 72% in English, 72 % in French")
+    func percent() {
+        #expect(Strings(.en).percentText(72.4) == "72%")
+        #expect(Strings(.fr).percentText(72.4) == "72 %")
+        #expect(Strings(.en).menuBarAccessibility(100) == "Sightglass, 100%")
+        #expect(Strings(.fr).accessibilityPercent(34, expired: true) == "34 %, expiré")
+    }
+
     @Test("Time zones apply to the clock time")
     func timeZone() {
         let paris = TimeFormatter(language: .fr, timeZone: TimeZone(identifier: "Europe/Paris")!)
@@ -65,7 +73,8 @@ struct FormattingTests {
 
     @Test("The documentation links point to the docs folder")
     func links() {
-        #expect(Links.accountsDoc.absoluteString == "https://github.com/ThanaelFontaine/Sightglass/blob/main/docs/accounts.md")
+        #expect(Links.accountsDoc(.en).absoluteString == "https://github.com/ThanaelFontaine/Sightglass/blob/main/docs/accounts.md")
+        #expect(Links.accountsDoc(.fr).absoluteString == "https://github.com/ThanaelFontaine/Sightglass/blob/main/docs/accounts.fr.md")
     }
 }
 

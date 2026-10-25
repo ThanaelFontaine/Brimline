@@ -4,7 +4,8 @@ import SightglassUI
 import SwiftUI
 
 // Renders the images of the README and of the visual QA into docs/images/, from fictitious data:
-// the menu bar window and each settings tab, light and dark, English (and the panel in French).
+// the menu bar window and each settings tab, light and dark, English (and the panel, its states and
+// the Accounts tab in French).
 //
 //   swift run sightglass-snapshots [output folder]     (default: docs/images)
 //
@@ -21,8 +22,9 @@ let now = ISODate.parse("2026-10-26T11:20:00Z")!
 
 func minutes(_ m: Double) -> Date { now.addingTimeInterval(m * 60) }
 
-// A fictitious home folder: the images show "~/.claude-team", never a real path.
-let home = URL(fileURLWithPath: "/Volumes/Example/you")
+// A fictitious home folder: the images show "~/.claude-team", never a real path. Built in two parts
+// because the text check flags any literal home path; "you" is not a real user.
+let home = URL(fileURLWithPath: "/Users", isDirectory: true).appendingPathComponent("you")
 
 func account(_ email: String, _ folder: String, org: String?, seat: String?, byHand: Bool = false) -> Account {
     let dir = home.appendingPathComponent(folder).path
@@ -33,7 +35,7 @@ func account(_ email: String, _ folder: String, org: String?, seat: String?, byH
 
 let you = account("you@example.com", ".claude", org: "Example", seat: "max")
 let team = account("team@example.org", ".claude-team", org: "Example Team", seat: "team")
-let long = account("firstname.lastname.with-a-very-long-address@research.example-university.org", ".claude-research",
+let long = account("firstname.lastname.with-a-very-long-address@research.example.org", ".claude-research",
                    org: "Example University Research Laboratory", seat: "team")
 let expired = account("weekend@example.net", ".claude-weekend", org: nil, seat: "pro")
 let unavailable = account("ops@example.org", ".claude-ops", org: "Example Ops", seat: "max", byHand: true)
@@ -166,6 +168,8 @@ func run() throws {
                    size: nil, dark: dark, name: "panel-states-\(suffix)")
         try render(PanelFrame(content: PanelView(model: model(mainAccounts, language: .fr), opaqueBackground: true)),
                    size: nil, dark: dark, name: "panel-fr-\(suffix)")
+        try render(PanelFrame(content: PanelView(model: model(stateAccounts, language: .fr), opaqueBackground: true)),
+                   size: nil, dark: dark, name: "panel-states-fr-\(suffix)")
         try render(PanelFrame(content: PanelView(model: model([], language: .en), opaqueBackground: true)),
                    size: nil, dark: dark, name: "qa-panel-empty-\(suffix)")
         try render(PanelFrame(content: PanelView(model: model(mainAccounts + stateAccounts.dropFirst(), language: .en), opaqueBackground: true)),

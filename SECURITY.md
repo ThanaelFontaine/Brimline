@@ -32,9 +32,10 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 ### How it reads Claude Code sign-ins
 
 - Claude Code keeps each sign-in in the macOS Keychain, one generic password per configuration folder. Sightglass computes the item's exact service name from the folder (`Claude Code-credentials`, or `Claude Code-credentials-` followed by the first 8 hex digits of the SHA-256 of the folder's absolute path) and asks for that one item. It never lists or searches the Keychain.
-- The read goes through Apple's `/usr/bin/security find-generic-password -s <service> -w`, whose output is piped straight into the app's decoder: it is never printed, logged or stored. Only `accessToken` and `expiresAt` are decoded; the refresh token is never read into a variable and never used.
+- If `security` does not answer within 60 seconds, it is stopped and the account is shown as unavailable.
+- The read goes through Apple's `/usr/bin/security find-generic-password -s <service> -w`, whose output is piped straight into the app's decoder: it is never printed, logged or stored. Only `accessToken` and `expiresAt` are decoded; the refresh token is never decoded, stored or used.
 - Why the `security` tool rather than the Keychain framework: in our tests, reading Claude Code's items with that tool showed no prompt, which suggests it is already allowed to read them (to be confirmed on other setups). An app reading them directly is not on their access list, so macOS would ask for each item, and ask again after each rebuild of an app signed ad hoc, which would train people to click "Always Allow" without reading.
-- The token is sent only to `https://api.anthropic.com` (the usage endpoint Claude Code uses), over HTTPS, with an ephemeral session that keeps no cookie and no cache. Requests time out after 15 seconds.
+- The token is sent only to `https://api.anthropic.com` (the usage endpoint Claude Code uses), over HTTPS, with an ephemeral session that keeps no cookie and no cache. Requests time out after 15 seconds. Each request carries the token (`Authorization: Bearer`), the header `anthropic-beta: oauth-2025-04-20`, and `User-Agent: Sightglass/<version> (+https://github.com/ThanaelFontaine/Sightglass)`: Sightglass says who it is and never presents itself as Claude Code.
 - An expired token is reported as "Session expired": Sightglass does not ask for usage with it and does not renew it.
 
 ### What it writes
@@ -42,6 +43,10 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 - `~/Library/Application Support/Sightglass/usage.json` (the last numbers, statuses, addresses and folders of the accounts) and `settings.json` (preferences), in a folder readable by your user only (`0700`, files `0600`). The cache type has no field for a token, and a test writes a cache from fake tokens and checks none of them is in the file.
 - `~/Library/LaunchAgents/eu.thanaelfontaine.sightglass.plist`, only when you turn on "Open at login"; it opens the app and nothing else.
 - Nothing in the Keychain, nothing in the Claude Code folders.
+
+### Anthropic's terms
+
+Anthropic's documentation restricts the use of Claude.ai OAuth tokens by third-party applications ([Authentication and credential use](https://code.claude.com/docs/en/legal-and-compliance)). Sightglass reads the user's own token on the user's own Mac, read only, never writes or renews it, sends it only to Anthropic and announces itself under its own name. It is not an official or endorsed Anthropic product, and we make no claim that this use is permitted: each user judges for their plan. See the README.
 
 ### Out of scope
 

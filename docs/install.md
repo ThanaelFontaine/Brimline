@@ -4,7 +4,7 @@ There is no downloadable, Apple-notarized build of Sightglass yet. You build it 
 
 ## What you need
 
-- macOS 14 (Sonoma) or later.
+- macOS 14 (Sonoma) or later. Sightglass is developed and tested on recent macOS; macOS 14 is the minimum it builds for, not yet tested on a real Sonoma Mac.
 - Apple's **Command Line Tools** with Swift 6 (Xcode is not needed). If `swift --version` does not answer, install them with:
 
   ```bash
@@ -21,7 +21,7 @@ scripts/install.sh
 ```
 
 - `scripts/build_app.sh` compiles the app and the `sightglass` command (`swift build -c release`), assembles `build/Sightglass.app` and signs it ad hoc (`codesign -s -`).
-- `scripts/install.sh` copies the app to `~/Applications`, links the command to `~/.local/bin/sightglass`, and opens the app. Nothing is written outside your home folder, and no administrator password is asked.
+- `scripts/install.sh` copies the app to `~/Applications`, links the command to `~/.local/bin/sightglass`, and opens the app. With `--login` it also turns on **Open at login** (otherwise turn it on in Settings, General). Nothing is written outside your home folder, and no administrator password is asked.
 
 If `sightglass` is not found in a new terminal, add `~/.local/bin` to your `PATH` (for example `export PATH="$HOME/.local/bin:$PATH"` in `~/.zshrc`).
 

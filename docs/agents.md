@@ -2,7 +2,7 @@
 
 Your agents can read the same numbers as the menu bar, so they can pick an account that still has room instead of failing in the middle of a task. Two ways: a command with JSON output, and a local MCP server.
 
-Both read the **cache written by the Sightglass app** (`~/Library/Application Support/Sightglass/usage.json`), refreshed every 5 minutes by default. They never read the Keychain and never see a token. Every answer says how old its numbers are.
+Both read the **cache written by the Sightglass app** (`~/Library/Application Support/Sightglass/usage.json`), refreshed every 5 minutes by default. They never read the Keychain and never see a token, except `sightglass status --live` (below), which reads like the app. Every answer says how old its numbers are.
 
 ## Where the command is
 
@@ -19,9 +19,9 @@ sightglass mcp                        Local MCP server over stdio
 sightglass --version
 ```
 
-- `status` reads the cache. Without the app running, it says so and exits with code 2.
+- `status` reads the cache, even when the app is not running (check `age_seconds`). Only when there is no cache at all does it say so and exit with code 2.
 - `status --live` reads every account now, with the same code as the app: it reads the Keychain through `/usr/bin/security` and asks Anthropic. It does not write the cache (the app stays the only writer).
-- Exit codes: 0 on success, 2 when there is no data yet, 64 for a wrong command or option.
+- Exit codes: 0 on success, 2 when there is no cache yet, 64 for a wrong command or option.
 
 ### `sightglass status --json`
 
@@ -118,7 +118,7 @@ All three are read only.
 | `get_usage` | `account` (optional: an email or an id), `include_hidden` (optional, default false) | The same JSON as `sightglass status --json` |
 | `best_account` | `window` (`any`, `session` or `week`; default `any`), `model` (optional, for example `Fable`) | `best` (the account with the most room left), `ranking` (all, best first), each with `headroom_percent` and the `binding_limit` that sets it |
 
-How `best_account` ranks: for each account with numbers, it takes the limits that apply (`any`: the session, the week across all models, and the model's week when `model` is given; `session`: the session only; `week`: the weekly limits only), keeps the tightest one, and sorts by room left. Hidden accounts and accounts whose sign-in was refused are left out; an account whose token merely expired stays in, since Claude Code renews it when used. Ties go to the freshest numbers. A window whose reset time has passed counts as empty.
+How `best_account` ranks: for each account with numbers, it takes the limits that apply (`any`: the session, the week across all models, and the model's week when `model` is given; `session`: the session only; `week`: the weekly limits only), keeps the tightest one, and sorts by room left. Hidden accounts and accounts whose sign-in was refused are left out; an account whose token merely expired stays in, since Claude Code renews it when used. Unavailable accounts come after all the others, since their numbers may be old. An account that has none of the limits asked for (a team seat without a weekly limit, asked for `week`) is judged on its tightest limit, so a full session never reads as 100% room. Ties go to the freshest numbers. A window whose reset time has passed counts as empty.
 
 Results come both as text (JSON) and as `structuredContent`. When the app has not written the cache yet, tools answer with `isError: true` and a sentence saying to open the app.
 

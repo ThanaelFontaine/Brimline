@@ -129,4 +129,18 @@ struct CacheAndRankingTests {
         // The team seat has no global week: only its Fable week counts.
         #expect(fableWeek.last?.bindingLimit?.model == "Fable")
     }
+
+    @Test("best_account: unavailable accounts come last, a missing limit never means 100 % room")
+    func bestEdgeCases() {
+        let accounts = [
+            Self.usage("down@example.com", [UsageLimit(kind: .session, percent: 0, resetsAt: Self.soon)], status: .unavailable),
+            Self.usage("seat@example.org", [UsageLimit(kind: .session, percent: 96, resetsAt: Self.soon)]),
+            Self.usage("you@example.com", [UsageLimit(kind: .weekly, percent: 40, resetsAt: Self.monday)]),
+        ]
+        let week = Ranking.rank(accounts, window: .week, model: nil, now: Self.now)
+        #expect(week.map(\.usage.account.email) == ["you@example.com", "seat@example.org", "down@example.com"])
+        // No weekly limit: judged on its 96 % session, not given 100 % room.
+        #expect(week[1].headroom == 4)
+        #expect(week[1].bindingLimit?.kind == .session)
+    }
 }

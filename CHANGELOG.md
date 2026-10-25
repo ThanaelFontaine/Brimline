@@ -16,12 +16,15 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 - **Settings window** with four tabs: Accounts (show or hide, label, add or remove a folder, search again, a link to the guide), General (refresh interval, percentage in the menu bar, open at login through a LaunchAgent), Agents (ready to copy command, MCP snippets and cache path), About. It opens in front, from the window or by opening the app again.
 - **English and French**, following the language of the Mac (`SIGHTGLASS_LANG` overrides it).
 - **`sightglass` command**: `status [--json] [--live]`, `accounts [--json]`, `mcp`, `--version`. The JSON says the age of every number and writes every key, `null` when unknown.
-- **Local MCP server** (`sightglass mcp`, stdio, protocol 2025-06-18, also 2025-03-26 and 2024-11-05): tools `list_accounts`, `get_usage` and `best_account` (the account with the most room left, for a window and optionally a model), with text and `structuredContent` answers. The command and the server read the app's cache only and never see a token.
+- **Local MCP server** (`sightglass mcp`, stdio, protocol 2025-06-18, also 2025-03-26 and 2024-11-05): tools `list_accounts`, `get_usage` and `best_account` (the account with the most room left, for a window and optionally a model), with text and `structuredContent` answers. The command and the server read the app's cache and never see a token; only `sightglass status --live` reads the Keychain, like the app.
 - **Cache and settings** in `~/Library/Application Support/Sightglass/`, readable by your user only; the cache type has no field for a token, and a test checks the written file.
 - **Design**: colors, glyph and app icon (`design/`), light and dark mode, never color alone.
-- **Scripts**: `scripts/build_app.sh` builds and signs `build/Sightglass.app` ad hoc with the Command Line Tools alone (the command ships inside, in `Contents/Helpers`); `scripts/install.sh` copies it to `~/Applications`, links `~/.local/bin/sightglass` and opens it.
+- **Scripts**: `scripts/build_app.sh` builds and signs `build/Sightglass.app` ad hoc with the Command Line Tools alone (the command ships inside, in `Contents/Helpers`); `scripts/install.sh` copies it to `~/Applications`, links `~/.local/bin/sightglass` and opens it; `--login` also turns on Open at login.
 - **Screenshots** rendered from fictitious data (`swift run sightglass-snapshots`) in `docs/images/`.
-- **Documentation**: linking accounts (English and French), installing, agents (command, JSON format, MCP), FAQ; README updated.
+- **Documentation**: linking accounts (English and French), installing, agents (command, JSON format, MCP), FAQ, and an honest section on Anthropic's terms for OAuth tokens; README updated.
+- **Honest User-Agent**: requests to Anthropic announce `Sightglass/<version>`, never Claude Code.
+- Percentages follow the language: "72%" in English, "72 %" in French. The guide link opens the French guide when the app is in French. `best_account` puts unavailable accounts last and never gives 100% room to an account that lacks the limit asked for.
+- The Keychain read is stopped after 60 seconds if `security` never answers, so refreshing never stays stuck.
 - **Tests**: Swift Testing suites for discovery, Keychain service names, credential and usage parsing (anonymized real answers), service states and backoff, cache, ranking, time formatting and the MCP server. The CI now also runs `swift build`, `swift test` and `scripts/build_app.sh`.
 
 ### Fixed

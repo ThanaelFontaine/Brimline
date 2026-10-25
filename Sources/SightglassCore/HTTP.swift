@@ -29,7 +29,8 @@ public enum ClaudeUsageAPI {
     public static let url = URL(string: "https://api.anthropic.com/api/oauth/usage")!
     public static let timeout: TimeInterval = 15
     public static let betaHeader = "oauth-2025-04-20"
-    public static let userAgent = "claude-cli/2.1.0 (external, cli)"
+    /// Sightglass says who it is: it never presents itself as Claude Code.
+    public static var userAgent: String { "Sightglass/\(SightglassVersion.current) (+\(Links.repository.absoluteString))" }
 
     public static func request(accessToken: String) -> URLRequest {
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: timeout)
