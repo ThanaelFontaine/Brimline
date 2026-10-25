@@ -2,7 +2,7 @@ import Foundation
 
 public enum SightglassVersion {
     /// Must equal the VERSION file at the root of the repository (a test checks it).
-    public static let source = "0.0.0"
+    public static let source = "0.1.0"
 
     /// The version of the running app or command: the Info.plist of Sightglass.app when there is
     /// one (the command lives in Sightglass.app/Contents/Helpers), else `source`.

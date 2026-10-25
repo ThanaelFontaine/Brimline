@@ -6,6 +6,16 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-25
+
+First version, private: the repository and the site are not public yet. The full notes are in [docs/releases/v0.1.0.md](https://github.com/ThanaelFontaine/Sightglass/blob/v0.1.0/docs/releases/v0.1.0.md).
+
+### What does not work yet
+
+- ChatGPT, Gemini and Grok are not supported: only Claude accounts are read.
+- Only the Mac mini has been used: the MacBook Pro and macOS 14 (Sonoma) are not tried yet.
+- The usage endpoint is not documented by Anthropic: it may change or stop answering without notice, and Sightglass says so in words when it does.
+
 ### Added
 
 - Repository set up: license (PolyForm Shield 1.0.0), contributing guide, security policy, text checks and the release workflow.
