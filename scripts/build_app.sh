@@ -28,7 +28,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Helpers" "$APP/Contents/Resources"
 cp "$BIN/SightglassApp" "$APP/Contents/MacOS/Sightglass"
 cp "$BIN/sightglass" "$APP/Contents/Helpers/sightglass"
-cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
+cp "$ROOT/design/icons/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 
 # Declared languages, so macOS shows its own texts (menus, dialogs) in the user's language.
 for lang in en fr; do
