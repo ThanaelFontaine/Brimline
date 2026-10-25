@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-25
+
+First version, private: the repository and the site are not public yet. See [docs/releases/v0.1.0.md](docs/releases/v0.1.0.md) for what works and what does not yet.
+
 ### Added
 
 - Repository set up: license (PolyForm Shield 1.0.0), contributing guide, security policy, text checks and the release workflow.
