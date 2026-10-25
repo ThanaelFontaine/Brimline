@@ -39,9 +39,15 @@ public struct MCPServer: Sendable {
                 if let reply { output.write(Data((reply + "\n").utf8)) }
             }
         }
+        // read(2) returns as soon as some bytes are there; FileHandle.read(upToCount:) would wait for
+        // 64 KiB or the end of the input on a pipe, and a client that keeps stdin open would get no answer.
+        var buffer = [UInt8](repeating: 0, count: 64 * 1024)
+        let descriptor = input.fileDescriptor
         while true {
-            guard let chunk = try? input.read(upToCount: 64 * 1024), !chunk.isEmpty else { break }
-            answer(splitter.push(chunk))
+            let count = buffer.withUnsafeMutableBytes { read(descriptor, $0.baseAddress, $0.count) }
+            if count < 0 && errno == EINTR { continue }
+            guard count > 0 else { break }
+            answer(splitter.push(Data(buffer[0..<count])))
         }
         answer(splitter.finish())
     }

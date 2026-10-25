@@ -118,10 +118,33 @@ struct HardeningTests {
     func permissiveUmask() throws {
         let home = try TemporaryHome()
         let paths = SightglassPaths(home: home.url)
-        let previous = umask(0)
+        let previous = umask(0o277)
         defer { umask(previous) }
         try JSONCoding.write(Data("{}".utf8), to: paths.cacheFile)
         #expect(try FileManager.default.attributesOfItem(atPath: paths.cacheFile.path)[.posixPermissions] as? Int == 0o600)
+    }
+
+    @Test("run answers while the input stays open")
+    func answersWithInputOpen() throws {
+        let inPipe = Pipe(), outPipe = Pipe()
+        let server = MCPServer(version: "0.0.0", load: { (nil, SightglassSettings()) })
+        let done = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async {
+            server.run(input: inPipe.fileHandleForReading, output: outPipe.fileHandleForWriting)
+            done.signal()
+        }
+        let reader = outPipe.fileHandleForReading
+        for id in [1, 2] {
+            inPipe.fileHandleForWriting.write(Data("{\"jsonrpc\":\"2.0\",\"id\":\(id),\"method\":\"ping\"}\n".utf8))
+            var pollfd = pollfd(fd: reader.fileDescriptor, events: Int16(POLLIN), revents: 0)
+            #expect(poll(&pollfd, 1, 5000) == 1, "no answer within 5 s while stdin is open")
+            var bytes = [UInt8](repeating: 0, count: 4096)
+            let count = read(reader.fileDescriptor, &bytes, bytes.count)
+            #expect(count > 0)
+            #expect(String(decoding: bytes[0..<max(count, 0)], as: UTF8.self).contains("\"id\":\(id)"))
+        }
+        try inPipe.fileHandleForWriting.close()
+        #expect(done.wait(timeout: .now() + 5) == .success)
     }
 
     @Test("run(input:output:) answers -32600 to a too long line, then handles the next one")
