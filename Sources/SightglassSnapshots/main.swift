@@ -76,7 +76,7 @@ settings.extraFolders = [unavailable.configDir]
 settings.labels = [long.id: "Research lab"]
 settings.showPercentInMenuBar = true
 
-let icon = NSImage(contentsOf: root.appendingPathComponent("Resources/AppIcon.icns"))
+let icon = NSImage(contentsOf: root.appendingPathComponent("design/icons/AppIcon.icns"))
 
 @MainActor
 func model(_ accounts: [AccountUsage], language: Language, settings: SightglassSettings = settings) -> AppModel {

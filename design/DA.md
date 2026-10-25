@@ -131,7 +131,7 @@ Grille de 4 : 2, 4, 8, 12, 16, 24, 32, 48, 64.
 
 ## Le glyphe de la barre des menus
 
-Fichiers : `SightglassGlyph.swift` (app), `glyph.svg` et `glyph-level.svg` (site).
+Fichiers : `SightglassGlyph.swift` (app), `icons/menubar-template.svg` et `glyph-level.svg` (site).
 
 - Image **gabarit** 18 x 18 pt, noir et transparence, `isTemplate = true` : macOS la teinte (clair, sombre, barre teintée, survol). Jamais de couleur dans la barre des menus.
 - Dessin : deux brides horizontales (12 pt de large) et deux parois verticales autour d'une cavité de 6 pt. Le liquide (4 pt de large) monte de la bride du bas vers celle du haut, qui figure la limite.
@@ -151,7 +151,7 @@ SightglassGlyph.image(level: last, dimmed: true)   // expiré ou indisponible
 
 ## L'icône de l'app
 
-`AppIcon.svg` (source vectorielle), `AppIcon.iconset/` (10 PNG aux noms d'`iconutil`), `AppIcon.icns`.
+`icons/app-icon.svg` (source vectorielle), `AppIcon.iconset/` (10 PNG aux noms d'`iconutil`), `icons/AppIcon.icns`.
 
 - Grille macOS : carré arrondi de 824 px dans 1024, à 100 px du bord, rayon 185,4, ombre portée douce.
 - Fond graphite (dégradé `#2C333A` vers `#111417`), halo sarcelle très discret.
