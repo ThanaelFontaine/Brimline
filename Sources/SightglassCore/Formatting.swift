@@ -88,8 +88,6 @@ public struct Strings: Sendable {
         }
     }
     public var noGlobalWeekly: String { t("No weekly limit across all models", "Pas de limite hebdomadaire globale") }
-    public func percentUsed(_ value: Int) -> String { t("\(value) % used", "\(value) % utilisés") }
-
     // States.
     public var expiredMessage: String {
         t("Session expired: open Claude Code with this account to sign it in again",

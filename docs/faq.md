@@ -59,7 +59,7 @@ Its source code is public, under the [PolyForm Shield 1.0.0](../LICENSE) license
 
 ## Is this allowed by Anthropic?
 
-We do not know, and we do not claim it is. Anthropic's documentation ([Authentication and credential use](https://code.claude.com/docs/en/legal-and-compliance)) says OAuth sign-ins are meant for Claude Code and Anthropic's own apps, and that third-party developers may not collect, store or intermediate Claude.ai credentials or session tokens. Sightglass reads your own token on your own Mac, read only, never writes, renews or copies it, sends it only to Anthropic to ask for your own usage, and announces itself as Sightglass. It is not an official or endorsed product. Read the terms of your plan and judge for yourself.
+We do not know, and we do not claim it is. Anthropic's documentation ([Authentication and credential use](https://code.claude.com/docs/en/legal-and-compliance)) says OAuth sign-ins are meant for Claude Code and Anthropic's own apps, and that third-party developers may not collect, store or intermediate Claude.ai credentials or session tokens. Sightglass reads your own token on your own Mac, read only, never writes, renews or copies it, sends it only to Anthropic to ask for your own usage, and announces itself as Sightglass. It is not an official or endorsed product. Read the terms of your plan and judge for yourself. The same page says Anthropic may enforce these restrictions without prior notice: the risk, if any, is on the account Sightglass reads.
 
 ## How do I report a bug or a security problem?
 
