@@ -40,8 +40,7 @@ public struct MCPServer: Sendable {
             }
         }
         while true {
-            let chunk = input.availableData
-            if chunk.isEmpty { break }
+            guard let chunk = try? input.read(upToCount: 64 * 1024), !chunk.isEmpty else { break }
             answer(splitter.push(chunk))
         }
         answer(splitter.finish())

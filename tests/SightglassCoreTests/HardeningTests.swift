@@ -102,4 +102,46 @@ struct HardeningTests {
         let leftovers = try fm.contentsOfDirectory(atPath: paths.supportDirectory.path).filter { $0.hasSuffix(".tmp") }
         #expect(leftovers.isEmpty)
     }
+
+    @Test("A failed write is thrown and leaves no temporary file")
+    func failedWriteThrows() throws {
+        let home = try TemporaryHome()
+        let paths = SightglassPaths(home: home.url)
+        let target = paths.supportDirectory.appendingPathComponent("occupied")
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+        #expect(throws: (any Error).self) { try JSONCoding.write(Data("{}".utf8), to: target) }
+        let leftovers = try FileManager.default.contentsOfDirectory(atPath: paths.supportDirectory.path).filter { $0.hasSuffix(".tmp") }
+        #expect(leftovers.isEmpty)
+    }
+
+    @Test("The temporary file is 0600 even under a permissive umask")
+    func permissiveUmask() throws {
+        let home = try TemporaryHome()
+        let paths = SightglassPaths(home: home.url)
+        let previous = umask(0)
+        defer { umask(previous) }
+        try JSONCoding.write(Data("{}".utf8), to: paths.cacheFile)
+        #expect(try FileManager.default.attributesOfItem(atPath: paths.cacheFile.path)[.posixPermissions] as? Int == 0o600)
+    }
+
+    @Test("run(input:output:) answers -32600 to a too long line, then handles the next one")
+    func runEndToEnd() throws {
+        let inPipe = Pipe(), outPipe = Pipe()
+        let writer = inPipe.fileHandleForWriting
+        let line = Data(repeating: 0x61, count: MCPServer.maxLineBytes + 10)
+        let next = Data("\n{\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"ping\"}\n".utf8)
+        DispatchQueue.global().async {
+            writer.write(line)
+            writer.write(next)
+            try? writer.close()
+        }
+        let server = MCPServer(version: "0.0.0", load: { (nil, SightglassSettings()) })
+        server.run(input: inPipe.fileHandleForReading, output: outPipe.fileHandleForWriting)
+        try outPipe.fileHandleForWriting.close()
+        let text = String(decoding: outPipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        let lines = text.split(separator: "\n").map(String.init)
+        #expect(lines.count == 2)
+        #expect(lines[0].contains("-32600") && lines[0].contains("\"id\":null"))
+        #expect(lines[1].contains("\"id\":7"))
+    }
 }
