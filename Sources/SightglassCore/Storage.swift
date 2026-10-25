@@ -32,13 +32,23 @@ enum JSONCoding {
         return d
     }
 
-    /// Writes atomically, readable by the user only.
+    /// Writes atomically, readable by the user only, with no wider window: the folder is put back
+    /// to 0700 and the temporary file is created in 0600 before any byte is written.
     static func write(_ data: Data, to url: URL) throws {
         let fm = FileManager.default
-        try fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true,
+        let directory = url.deletingLastPathComponent()
+        try fm.createDirectory(at: directory, withIntermediateDirectories: true,
                                attributes: [.posixPermissions: 0o700])
-        try data.write(to: url, options: [.atomic])
-        try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
+        let temporary = directory.appendingPathComponent(".\(url.lastPathComponent).\(UUID().uuidString).tmp")
+        guard fm.createFile(atPath: temporary.path, contents: data, attributes: [.posixPermissions: 0o600]) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        if rename(temporary.path, url.path) != 0 {
+            let code = errno
+            try? fm.removeItem(at: temporary)
+            throw POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)
+        }
     }
 }
 
