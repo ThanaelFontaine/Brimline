@@ -78,4 +78,17 @@ struct CursorHardeningTests {
         #expect(status == .unavailable)
         #expect(detail == "state database busy")
     }
+
+    @Test("Whatever stands at the -journal name (a link, a folder) keeps a classic database from being opened")
+    func oddJournal() throws {
+        let home = try TemporaryHome()
+        let database = try CursorTests.StateDatabase(in: home, rows: [CursorTests.token(CursorTests.seedToken)], wal: false)
+        defer { database.close() }
+        let journal = URL(fileURLWithPath: database.url.path + "-journal")
+        try FileManager.default.createSymbolicLink(at: journal, withDestinationURL: home.url.appendingPathComponent("nowhere"))
+        #expect(throws: CursorSession.Failure.busy) { try CursorSession.classify(database: database.url) }
+        try FileManager.default.removeItem(at: journal)
+        try FileManager.default.createDirectory(at: journal, withIntermediateDirectories: false)
+        #expect(throws: CursorSession.Failure.busy) { try CursorSession.classify(database: database.url) }
+    }
 }
