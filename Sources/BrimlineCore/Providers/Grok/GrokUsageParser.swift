@@ -5,8 +5,9 @@ import Foundation
 /// `config.creditUsagePercent` is the share of the included credits used in the current period
 /// (0 to 100) and `config.currentPeriod` says which period: its `type` (`USAGE_PERIOD_TYPE_WEEKLY` or
 /// `..._MONTHLY`), its `start` and its `end` (RFC 3339). It is one `period` limit, whose length is
-/// `end - start` and whose reset time is `end`. The percentage is absent early in a period (the
-/// server leaves out what is zero): that is "no number yet", never a 0 %. The older answer
+/// `end - start` and whose reset time is `end`. The percentage is absent when the server leaves out
+/// what is zero: with an allowance (`monthlyLimit`) that is "no number yet", never a 0 %; with no allowance either (a free
+/// account), it is the "no credit limit" sentence. The older answer
 /// (`monthlyLimit` and `used` in cents, `billingPeriodStart` and `billingPeriodEnd`) is read when the
 /// new field is not there. Every other key (on-demand credits, prepaid balance, history, tier, usage
 /// per product) is ignored.

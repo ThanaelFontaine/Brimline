@@ -70,7 +70,7 @@ Cursor n'a pas de compte à relier : Brimline utilise la connexion que l'app Cur
 
 ## Gemini, par Antigravity
 
-Gemini se lit par l'outil de Google, Antigravity CLI (`agy`), que vous installez et dans lequel vous vous connectez vous-même : Brimline ne vous connecte jamais. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`). Quand `agy` est dans `~/.local/bin/agy`, Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; l'outil de Google peut renouveler lui-même sa connexion) et montre l'usage de chaque modèle. Sans lui, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). **Gemini n'est pas encore lu et vérifié :** tant qu'un vrai Antigravity n'a pas été essayé, Brimline ne le lance pas. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
+Gemini se lit par l'outil de Google, Antigravity CLI (`agy`), que vous installez et dans lequel vous vous connectez vous-même : Brimline ne vous connecte jamais. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`). Quand `agy` est dans `~/.local/bin/agy`, Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; l'outil de Google peut renouveler lui-même sa connexion) et montre, par groupe de modèles, la fenêtre de 5 heures et la semaine. Sans lui, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). **Gemini n'est pas encore lu et vérifié :** seule la build vérifiée le 27/10/2026 (Antigravity CLI 1.4.8) est lancée ; toute autre ne l'est pas. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
 
 ## Grok, par le CLI Grok
 

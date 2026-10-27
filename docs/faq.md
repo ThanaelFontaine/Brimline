@@ -2,7 +2,7 @@
 
 ## Which providers does Brimline support?
 
-Claude, through Claude Code sign-ins; ChatGPT, through the Codex sign-in (the 5 hour session and the week that Codex shows with `/status`); Grok, through the sign-in of the Grok CLI (the credits of the current period); and Gemini through Google's Antigravity CLI (Brimline launches its official command `agy --print /usage`, and says where the limits are when Antigravity is not installed; it is not launched until it has been tried on a real account, see [providers](providers.md)); and Cursor, through the sign-in its app keeps (the cycle of your plan, when Cursor stores that sign-in in plain text; when it protects it, Brimline says where to see the usage). ChatGPT, Gemini, Grok and Cursor are off until you turn them on. Each provider is a small plugin; the ones that read limits use the sign-in their official tool already keeps.
+Claude, through Claude Code sign-ins; ChatGPT, through the Codex sign-in (the 5 hour session and the week that Codex shows with `/status`); Grok, through the sign-in of the Grok CLI (the credits of the current period); and Gemini through Google's Antigravity CLI (Brimline launches its official command `agy --print /usage`, and says where the limits are when Antigravity is not installed; only its build verified on 27/10/2026, Antigravity CLI 1.4.8, is launched, see [providers](providers.md)); and Cursor, through the sign-in its app keeps (the cycle of your plan, when Cursor stores that sign-in in plain text; when it protects it, Brimline says where to see the usage). ChatGPT, Gemini, Grok and Cursor are off until you turn them on. Each provider is a small plugin; the ones that read limits use the sign-in their official tool already keeps.
 
 ## Where do the numbers come from?
 
