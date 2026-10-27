@@ -289,6 +289,9 @@ public struct Strings: Sendable {
         t("Sign in to Claude Code, or add its folder in the settings.",
           "Connectez-vous à Claude Code, ou ajoutez son dossier dans les réglages.")
     }
+    public var allProvidersOff: String {
+        t("Every provider is off. Turn one on in the settings.", "Tous les fournisseurs sont coupés. Allumez-en un dans les réglages.")
+    }
     public var allHidden: String { t("Every account is hidden in the settings.", "Tous les comptes sont masqués dans les réglages.") }
 
     // Settings.
@@ -363,8 +366,8 @@ public struct Strings: Sendable {
     }
     /// Shown once, under the cards, while only Claude is on.
     public var providerHint: String {
-        t("Brimline can also read ChatGPT (via Codex), Grok and Cursor, and tell you where to see Gemini limits. Each stays off until you turn it on.",
-          "Brimline peut aussi lire ChatGPT (par Codex), Grok et Cursor, et vous dire où voir les limites de Gemini. Chacun reste coupé tant que vous ne l'allumez pas.")
+        t("Brimline can also read ChatGPT (via Codex) and Grok, and tell you where to see Gemini limits. Each stays off until you turn it on.",
+          "Brimline peut aussi lire ChatGPT (par Codex) et Grok, et vous dire où voir les limites de Gemini. Chacun reste coupé tant que vous ne l'allumez pas.")
     }
     public var dismiss: String { t("Dismiss", "Masquer") }
     /// A sentence cut after its first full stop: the first part, then the rest ("Learn more" shows it).

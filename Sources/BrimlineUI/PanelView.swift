@@ -53,7 +53,9 @@ public struct PanelView: View {
         VStack(spacing: SGTheme.Space.s) {
             let visible = model.visibleUsages
             let groups = model.groups
-            if model.allUsages.isEmpty && model.enabledProviders == [.claude] {
+            if model.enabledProviders.isEmpty {
+                emptyState(title: nil, body: model.strings.allProvidersOff)
+            } else if model.allUsages.isEmpty && model.enabledProviders == [.claude] {
                 emptyState(title: model.strings.noAccountTitle, body: model.strings.noAccountBody)
             } else if visible.isEmpty && !model.allUsages.isEmpty {
                 emptyState(title: nil, body: model.strings.allHidden)

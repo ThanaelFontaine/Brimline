@@ -109,6 +109,15 @@ struct PanelModelTests {
         #expect(!other.showsProviderHint)
     }
 
+    @Test("With every provider off the panel says so, instead of staying blank")
+    func allProvidersOff() {
+        let claude = account(.claude, ".claude", email: "a@claude.ai")
+        let off = model([ok(claude, [])], enabled: [])
+        #expect(off.enabledProviders.isEmpty)
+        #expect(!off.strings.allProvidersOff.isEmpty)
+        #expect(!model([ok(claude, [])], enabled: [.claude]).enabledProviders.isEmpty)
+    }
+
     @Test("\"Learn more\" opens and closes the rest of a sentence, per account")
     func learnMore() {
         let gemini = account(.gemini, ".gemini")
