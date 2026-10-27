@@ -6,10 +6,19 @@ import SQLite3
 /// sent and never returned.
 ///
 /// The database is `state.vscdb`, the SQLite file of the Cursor app. It is opened read-only, without
-/// following a link, and only if its write-ahead log files (`-wal` and `-shm`) already exist: without
-/// them SQLite could create them, which would be a write in Cursor's folder (sqlite.org/wal.html,
-/// "Read-Only Databases"). `immutable=1` is never used (it would ignore a token still in the log:
-/// sqlite.org/uri.html), and the file is never copied.
+/// following a link, and nothing is ever created in Cursor's folder. The journal mode, written in the
+/// file header (bytes 18 and 19: 2 is WAL, 1 is the classic rollback journal), says what that takes:
+///
+/// - WAL: only if its log files (`-wal` and `-shm`) already exist, because without them SQLite could
+///   create them (sqlite.org/wal.html, "Read-Only Databases").
+/// - Classic journal: nothing else is needed, a read-only opening creates no file; but a `-journal`
+///   file next to the database means a write is going on, and nothing is opened until it is gone.
+///
+/// VS Code, which Cursor derives from, does not turn WAL on (`SQLiteStorageDatabase` in
+/// `src/vs/base/parts/storage/node/storage.ts` runs `PRAGMA journal_mode=WAL` only when `useWAL` is
+/// true, and the three calls of `src/vs/platform/storage/electron-main/storageMain.ts` never pass it),
+/// so the classic journal is the likely case; both are handled. `immutable=1` is never used (it would
+/// ignore a token still in a log or a journal: sqlite.org/uri.html), and the file is never copied.
 enum CursorSession {
     /// The one row looked up.
     static let tokenKey = "cursorAuth/accessToken"
@@ -38,12 +47,14 @@ enum CursorSession {
         case notRegularFile
         /// The database belongs to someone else.
         case wrongOwner
-        /// `-wal` or `-shm` is missing (Cursor is closed, or the database is not in WAL mode): nothing
-        /// is opened, so that SQLite creates nothing.
+        /// The database is in WAL mode and `-wal` or `-shm` is missing (Cursor is closed): nothing is
+        /// opened, so that SQLite creates nothing.
         case logFilesMissing
-        /// The database is busy, locked or could not be read: a new attempt can succeed.
+        /// The database is busy, locked, being written (a `-journal` file is there) or could not be
+        /// read: a new attempt can succeed.
         case busy
-        /// Not a database, or no `ItemTable`: Cursor changed how it stores its state.
+        /// Not a database (no SQLite header, or a journal mode that is neither WAL nor the classic
+        /// one), or no `ItemTable`: Cursor changed how it stores its state.
         case notADatabase
     }
 
@@ -55,12 +66,19 @@ enum CursorSession {
         // never followed (`check` refuses a link there).
         let database = resolvedFolder(of: url).appendingPathComponent(url.lastPathComponent)
         try check(database, owner: owner)
-        for suffix in ["-wal", "-shm"] {
-            do {
-                try check(URL(fileURLWithPath: database.path + suffix), owner: owner)
-            } catch .notFound {
-                throw .logFilesMissing
+        switch try journalMode(of: database) {
+        case .wal:
+            for suffix in ["-wal", "-shm"] {
+                do {
+                    try check(URL(fileURLWithPath: database.path + suffix), owner: owner)
+                } catch .notFound {
+                    throw .logFilesMissing
+                }
             }
+        case .rollback:
+            // A journal next to the database is a write in progress (a "hot" journal): a read-only
+            // opening could not roll it back, and reading around it could show half a change.
+            if exists(URL(fileURLWithPath: database.path + "-journal")) { throw .busy }
         }
 
         var handle: OpaquePointer?
@@ -91,6 +109,44 @@ enum CursorSession {
         default:
             throw failure(sqlite3_extended_errcode(handle))
         }
+    }
+
+    /// The two journal modes the state database can be in.
+    enum JournalMode: Equatable, Sendable {
+        case wal
+        case rollback
+    }
+
+    /// The journal mode written in the header of the SQLite file: its first 16 bytes are
+    /// `SQLite format 3` and a zero byte, and bytes 18 and 19 are the file format version numbers for
+    /// writing and for reading (1 is the classic journal, 2 is WAL; sqlite.org/fileformat2.html). Only
+    /// those 20 bytes are read, through a descriptor opened read-only that never follows a link.
+    static func journalMode(of url: URL) throws(Failure) -> JournalMode {
+        let descriptor = open(url.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC)
+        guard descriptor >= 0 else {
+            switch errno {
+            case ENOENT, ENOTDIR: throw .notFound
+            case ELOOP: throw .notRegularFile
+            default: throw .busy
+            }
+        }
+        defer { close(descriptor) }
+        var header = [UInt8](repeating: 0, count: 20)
+        let count = pread(descriptor, &header, header.count, 0)
+        guard count >= 0 else { throw .busy }
+        guard count == header.count, Array(header[0..<16]) == Array("SQLite format 3".utf8) + [0] else { throw .notADatabase }
+        switch (header[18], header[19]) {
+        case (1, 1): return .rollback
+        case (2, 2), (2, 1), (1, 2): return .wal
+        default: throw .notADatabase
+        }
+    }
+
+    /// Whether something (a file, a link, a folder) is at `url`, without following it. A path that
+    /// cannot be examined counts as there.
+    private static func exists(_ url: URL) -> Bool {
+        var info = stat()
+        return lstat(url.path, &info) == 0 || (errno != ENOENT && errno != ENOTDIR)
     }
 
     /// Classifies a value from its first column, copying nothing when it is not a short text.

@@ -7,8 +7,9 @@ import Foundation
 /// a protected, absent or unreadable one is a sentence. The value is never kept and never sent.
 ///
 /// Rules: one file (`~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`), opened
-/// read-only without following a link and only when its `-wal` and `-shm` files already exist; one
-/// prepared query; no Keychain item (never "Cursor Safe Storage"), no program launched, no request.
+/// read-only without following a link, and creating nothing: in WAL mode only when its `-wal` and
+/// `-shm` files already exist, in the classic journal mode only when no `-journal` file is there (a
+/// write is in progress); one prepared query; no Keychain item (never "Cursor Safe Storage"), no program launched, no request.
 /// The provider is off until the user turns it on, like every provider but Claude.
 public struct CursorReader: ProviderReader {
     public init() {}
@@ -52,9 +53,14 @@ public struct CursorReader: ProviderReader {
             }
         } catch {
             switch error {
-            case .notFound, .logFilesMissing:
-                // Cursor is closed or never ran here: no log files, so nothing is opened.
+            case .logFilesMissing:
+                // A WAL database with no log files: Cursor is closed, so nothing is opened and
+                // nothing is known about the sign-in.
                 return .notReadable(reason: .protectedSignIn)
+            case .notFound:
+                // The card came from a database that is gone since: a passing failure, not a verdict
+                // on the sign-in.
+                return .failure(status: .unavailable, detail: "state database not found", retryAfter: nil)
             case .notRegularFile, .wrongOwner:
                 return .failure(status: .unavailable, detail: "state database refused", retryAfter: nil)
             case .busy:

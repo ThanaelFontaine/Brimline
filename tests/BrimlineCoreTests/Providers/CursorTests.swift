@@ -26,18 +26,28 @@ struct CursorTests {
     static let seedRefresh = "SEED-CURSOR-REFRESH-TOKEN-4e8b"
     static let encrypted = "cursor-safe-storage:v1:" + Data("v10-SEED-CIPHERTEXT-0123456789abcdef".utf8).base64EncodedString()
 
-    /// A Cursor state database in a home folder, in WAL mode like the app's, kept open (as the app
-    /// keeps it) so that `-wal` and `-shm` exist. `closeAndRemoveLogs()` gives a closed Cursor.
+    /// A Cursor state database in a home folder, kept open (as the app keeps it). Two modes:
+    ///
+    /// - classic (`wal: false`, the default of SQLite, `journal_mode=delete`): the mode VS Code uses.
+    ///   Its `SQLiteStorageDatabase` (microsoft/vscode, `src/vs/base/parts/storage/node/storage.ts`,
+    ///   lines 345 to 347) runs `PRAGMA journal_mode=WAL` only when its `useWAL` option is true, and
+    ///   the three calls of `src/vs/platform/storage/electron-main/storageMain.ts` (lines 305, 378 and
+    ///   439) never pass it. No `-wal` and no `-shm` ever exist next to such a database. Cursor itself
+    ///   is closed source and not checked: this is the mode of its upstream.
+    /// - WAL (`wal: true`): the other mode Cursor could be in, kept open so that `-wal` and `-shm`
+    ///   exist. `closeAndRemoveLogs()` gives a closed Cursor.
     final class StateDatabase {
         let url: URL
         private var handle: OpaquePointer?
 
-        init(in home: TemporaryHome, rows: [(String, Data?)] = [], table: Bool = true) throws {
+        init(in home: TemporaryHome, rows: [(String, Data?)] = [], table: Bool = true, wal: Bool = true) throws {
             url = home.url.appendingPathComponent(CursorTests.relative)
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             guard sqlite3_open(url.path, &handle) == SQLITE_OK else { throw CocoaError(.fileWriteUnknown) }
-            try exec("PRAGMA journal_mode=WAL")
-            try exec("PRAGMA wal_autocheckpoint=0")
+            if wal {
+                try exec("PRAGMA journal_mode=WAL")
+                try exec("PRAGMA wal_autocheckpoint=0")
+            }
             try exec(table ? "CREATE TABLE IF NOT EXISTS ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)"
                            : "CREATE TABLE Unrelated (key TEXT, value BLOB)")
             for (key, value) in rows { try put(key, value) }
@@ -92,9 +102,9 @@ struct CursorTests {
                 keychainService: nil)
     }
 
-    func reading(_ rows: [(String, Data?)], table: Bool = true) async throws -> ProviderReading {
+    func reading(_ rows: [(String, Data?)], table: Bool = true, wal: Bool = true) async throws -> ProviderReading {
         let home = try TemporaryHome()
-        let database = try StateDatabase(in: home, rows: rows, table: table)
+        let database = try StateDatabase(in: home, rows: rows, table: table, wal: wal)
         defer { database.close() }
         return await CursorReader().read(account: card(home), now: now)
     }
@@ -292,9 +302,127 @@ struct CursorTests {
         expectFailure(await CursorReader().read(account: card(home), now: now), .formatChanged)
     }
 
+    // MARK: The classic journal (VS Code's mode), and the header that tells the two modes apart
+
+    @Test("A database in the classic journal mode (no -wal, no -shm ever) is read: plain token, encrypted, absent")
+    func classicJournal() async throws {
+        guard case .failure(.pending, "reading to come", _) = try await reading([Self.token(Self.seedToken)], wal: false) else {
+            Issue.record("a plain token in a classic database was not seen")
+            return
+        }
+        expectNotReadable(try await reading([Self.token(Self.encrypted)], wal: false))
+        expectNotReadable(try await reading([], wal: false))
+        expectFailure(try await reading([Self.token("not a token at all")], wal: false), .formatChanged)
+        expectFailure(try await reading([], table: false, wal: false), .formatChanged)
+    }
+
+    @Test("In the classic mode, with the app's connection open, nothing is created and nothing changes")
+    func classicJournalCreatesNothing() async throws {
+        let home = try TemporaryHome()
+        let database = try StateDatabase(in: home, rows: [Self.token(Self.seedToken)], wal: false)
+        defer { database.close() }
+        let folder = database.url.deletingLastPathComponent()
+        #expect(try Self.names(in: folder).map { ($0 as NSString).lastPathComponent } == ["state.vscdb"])
+        let before = try Self.listing(of: home.url)
+        let service = UsageService(readers: [CursorReader()])
+        let accounts = Providers.discover(readers: service.readers, home: home.url, settings: on)
+        for _ in 0..<3 { _ = await service.refresh(accounts: accounts, settings: on, previous: nil, now: now, force: true) }
+        #expect(try Self.listing(of: home.url) == before)
+        #expect(try Self.names(in: folder).map { ($0 as NSString).lastPathComponent } == ["state.vscdb"])
+    }
+
+    @Test("In the classic mode, alone on the database, the reader writes nothing and creates no file")
+    func classicJournalReadOnly() throws {
+        let source = try TemporaryHome()
+        let live = try StateDatabase(in: source, rows: [Self.token(Self.seedToken)], wal: false)
+        defer { live.close() }
+        let home = try TemporaryHome()
+        let target = home.url.appendingPathComponent(Self.relative)
+        try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.copyItem(atPath: live.url.path, toPath: target.path)
+        let before = try Self.listing(of: home.url)
+        #expect(try CursorSession.classify(database: target) == .clear)
+        #expect(try Self.listing(of: home.url) == before)
+    }
+
+    @Test("A -journal file next to a classic database means a write in progress: nothing is opened, busy, nothing is created")
+    func hotJournal() async throws {
+        let home = try TemporaryHome()
+        let database = try StateDatabase(in: home, rows: [Self.token(Self.seedToken)], wal: false)
+        defer { database.close() }
+        try home.write(Self.relative + "-journal", "a write is going on")
+        let before = try Self.listing(of: home.url)
+        #expect(throws: CursorSession.Failure.busy) { try CursorSession.classify(database: database.url) }
+        // The answer is a passing failure to try again, never a verdict on the sign-in.
+        guard case .failure(let status, let detail, _) = await CursorReader().read(account: card(home), now: now) else {
+            Issue.record("expected a failure")
+            return
+        }
+        #expect(status == .unavailable)
+        #expect(detail == "state database busy")
+        #expect(try Self.listing(of: home.url) == before)
+        // Even an empty journal, which SQLite alone would ignore, keeps the reader from opening.
+        try FileManager.default.removeItem(atPath: database.url.path + "-journal")
+        try home.write(Self.relative + "-journal", "")
+        #expect(throws: CursorSession.Failure.busy) { try CursorSession.classify(database: database.url) }
+        // Once the journal is gone, the database is read again.
+        try FileManager.default.removeItem(atPath: database.url.path + "-journal")
+        #expect(try CursorSession.classify(database: database.url) == .clear)
+    }
+
+    @Test("The journal mode comes from bytes 18 and 19 of the header: 2 is WAL, 1 is the classic journal")
+    func journalMode() throws {
+        let home = try TemporaryHome()
+        let wal = try StateDatabase(in: home, rows: [Self.token(Self.seedToken)])
+        defer { wal.close() }
+        #expect(try CursorSession.journalMode(of: wal.url) == .wal)
+        let other = try TemporaryHome()
+        let classic = try StateDatabase(in: other, rows: [Self.token(Self.seedToken)], wal: false)
+        defer { classic.close() }
+        #expect(try CursorSession.journalMode(of: classic.url) == .rollback)
+    }
+
+    @Test("A WAL database with no log files stays 'Cursor is closed', even if the header is all that is checked")
+    func walHeaderNeedsLogs() async throws {
+        let home = try TemporaryHome()
+        let database = try StateDatabase(in: home, rows: [Self.token(Self.seedToken)])
+        try database.closeAndRemoveLogs()
+        #expect(try CursorSession.journalMode(of: database.url) == .wal)
+        #expect(throws: CursorSession.Failure.logFilesMissing) { try CursorSession.classify(database: database.url) }
+    }
+
+    @Test("A header that is not SQLite's, too short, or with another version number is a changed format")
+    func badHeaders() async throws {
+        var valid = Data("SQLite format 3".utf8) + Data([0]) + Data([0x10, 0x00, 1, 1]) + Data(repeating: 0, count: 80)
+        func reading(of bytes: Data) async throws -> ProviderReading {
+            let home = try TemporaryHome()
+            try FileManager.default.createDirectory(at: home.url.appendingPathComponent(Self.relative).deletingLastPathComponent(),
+                                                    withIntermediateDirectories: true)
+            try bytes.write(to: home.url.appendingPathComponent(Self.relative))
+            return await CursorReader().read(account: card(home), now: now)
+        }
+        expectFailure(try await reading(of: Data()), .formatChanged)
+        expectFailure(try await reading(of: Data(valid.prefix(19))), .formatChanged)
+        valid[18] = 3; valid[19] = 3
+        expectFailure(try await reading(of: valid), .formatChanged)
+        valid[18] = 0; valid[19] = 0
+        expectFailure(try await reading(of: valid), .formatChanged)
+        valid[0] = UInt8(ascii: "X"); valid[18] = 1; valid[19] = 1
+        expectFailure(try await reading(of: valid), .formatChanged)
+    }
+
+    @Test("A database that is gone since discovery is a passing failure, not a verdict on the sign-in")
+    func gone() async throws {
+        let home = try TemporaryHome()
+        guard case .failure(.unavailable, _, _) = await CursorReader().read(account: card(home), now: now) else {
+            Issue.record("expected unavailable")
+            return
+        }
+    }
+
     // MARK: Nothing is created, nothing is written
 
-    @Test("Without -wal and -shm (Cursor is closed) nothing is opened and nothing is created")
+    @Test("A WAL database without -wal and -shm (Cursor is closed) is not opened and nothing is created")
     func logFilesMissing() async throws {
         let home = try TemporaryHome()
         let database = try StateDatabase(in: home, rows: [Self.token(Self.seedToken)])

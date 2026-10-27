@@ -66,7 +66,7 @@ Brimline reads only `auth.json` in that folder, and of it the sign-in mode, the 
 
 ## Cursor
 
-Cursor has no account to link, and Brimline does not read its limits yet. Turn Cursor on in **Settings, Accounts** (or `brimline providers enable cursor`) while Cursor is running, and Brimline looks at the one file where Cursor keeps its state to see whether its sign-in is readable. If Cursor protects it (or Cursor is closed), the card says so and points to cursor.com, Dashboard, Usage; if it is readable, the card says "Not read yet" until the next version reads the limits. Brimline never reads Cursor's Keychain item and opens that file read-only, only while Cursor is running. Details in [providers](providers.md).
+Cursor has no account to link, and Brimline does not read its limits yet. Turn Cursor on in **Settings, Accounts** (or `brimline providers enable cursor`) and Brimline looks at the one file where Cursor keeps its state to see whether its sign-in is readable. If Cursor protects it (or keeps it in WAL mode and is closed), the card says so and points to cursor.com, Dashboard, Usage; if it is readable, the card says "Not read yet" until the next version reads the limits. Brimline never reads Cursor's Keychain item and opens that file read-only, creating nothing in Cursor's folder (if Cursor keeps that file in WAL mode, only while Cursor is running). Details in [providers](providers.md).
 
 ## Gemini
 
