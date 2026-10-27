@@ -15,6 +15,8 @@ THEMES = ("light", "dark")
 TEXT_ROLES = ("text", "text2", "accent", "gaugeOk", "gaugeWarn", "gaugeCrit")
 GROUNDS = ("bg", "surface")
 HEX = re.compile(r"#[0-9A-Fa-f]{6}\b")
+PROVIDERS = ("providerClaude", "providerChatgpt", "providerGemini", "providerGrok", "providerCursor")
+PLANCHES = ("planche.html", "planche-fournisseurs.html")
 
 
 def luminance(hex_color):
@@ -64,22 +66,43 @@ class TokensTest(unittest.TestCase):
                     ratio = contrast(token["value"], value(theme, ground))
                     self.assertAlmostEqual(ratio, declared, delta=0.011, msg=f"{theme}.{role} on {ground}")
 
+    def test_provider_dots_at_least_4_5_on_bg_and_surface(self):
+        for theme in THEMES:
+            for role in PROVIDERS:
+                for ground in GROUNDS:
+                    ratio = contrast(value(theme, role), value(theme, ground))
+                    self.assertGreaterEqual(ratio, 4.5, f"{theme}: {role} on {ground} = {ratio:.2f}")
+
+    def test_provider_dots_are_not_gauge_colors(self):
+        # a dot must never read as a gauge state: no provider shares a gauge or accent color
+        for theme in THEMES:
+            dots = [value(theme, r) for r in PROVIDERS]
+            self.assertEqual(len(set(dots)), len(dots), theme)
+            gauges = {value(theme, r) for r in ("accent", "gaugeOk", "gaugeWarn", "gaugeCrit", "gaugeMuted")}
+            self.assertFalse(set(dots) & gauges, theme)
+
     def test_thresholds_are_ordered(self):
         self.assertLess(TOKENS["threshold"]["warn"], TOKENS["threshold"]["crit"])
         self.assertLessEqual(TOKENS["threshold"]["crit"], 1)
 
     def test_planche_and_css_use_only_token_colors(self):
         allowed = {v["value"].upper() for t in THEMES for v in TOKENS["color"][t].values()}
-        for name in ("planche.html", "tokens.css"):
+        for name in PLANCHES + ("tokens.css",):
             used = {h.upper() for h in HEX.findall((DESIGN / name).read_text(encoding="utf-8"))}
             # grays of the simulated menu bar in the planche are not tokens (macOS draws them)
             extra = used - allowed - {"#DADDE0", "#2F3338"}
             self.assertFalse(extra, f"{name}: colors outside tokens.json: {sorted(extra)}")
 
     def test_planche_is_self_contained(self):
+        for name in PLANCHES:
+            text = (DESIGN / name).read_text(encoding="utf-8")
+            self.assertNotRegex(text, r"(?i)(src|href)=[\"']https?:", name)
+            self.assertNotRegex(text, r"(?i)@import|url\(\s*[\"']?https?:", name)
+            self.assertNotRegex(text, "[\u2013\u2014]", f"{name}: no en or em dash")
+        # the providers' planche draws everything itself: no image at all, so no third-party logo
+        providers = (DESIGN / "planche-fournisseurs.html").read_text(encoding="utf-8")
+        self.assertNotRegex(providers, r"(?i)<img|<image|\.(svg|png|jpe?g|webp)[\"')]")
         text = (DESIGN / "planche.html").read_text(encoding="utf-8")
-        self.assertNotRegex(text, r"(?i)(src|href)=[\"']https?:")
-        self.assertNotRegex(text, r"(?i)@import|url\(\s*[\"']?https?:")
         for level in ("0 %", "50 %", "80 %", "100 %"):
             self.assertIn(level, text)
 

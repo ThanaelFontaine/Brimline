@@ -106,6 +106,29 @@ Dans l'app, `SightglassTheme.swift` fournit ces couleurs en `Color` dynamiques (
 
 **Accessibilité.** Chaque jauge est un seul élément VoiceOver : libellé = nom de la limite, valeur = « 72 % » (plus « expiré » ou « indisponible »). Composant prêt à l'emploi : `SGGauge` dans `SightglassTheme.swift` (chaînes à passer par les ressources localisées de l'app). Sur le site : `role="meter"` avec `aria-valuenow`, classe `.sg-gauge` de `tokens.css`.
 
+## Plusieurs fournisseurs
+
+Planche : `planche-fournisseurs.html` (QUOTA-35, lot D), captures dans `captures-fournisseurs/`. En attente de la validation de Thanaël, variante A (regroupé par fournisseur) recommandée.
+
+- **Le fournisseur s'écrit** : son nom en texte, toujours, avec une pastille ronde de 8 pt. Aucun logo de tiers.
+- **Pastilles** : couleurs propres à l'app, pas celles des marques, et aucune ne reprend l'accent ou une couleur de jauge.
+
+| Jeton | Clair | Sombre |
+|---|---|---|
+| `providerClaude` (violet) | `#7445D6` | `#B48CFF` |
+| `providerChatgpt` (bleu) | `#1C68C9` | `#62AEF5` |
+| `providerGemini` (magenta) | `#B03A86` | `#F08BCB` |
+| `providerGrok` (olive) | `#5E7A12` | `#B3CC5C` |
+| `providerCursor` (encre) | `#15191D` | `#ECEFF2` |
+
+Toutes passent 4,5:1 sur le fond et la surface.
+
+- **Sous-limite** (un modèle, un pool Auto ou API) : ligne compacte, texte de 11 pt, jauge de 4 pt, remise à zéro écrite seulement si elle diffère de la ligne au-dessus.
+- **Remise à zéro au-delà de 6 jours** : avec la date (« repart dans 12 j (dim. 8 nov.) »).
+- **Sans limite lisible** (`not_readable`) : jamais de jauge. La première phrase tient en deux lignes, la suite se déplie par « En savoir plus ».
+- **Format changé** (`format_changed`) : derniers chiffres en gris avec leur âge, et la phrase.
+- **Ne pas lire** : derniers chiffres en gris, « Lecture coupée dans les Réglages ».
+
 ## Espacements et mesures
 
 Grille de 4 : 2, 4, 8, 12, 16, 24, 32, 48, 64.

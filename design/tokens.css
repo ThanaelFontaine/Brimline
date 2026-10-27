@@ -16,6 +16,12 @@
   --sg-gauge-warn: #9A5800;    /* attention, 70 à moins de 90 % */
   --sg-gauge-crit: #C0302B;    /* critique, 90 % et plus */
   --sg-gauge-muted: rgb(86 96 106 / 0.55); /* expiré */
+  /* Pastilles des fournisseurs (QUOTA-35) : à côté du nom écrit, jamais seules */
+  --sg-provider-claude: #7445D6;
+  --sg-provider-chatgpt: #1C68C9;
+  --sg-provider-gemini: #B03A86;
+  --sg-provider-grok: #5E7A12;
+  --sg-provider-cursor: #15191D;
 
   /* Typographie */
   --sg-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -66,6 +72,11 @@
     --sg-gauge-warn: #EFA63A;
     --sg-gauge-crit: #FF6F64;
     --sg-gauge-muted: rgb(155 165 175 / 0.55);
+    --sg-provider-claude: #B48CFF;
+    --sg-provider-chatgpt: #62AEF5;
+    --sg-provider-gemini: #F08BCB;
+    --sg-provider-grok: #B3CC5C;
+    --sg-provider-cursor: #ECEFF2;
   }
 }
 
