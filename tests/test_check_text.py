@@ -9,6 +9,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_text  # noqa: E402
 
 
+def run_in_repo(files):
+    """Runs the checker in a throwaway git repository holding the given {name: text} files."""
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        (root / "scripts").mkdir()
+        (root / "scripts" / "check_text.py").write_text(Path(check_text.__file__).read_text(encoding="utf-8"), encoding="utf-8")
+        for name, text in files.items():
+            (root / name).parent.mkdir(parents=True, exist_ok=True)
+            (root / name).write_text(text, encoding="utf-8")
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+        subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+        return subprocess.run([sys.executable, "scripts/check_text.py"], cwd=root, capture_output=True, text=True,
+                              env={**os.environ, "HOME": d})
+
+
 class CheckTextTest(unittest.TestCase):
     def test_finds_em_and_en_dashes(self):
         text = "ok\nbad " + chr(0x2014) + "\nfine\nbad " + chr(0x2013)
@@ -28,6 +43,22 @@ class CheckTextTest(unittest.TestCase):
 
     def test_checker_may_quote_its_patterns(self):
         self.assertEqual(check_text.find_personal_data("scripts/check_text.py", "/Users/x", check_text.GENERIC_PATTERNS), [])
+
+    def test_finds_the_old_name_in_any_case(self):
+        text = "ok\nthe Sightglass app\nfine\nSIGHTGLASS_LANG and sightglass"
+        self.assertEqual(check_text.find_old_name("README.md", text), [2, 4])
+
+    def test_a_formerly_line_may_name_the_old_product(self):
+        text = "*Formerly Sightglass. Renamed.*\n*Anciennement Sightglass.*\nSightglass alone"
+        self.assertEqual(check_text.find_old_name("README.md", text), [3])
+
+    def test_history_and_migration_files_may_name_the_old_product(self):
+        for name in ("CHANGELOG.md", "scripts/install.sh", "Sources/BrimlineCore/LegacyMigration.swift"):
+            self.assertEqual(check_text.find_old_name(name, "Sightglass"), [], name)
+        self.assertEqual(check_text.find_old_name("docs/install.md", "Sightglass"), [1])
+
+    def test_new_name_is_fine(self):
+        self.assertEqual(check_text.find_old_name("README.md", "Brimline, sight glass"), [])
 
     def test_local_patterns_merge_files_and_skip_comments(self):
         with tempfile.TemporaryDirectory() as d:
@@ -60,3 +91,17 @@ class CheckTextTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_old_name_is_refused_in_a_text_and_in_a_file_name(self):
+        out = run_in_repo({
+            "README.md": "# Brimline\n*Formerly Sightglass.*\n",
+            "docs/why.md": "Why Sightglass\n",
+            "docs/sightglass.md": "fine\n",
+            "CHANGELOG.md": "Sightglass is now Brimline.\n",
+        })
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("docs/why.md: line 1: old product name", out.stdout)
+        self.assertIn("docs/sightglass.md: old product name in the file name", out.stdout)
+        self.assertNotIn("README.md", out.stdout)
+        self.assertNotIn("CHANGELOG.md", out.stdout)
+        self.assertIn("2 problem(s)", out.stdout)
