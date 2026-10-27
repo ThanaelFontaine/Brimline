@@ -26,7 +26,7 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 
 - **Read only.** Tokens are read, never refreshed, rewritten, moved or copied to another store. Refreshing a token can rotate it, which may sign the official tool out: Brimline never does it.
 - **Tokens stay in memory**, only for the request that needs them. They are never written to a log, a cache file, the JSON output or the MCP answers.
-- **Only the providers' own hosts** are contacted, over HTTPS, and only with the account's own token. Each reader has a closed list of URLs, compared whole (host, path and query); anything else is refused before the request leaves, redirections are refused, and no cookie is sent or kept.
+- **Only the providers' own hosts** are contacted, over HTTPS, and only with the account's own token. Each reader has a closed list of URLs, compared whole (host, path and query); anything else is refused before the request leaves, redirections are refused, and no cookie is kept. None is sent either, except the session cookie of cursor.com that the Cursor reader needs (see the Cursor section below).
 - **A provider is read only if you turned it on.** Claude is on, as it always was; every other provider starts off (see below).
 - **The local MCP server and command expose usage numbers only**, never a token or a cookie.
 
