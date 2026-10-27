@@ -64,6 +64,10 @@ Brimline reads the limits of ChatGPT through Codex, the official tool: there is 
 
 Brimline reads only `auth.json` in that folder, and of it the sign-in mode, the access token and the account id. It never renews the sign-in: if Codex has been closed for a long time the card says "Open Codex to refresh the sign-in." An account signed in with an API key has no subscription limit to show. Details in [providers](providers.md).
 
+## Cursor
+
+Cursor has no account to link, and Brimline does not read its limits yet. Turn Cursor on in **Settings, Accounts** (or `brimline providers enable cursor`) and Brimline looks at the one file where Cursor keeps its state to see whether its sign-in is readable. If Cursor protects it (or keeps it in WAL mode and is closed), the card says so and points to cursor.com, Dashboard, Usage; if it is readable, the card says "Not read yet" until the next version reads the limits. Brimline never reads Cursor's Keychain item and opens that file read-only, creating nothing in Cursor's folder (if Cursor keeps that file in WAL mode, only while Cursor is running). Details in [providers](providers.md).
+
 ## Gemini, through Antigravity
 
 Gemini is read through Google's own tool, Antigravity CLI (`agy`), which you install and sign in to yourself: Brimline never signs you in. Turn Gemini on in **Settings, Accounts** (or `brimline providers enable gemini`). When `agy` is at `~/.local/bin/agy`, Brimline launches `agy --print /usage` (Google's official command for your limits; Google's program may renew its own sign-in) and shows the usage of each model. Without it, one card tells you where your limits are (the Gemini app, Settings, Usage limits). **Gemini is not read and checked yet:** until a real Antigravity has been tried, Brimline does not launch it. Details in [providers](providers.md) and [SECURITY.md](../SECURITY.md).

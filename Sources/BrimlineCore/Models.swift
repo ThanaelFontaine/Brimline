@@ -51,7 +51,8 @@ public struct Account: Codable, Sendable, Hashable, Identifiable {
     }
 
     /// The name shown when no address is known.
-    public var folderName: String { (source as NSString).lastPathComponent }
+    /// The folder, or "Cursor" for Cursor, whose connection is a database file in a folder of the app.
+    public var folderName: String { provider == .cursor ? provider.displayName : (source as NSString).lastPathComponent }
 }
 
 /// The kind of a limit, normalized across providers.

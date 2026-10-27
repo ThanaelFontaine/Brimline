@@ -64,6 +64,10 @@ Brimline lit les limites de ChatGPT par Codex, l'outil officiel : il n'y a rien 
 
 Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de connexion, le jeton d'accès et l'identifiant du compte. Il ne renouvelle jamais la connexion : si Codex est resté fermé longtemps, la carte dit « Ouvrez Codex pour rafraîchir la connexion. » Un compte connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Détails dans [providers](providers.md) (en anglais).
 
+## Cursor
+
+Cursor n'a pas de compte à relier, et Brimline ne lit pas encore ses limites. Allumez Cursor dans **Réglages, Comptes** (ou `brimline providers enable cursor`) et Brimline regarde le seul fichier où Cursor range son état, pour voir si sa connexion est lisible. Si Cursor la protège (ou la garde en mode WAL et est fermé), la carte le dit et renvoie à cursor.com, Dashboard, Usage ; si elle est lisible, la carte dit « Pas encore lu » jusqu'à la prochaine version, qui lira les limites. Brimline ne lit jamais l'élément du Trousseau de Cursor et ouvre ce fichier en lecture seule, sans rien créer dans le dossier de Cursor (si Cursor garde ce fichier en mode WAL, seulement pendant que Cursor tourne). Détails dans [providers](providers.md) (en anglais).
+
 ## Gemini, par Antigravity
 
 Gemini se lit par l'outil de Google, Antigravity CLI (`agy`), que vous installez et dans lequel vous vous connectez vous-même : Brimline ne vous connecte jamais. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`). Quand `agy` est dans `~/.local/bin/agy`, Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; l'outil de Google peut renouveler lui-même sa connexion) et montre l'usage de chaque modèle. Sans lui, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). **Gemini n'est pas encore lu et vérifié :** tant qu'un vrai Antigravity n'a pas été essayé, Brimline ne le lance pas. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).

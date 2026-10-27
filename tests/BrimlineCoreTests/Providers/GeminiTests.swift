@@ -16,7 +16,7 @@ struct GeminiTests {
 
     @Test("Gemini is in the registry, after Claude, and calls nothing")
     func registry() {
-        #expect(Providers.all.map(\.provider) == [.claude, .chatgpt, .gemini, .grok])
+        #expect(Providers.all.map(\.provider) == [.claude, .chatgpt, .gemini, .grok, .cursor])
         #expect(GeminiReader().allowedURLs.isEmpty)
         #expect(Providers.isSupported(.gemini))
     }

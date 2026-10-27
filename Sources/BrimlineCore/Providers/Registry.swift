@@ -1,7 +1,7 @@
 import Foundation
 
-/// The providers Brimline has a reader for: Claude, ChatGPT (through Codex), Gemini (a sentence only, nothing is read)
-/// and Grok (through the Grok CLI).
+/// The providers Brimline has a reader for: Claude, ChatGPT (through Codex), Gemini (through the Antigravity CLI),
+/// Grok (through the Grok CLI) and Cursor (its sign-in database is looked at, no limit is read yet).
 ///
 /// Having a reader here does not mean it runs: every provider is off until the user turns it on
 /// (`BrimlineSettings.enabledProviders`, Claude on by default), and `discover` and the service
@@ -13,7 +13,7 @@ public enum Providers {
     /// The readers, with the Keychain and the network replaced (tests).
     public static func make(credentials: any CredentialReading = SecurityToolCredentialReader(),
                             http: any HTTPClient = URLSessionHTTPClient()) -> [any ProviderReader] {
-        [ClaudeReader(credentials: credentials, http: http), ChatGPTReader(http: http), GeminiReader(), GrokReader(http: http)]
+        [ClaudeReader(credentials: credentials, http: http), ChatGPTReader(http: http), GeminiReader(), GrokReader(http: http), CursorReader()]
     }
 
     /// Whether Brimline has a reader for this provider.
