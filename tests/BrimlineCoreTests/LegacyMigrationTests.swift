@@ -178,4 +178,31 @@ struct LegacyMigrationTests {
         #expect(try mode(legacy) == modeBefore)
         #expect(!exists("\(current)/other.txt"))
     }
+
+    @Test("A file that appears between the check and the write is never replaced (RENAME_EXCL)")
+    func raceAfterTheCheck() throws {
+        try legacyFolder()
+        let mine = #"{"schemaVersion":1,"refreshMinutes":15}"#
+        let outcome = LegacyMigration.run(paths: paths) { data, url in
+            // Another launch (the app or the command) wins the race right before this write.
+            if url.lastPathComponent == "settings.json" { try self.home.write("\(self.current)/settings.json", mine) }
+            try JSONCoding.write(data, to: url, replacing: false)
+        }
+        #expect(outcome.copied == ["usage.json"])
+        #expect(outcome.done)
+        #expect(try String(contentsOf: paths.settingsFile, encoding: .utf8) == mine)
+        let names = try FileManager.default.contentsOfDirectory(atPath: paths.supportDirectory.path).sorted()
+        #expect(names == [LegacyMigration.markerName, "settings.json", "usage.json"])
+    }
+
+    @Test("JSONCoding.write with replacing: false throws EEXIST, keeps the file and leaves no temporary file")
+    func exclusiveWrite() throws {
+        let file = home.url.appendingPathComponent("\(current)/settings.json")
+        try home.write("\(current)/settings.json", "first")
+        #expect(throws: POSIXError.self) { try JSONCoding.write(Data("second".utf8), to: file, replacing: false) }
+        #expect(try String(contentsOf: file, encoding: .utf8) == "first")
+        #expect(try FileManager.default.contentsOfDirectory(atPath: file.deletingLastPathComponent().path) == ["settings.json"])
+        try JSONCoding.write(Data("third".utf8), to: file)
+        #expect(try String(contentsOf: file, encoding: .utf8) == "third")
+    }
 }
