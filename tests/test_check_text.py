@@ -88,10 +88,6 @@ class CheckTextTest(unittest.TestCase):
         self.assertIn("été.md: line 1", out.stdout)
         self.assertIn("4 tracked files, 3 problem(s)", out.stdout)
 
-
-if __name__ == "__main__":
-    unittest.main()
-
     def test_old_name_is_refused_in_a_text_and_in_a_file_name(self):
         out = run_in_repo({
             "README.md": "# Brimline\n*Formerly Sightglass.*\n",
@@ -105,3 +101,7 @@ if __name__ == "__main__":
         self.assertNotIn("README.md", out.stdout)
         self.assertNotIn("CHANGELOG.md", out.stdout)
         self.assertIn("2 problem(s)", out.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()
