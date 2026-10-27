@@ -66,7 +66,7 @@ Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de 
 
 ## Cursor
 
-Cursor n'a pas de compte à relier, et Brimline ne lit pas encore ses limites. Allumez Cursor dans **Réglages, Comptes** (ou `brimline providers enable cursor`) pendant que Cursor tourne : Brimline regarde le seul fichier où Cursor range son état, pour voir si sa connexion est lisible. Si Cursor la protège (ou s'il est fermé), la carte le dit et renvoie à cursor.com, Dashboard, Usage ; si elle est lisible, la carte dit « Pas encore lu » jusqu'à la prochaine version, qui lira les limites. Brimline ne lit jamais l'élément du Trousseau de Cursor et ouvre ce fichier en lecture seule, seulement pendant que Cursor tourne. Détails dans [providers](providers.md) (en anglais).
+Cursor n'a pas de compte à relier, et Brimline ne lit pas encore ses limites. Allumez Cursor dans **Réglages, Comptes** (ou `brimline providers enable cursor`) et Brimline regarde le seul fichier où Cursor range son état, pour voir si sa connexion est lisible. Si Cursor la protège (ou la garde en mode WAL et est fermé), la carte le dit et renvoie à cursor.com, Dashboard, Usage ; si elle est lisible, la carte dit « Pas encore lu » jusqu'à la prochaine version, qui lira les limites. Brimline ne lit jamais l'élément du Trousseau de Cursor et ouvre ce fichier en lecture seule, sans rien créer dans le dossier de Cursor (si Cursor garde ce fichier en mode WAL, seulement pendant que Cursor tourne). Détails dans [providers](providers.md) (en anglais).
 
 ## Gemini
 
