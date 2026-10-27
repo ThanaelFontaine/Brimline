@@ -513,6 +513,18 @@ public struct Strings: Sendable {
         }
         return parts.joined(separator: " ")
     }
+    /// The tooltip of the menu bar element: "Average 45% across 5 accounts · Agency at 94%" (the alerts after a middle dot).
+    public func menuBarTooltip(_ gauge: GaugeModel, names: (String) -> String) -> String {
+        let count = gauge.segments.count
+        guard count > 0 else { return "Brimline" }
+        var parts = [t("Average \(percentText(gauge.total * 100)) across \(count == 1 ? "1 account" : "\(count) accounts")",
+                       "Moyenne \(percentText(gauge.total * 100)) sur \(count == 1 ? "1 compte" : "\(count) comptes")")]
+        for segment in gauge.alerts {
+            parts.append(t("\(names(segment.accountID)) at \(percentText(segment.percent))",
+                           "\(names(segment.accountID)) à \(percentText(segment.percent))"))
+        }
+        return parts.joined(separator: " · ")
+    }
     public func reason(_ detail: String?) -> String? {
         guard let detail else { return nil }
         switch detail {

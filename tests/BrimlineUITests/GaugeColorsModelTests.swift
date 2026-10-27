@@ -47,4 +47,29 @@ struct GaugeColorsModelTests {
         let relaunched = AppModel(home: home)
         #expect(relaunched.settings.accountColors == model.settings.accountColors)
     }
+
+    @Test("The model gives the gauge of the menu bar and the name of each account for its sentences")
+    func menuBarGaugeOfTheModel() {
+        let a = Account(provider: .claude, source: "/tmp/gauge/a", email: "a@example.com", organization: nil, seatTier: nil, keychainService: nil)
+        let b = Account(provider: .claude, source: "/tmp/gauge/b", email: "b@example.com", organization: nil, seatTier: nil, keychainService: nil)
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        func usage(_ account: Account, _ percent: Double) -> AccountUsage {
+            AccountUsage(account: account, status: .ok, limits: [UsageLimit(kind: .session, percent: percent, resetsAt: now.addingTimeInterval(3600))],
+                         fetchedAt: now, checkedAt: now)
+        }
+        var settings = BrimlineSettings()
+        settings.labels = [b.id: "Agency"]
+        let model = AppModel(preview: UsageSnapshot(generatedAt: now, accounts: [usage(a, 20), usage(b, 94)]), settings: settings,
+                             now: now, language: .en, timeZone: TimeZone(identifier: "Europe/Paris")!, home: URL(fileURLWithPath: "/tmp/gauge"),
+                             launchAtLogin: false)
+        let gauge = model.menuBarGauge
+        #expect(gauge.segments.map(\.accountID) == [a.id, b.id])
+        #expect(gauge.alerts.map(\.accountID) == [b.id])
+        #expect(abs(gauge.total - 0.57) < 1e-9)
+        #expect(model.gaugeName(forAccountID: b.id) == model.title(for: b))
+        #expect(model.strings.menuBarAccessibility(gauge) { model.gaugeName(forAccountID: $0) }.hasPrefix("Alert: "))
+        // Hiding an account takes its part out of the gauge.
+        model.setHidden(true, accountID: a.id)
+        #expect(model.menuBarGauge.segments.map(\.accountID) == [b.id])
+    }
 }

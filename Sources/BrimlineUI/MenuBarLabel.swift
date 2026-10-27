@@ -2,26 +2,33 @@ import AppKit
 import BrimlineCore
 import SwiftUI
 
-/// What the menu bar shows: the level glyph, and the percentage when the setting asks for it.
+/// What the menu bar shows: the gauge element (one colored part per account), and the percentage of the most loaded
+/// account when the setting asks for it. VoiceOver reads it as one element.
 public struct MenuBarLabel: View {
     var model: AppModel
+    /// Read so that the image is drawn again when the appearance changes.
+    @Environment(\.colorScheme) private var colorScheme
 
     public init(model: AppModel) {
         self.model = model
     }
 
     public var body: some View {
-        let level = model.menuBarLevel
-        let image = MenuBarGaugeImage.proof()
-        HStack(spacing: 3) {
+        let gauge = model.menuBarGauge
+        let names: (String) -> String = { model.gaugeName(forAccountID: $0) }
+        let sentence = model.strings.menuBarAccessibility(gauge, names: names)
+        let image = MenuBarGaugeImage.image(gauge, colors: model.settings.accountColors, accessibilityDescription: sentence)
+        HStack(spacing: 4) {
             Image(nsImage: image)
-            if model.settings.showPercentInMenuBar, let percent = level.percent {
+                .id(colorScheme)
+            if model.settings.showPercentInMenuBar, let percent = gauge.mostLoaded?.percent {
                 Text(model.strings.percentText(percent))
                     .monospacedDigit()
             }
         }
+        .help(model.strings.menuBarTooltip(gauge, names: names))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(model.strings.menuBarAccessibility(level.percent, provider: level.provider, account: level.account))
+        .accessibilityLabel(sentence)
     }
 }
 

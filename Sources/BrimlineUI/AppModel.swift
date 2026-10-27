@@ -165,6 +165,16 @@ public final class AppModel {
         return (top.percent, top.dimmed, top.usage.account.provider, title(for: top.usage.account))
     }
 
+    /// What the menu bar element shows: one part per counted account (see `MenuBarGauge`).
+    public var menuBarGauge: GaugeModel {
+        MenuBarGauge.model(allUsages, settings: settings, providers: enabledProviders, now: now)
+    }
+
+    /// The name of an account in the gauge's sentences (VoiceOver, tooltip): its title, else its id.
+    public func gaugeName(forAccountID id: String) -> String {
+        allUsages.first { $0.account.id == id }.map { title(for: $0.account) } ?? id
+    }
+
     /// The providers that are on.
     public var enabledProviders: Set<Provider> { Set(Provider.allCases.filter(settings.isEnabled)) }
 

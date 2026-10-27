@@ -295,6 +295,119 @@ func statePanel(named name: String, language: Language, unread: [String] = [], e
                       expand: expand ? [usage.account.id] : [])
 }
 
+// MARK: Menu bar element (QUOTA-70, lot L4)
+
+/// One row of the menu bar sheet: a caption, and the gauge for fictitious accounts.
+struct BarCase {
+    var caption: String
+    var usages: [AccountUsage]
+    var colors: [String: AccountColor]
+}
+
+/// A Claude account (one per folder) that has read a given percentage of its tightest limit.
+func claudeUsage(_ index: Int, _ percent: Double, status: AccountStatus = .ok) -> AccountUsage {
+    let acct = account("account\(index)@claude.ai", ".claude-\(index)", org: nil, seat: "max")
+    return AccountUsage(account: acct, status: status,
+                        limits: [UsageLimit(kind: .session, percent: percent, resetsAt: minutes(100))],
+                        fetchedAt: minutes(status == .ok ? -2 : -200), checkedAt: minutes(-2))
+}
+
+func barCases() -> [BarCase] {
+    func colored(_ usages: [AccountUsage]) -> [String: AccountColor] {
+        Dictionary(uniqueKeysWithValues: usages.enumerated().map { ($1.account.id, AccountColor.palette($0)) })
+    }
+    let one = [claudeUsage(0, 34)]
+    // The example of the request: Gemini pink, Claude mauve, ChatGPT blue, and two more accounts.
+    let three = [
+        AccountUsage(account: provider(.claude, ".claude"), status: .ok, limits: [UsageLimit(kind: .weekly, percent: 58, resetsAt: minutes(300))], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+        AccountUsage(account: provider(.chatgpt, ".codex"), status: .ok, limits: [UsageLimit(kind: .weekly, percent: 22, resetsAt: minutes(300))], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+        AccountUsage(account: provider(.gemini, ".gemini"), status: .ok, limits: [UsageLimit(kind: .weekly, percent: 33, resetsAt: minutes(300))], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+    ]
+    let threeColors: [String: AccountColor] = Dictionary(uniqueKeysWithValues: three.map {
+        ($0.account.id, AccountColor.palette(AccountPalette.providerSlot[$0.account.provider]!))
+    })
+    let ten = (0..<10).map { claudeUsage($0, [58, 22, 9, 41, 3, 67, 0.4, 15, 80, 28][$0]) }
+    let alert = [claudeUsage(0, 58), claudeUsage(1, 22), claudeUsage(2, 94), claudeUsage(3, 9), claudeUsage(4, 41)]
+    let stale = [claudeUsage(0, 58), claudeUsage(1, 62, status: .expired), claudeUsage(2, 30)]
+    return [
+        BarCase(caption: "1 account", usages: one, colors: colored(one)),
+        BarCase(caption: "3 accounts", usages: three, colors: threeColors),
+        BarCase(caption: "10 accounts", usages: ten, colors: colored(ten)),
+        BarCase(caption: "Alert (one account at 94 %)", usages: alert, colors: colored(alert)),
+        BarCase(caption: "Last known value (dimmed)", usages: stale, colors: colored(stale)),
+        BarCase(caption: "No counted account", usages: [], colors: [:]),
+    ]
+}
+
+/// The menu bar element on a simulated bar, light and dark, drawn at 2x and at 1x with real pixels
+/// and enlarged without smoothing (6 px per point) to be read. One sheet per appearance.
+@MainActor
+func renderMenuBarSheet(dark: Bool, name: String) throws {
+    let enlarge = 6, bar = 24, margin = 10
+    let cases = barCases()
+    let barWidth = 74 + 2 * margin
+    let captionWidth = 200
+    let rowHeight = bar * enlarge + 2 * margin
+    let width = captionWidth + 2 * (barWidth * enlarge) + 3 * margin * 2
+    let height = rowHeight * cases.count + 56
+    let barColor: UInt32 = dark ? 0x2B2D31 : 0xE6E7EA
+    let labelRGB: UInt32 = dark ? 0xF2F2F4 : 0x1D1D1F
+    let page: UInt32 = dark ? 0x1C1C1E : 0xFFFFFF
+    func cg(_ rgb: UInt32) -> CGColor {
+        CGColor(srgbRed: CGFloat((rgb >> 16) & 0xFF) / 255, green: CGFloat((rgb >> 8) & 0xFF) / 255,
+                blue: CGFloat(rgb & 0xFF) / 255, alpha: 1)
+    }
+    let space = CGColorSpace(name: CGColorSpace.sRGB)!
+    guard let sheet = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+                                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { throw CocoaError(.fileWriteUnknown) }
+    sheet.setFillColor(cg(page))
+    sheet.fill(CGRect(x: 0, y: 0, width: width, height: height))
+
+    func text(_ string: String, x: Int, yTop: Int, size: CGFloat, weight: NSFont.Weight = .regular) {
+        let attributes: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: size, weight: weight),
+                                                         .foregroundColor: NSColor(cgColor: cg(labelRGB))!]
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(cgContext: sheet, flipped: false)
+        NSAttributedString(string: string, attributes: attributes).draw(at: NSPoint(x: x, y: height - yTop - Int(size * 1.3)))
+        NSGraphicsContext.restoreGraphicsState()
+    }
+    text("Menu bar element, \(dark ? "dark" : "light") bar: 2x (left) and 1x (right), pixels enlarged \(enlarge)x",
+         x: margin, yTop: 14, size: 15, weight: .semibold)
+
+    for (row, item) in barCases().enumerated() {
+        let top = 56 + row * rowHeight
+        text(item.caption, x: margin, yTop: top + rowHeight / 2 - 8, size: 15)
+        let gauge = MenuBarGauge.model(item.usages, settings: settings, providers: Set(Provider.allCases), now: now)
+        for (column, scale) in [2, 1].enumerated() {
+            let itemWidth = Int(MenuBarGaugeImage.width(accounts: gauge.segments.count))
+            let pxW = barWidth * scale, pxH = bar * scale
+            guard let small = CGContext(data: nil, width: pxW, height: pxH, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+                                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { throw CocoaError(.fileWriteUnknown) }
+            small.setFillColor(cg(barColor))
+            small.fill(CGRect(x: 0, y: 0, width: pxW, height: pxH))
+            small.translateBy(x: CGFloat(((barWidth - itemWidth) / 2) * scale), y: CGFloat(3 * scale))   // centered in the 24 pt bar
+            small.scaleBy(x: CGFloat(scale), y: CGFloat(scale))
+            if gauge.segments.isEmpty {
+                BrimlineGlyph.draw(level: nil, in: small, scale: CGFloat(scale), color: cg(labelRGB))
+            } else {
+                MenuBarGaugeImage.draw(gauge, colors: item.colors, in: small,
+                                       size: CGSize(width: itemWidth, height: 18), scale: CGFloat(scale), dark: dark, label: cg(labelRGB))
+            }
+            guard let image = small.makeImage() else { throw CocoaError(.fileWriteUnknown) }
+            let x = captionWidth + margin * 2 + column * (barWidth * enlarge + margin * 2)
+            sheet.saveGState()
+            sheet.interpolationQuality = .none
+            sheet.draw(image, in: CGRect(x: x, y: height - top - bar * enlarge - margin, width: barWidth * enlarge, height: bar * enlarge))
+            sheet.restoreGState()
+        }
+    }
+    guard let cgImage = sheet.makeImage(),
+          let png = NSBitmapImageRep(cgImage: cgImage).representation(using: .png, properties: [:]) else { throw CocoaError(.fileWriteUnknown) }
+    let url = output.appendingPathComponent(name + ".png")
+    try png.write(to: url)
+    print("wrote \(url.path) (\(width)x\(height) px)")
+}
+
 @MainActor
 func run() throws {
     _ = NSApplication.shared
@@ -303,6 +416,7 @@ func run() throws {
 
     for dark in [false, true] {
         let suffix = dark ? "dark" : "light"
+        try renderMenuBarSheet(dark: dark, name: "menubar-gauge-\(suffix)")
         try render(PanelFrame(content: PanelView(model: model(mainAccounts, language: .en), opaqueBackground: true)),
                    size: nil, dark: dark, name: "panel-\(suffix)")
         try render(PanelFrame(content: PanelView(model: model(stateAccounts, language: .en), opaqueBackground: true)),
