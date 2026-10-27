@@ -5,6 +5,7 @@ import BrimlineCore
 //
 //   brimline status [--json] [--live]   usage of each account (from the app's cache, or read now)
 //   brimline accounts [--json]          accounts found on this Mac (no Keychain read)
+//   brimline providers [enable|disable <name>]   which providers Brimline reads
 //   brimline mcp                        local MCP server over stdio
 //   brimline --version | --help
 
@@ -22,6 +23,10 @@ Usage:
                                       Brimline app; --live reads the Keychain and asks the
                                       provider now (macOS may ask to allow the Keychain read).
   brimline accounts [--json]          Accounts found on this Mac.
+  brimline providers [--json]         The providers and whether each is on. Only Claude is on by
+                                      default: a provider that is off is not touched at all.
+  brimline providers enable <name>    Turn a provider on (claude, chatgpt, gemini, grok, cursor).
+  brimline providers disable <name>   Turn it off: nothing of it is opened or requested again.
   brimline mcp                        Local MCP server over stdio (list_accounts, get_usage,
                                       best_account).
   brimline --version                  Print the version.
@@ -61,8 +66,8 @@ case "accounts":
     let accounts = Providers.discover(settings: settings)
     if flags.contains("--json") {
         struct Entry: Encodable {
-            var id, provider, folder, keychainService: String
-            var email, organization, label: String?
+            var id, provider, folder: String
+            var keychainService, email, organization, label: String?
             var hidden: Bool
             enum CodingKeys: String, CodingKey {
                 case id, provider, folder, email, organization, label, hidden
@@ -70,7 +75,7 @@ case "accounts":
             }
         }
         let entries = accounts.map {
-            Entry(id: $0.id, provider: $0.provider.rawValue, folder: $0.configDir, keychainService: $0.keychainService,
+            Entry(id: $0.id, provider: $0.provider.rawValue, folder: $0.source, keychainService: $0.keychainService,
                   email: $0.email, organization: $0.organization, label: settings.label(for: $0.id),
                   hidden: settings.isHidden($0.id))
         }
@@ -84,7 +89,53 @@ case "accounts":
             let hidden = settings.isHidden(a.id) ? "  (hidden)" : ""
             print("\(a.email ?? a.folderName)\(hidden)")
             if let org = a.organization { print("  \(org)") }
-            print("  \((a.configDir as NSString).abbreviatingWithTildeInPath)")
+            print("  \((a.source as NSString).abbreviatingWithTildeInPath)")
+        }
+    }
+
+case "providers":
+    let options = Set(arguments.filter { $0.hasPrefix("-") })
+    let words = arguments.filter { !$0.hasPrefix("-") }
+    if !options.subtracting(["--json"]).isEmpty {
+        printError("brimline: unknown option \(options.subtracting(["--json"]).sorted().joined(separator: " ")). See brimline --help.")
+        exit(64)
+    }
+    var current = settings
+    if let action = words.first {
+        guard action == "enable" || action == "disable", words.count == 2, !options.contains("--json") else {
+            printError("brimline: usage: brimline providers [enable|disable <name>]. See brimline --help.")
+            exit(64)
+        }
+        guard let provider = Provider(rawValue: words[1].lowercased()) else {
+            printError("brimline: unknown provider \(words[1]). Choose one of \(Provider.allCases.map(\.rawValue).joined(separator: ", ")).")
+            exit(64)
+        }
+        guard Providers.isSupported(provider) else {
+            printError("brimline: \(provider.displayName) is not read by this version of Brimline.")
+            exit(1)
+        }
+        current.enabledProviders.removeAll { $0 == provider.rawValue }
+        if action == "enable" { current.enabledProviders.append(provider.rawValue) }
+        do {
+            try SettingsStore(file: paths.settingsFile).save(current)
+        } catch {
+            printError("brimline: could not save the settings: \(error.localizedDescription)")
+            exit(1)
+        }
+        print("\(provider.displayName): \(action == "enable" ? "on" : "off")")
+        print("(the app takes it at its next refresh)")
+    } else if options.contains("--json") {
+        struct Entry: Encodable { var provider: String; var enabled: Bool; var available: Bool }
+        let entries = Provider.allCases.map {
+            Entry(provider: $0.rawValue, enabled: current.isEnabled($0), available: Providers.isSupported($0))
+        }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        print(String(decoding: try encoder.encode(["providers": entries]), as: UTF8.self))
+    } else {
+        for provider in Provider.allCases {
+            let state = Providers.isSupported(provider) ? (current.isEnabled(provider) ? "on" : "off") : "not available yet"
+            print("\(provider.displayName.padding(toLength: 8, withPad: " ", startingAt: 0))\(state)")
         }
     }
 
@@ -96,7 +147,7 @@ case "status":
     let source: String
     if flags.contains("--live") {
         let accounts = Providers.discover(settings: settings)
-        snapshot = await UsageService().refresh(accounts: accounts, previous: cache.load(), now: now, force: true)
+        snapshot = await UsageService().refresh(accounts: accounts, settings: settings, previous: cache.load(), now: now, force: true)
         source = "live"
     } else if let cached = cache.load() {
         snapshot = cached

@@ -20,8 +20,11 @@ public struct AccountChoice: Sendable {
 
 public enum Ranking {
     /// The account closest to one of its limits (the menu bar glyph follows it), with its percentage.
-    public static func mostLoaded(_ accounts: [AccountUsage], now: Date) -> (usage: AccountUsage, percent: Double)? {
+    /// Only the providers in `providers` count (all of them when nil): a provider that is off never sets the glyph.
+    public static func mostLoaded(_ accounts: [AccountUsage], providers: Set<Provider>? = nil,
+                                  now: Date) -> (usage: AccountUsage, percent: Double)? {
         accounts
+            .filter { providers?.contains($0.account.provider) ?? true }
             .compactMap { u in u.highestPercent(at: now).map { (usage: u, percent: $0) } }
             .max { $0.percent < $1.percent }
     }
@@ -42,9 +45,10 @@ public enum Ranking {
                 switch limit.kind {
                 case .session: return window != .week
                 case .weekly: return window != .session
-                case .weeklyModel:
+                case .model:
                     guard window != .session, let wanted, !wanted.isEmpty else { return false }
                     return limit.model?.lowercased() == wanted
+                case .daily, .monthly, .period: return true
                 }
             }
             let pool = considered.isEmpty ? usage.limits : considered

@@ -55,7 +55,11 @@ struct LegacyMigrationTests {
         #expect(settings.labels == ["abc": "Work"])
         #expect(settings.hiddenAccounts == ["x"])
         #expect(settings.refreshMinutes == 10)
-        #expect(UsageCache(file: paths.cacheFile).load()?.accounts.isEmpty == true)
+        // The settings of 0.1.0 have no provider keys: Claude stays on, nothing else.
+        #expect(settings.enabledProviders == ["claude"])
+        // The cache of 0.1.0 is schema 1: it comes over but is not read (the app writes a new one at once).
+        #expect(FileManager.default.fileExists(atPath: paths.cacheFile.path))
+        #expect(UsageCache(file: paths.cacheFile).load() == nil)
         #expect(try mode(current) == 0o700)
         #expect(try mode("\(current)/settings.json") == 0o600)
         #expect(try mode("\(current)/usage.json") == 0o600)
@@ -163,7 +167,7 @@ struct LegacyMigrationTests {
         let names = try FileManager.default.contentsOfDirectory(atPath: paths.supportDirectory.path).sorted()
         #expect(names == [LegacyMigration.markerName, "settings.json", "usage.json"])
         #expect(SettingsStore(file: paths.settingsFile).load().labels == ["abc": "Work"])
-        #expect(UsageCache(file: paths.cacheFile).load() != nil)
+        #expect(FileManager.default.fileExists(atPath: paths.cacheFile.path))
     }
 
     @Test("The old folder is left exactly as it was")

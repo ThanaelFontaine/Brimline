@@ -95,12 +95,23 @@ public final class AppModel {
         guard let service, !isRefreshing else { return }
         isRefreshing = true
         defer { isRefreshing = false }
+        reloadSettings()
         let accounts = self.accounts
         let previous = snapshot
-        let result = await service.refresh(accounts: accounts, previous: previous, now: Date(), force: force)
+        let result = await service.refresh(accounts: accounts, settings: settings, previous: previous, now: Date(), force: force)
         snapshot = result
         now = Date()
         try? cache?.save(result)
+    }
+
+    /// Takes the settings file again: `brimline providers enable|disable` writes it while the app runs,
+    /// and a provider turned off must stop being read at the next attempt, not at the next launch.
+    private func reloadSettings() {
+        guard let settingsStore else { return }
+        let onDisk = settingsStore.load()
+        guard onDisk != settings else { return }
+        settings = onDisk
+        rescan()
     }
 
     public func refreshNow() {
@@ -137,12 +148,15 @@ public final class AppModel {
 
     public var visibleUsages: [AccountUsage] { allUsages.filter { !settings.isHidden($0.account.id) } }
 
-    /// Level of the menu bar glyph: the visible limit closest to its ceiling.
+    /// Level of the menu bar glyph: the visible limit closest to its ceiling, among the providers that are on.
     public var menuBarLevel: (percent: Double?, dimmed: Bool) {
         let visible = visibleUsages
-        guard let top = Ranking.mostLoaded(visible, now: now) else { return (nil, false) }
+        guard let top = Ranking.mostLoaded(visible, providers: enabledProviders, now: now) else { return (nil, false) }
         return (top.percent, top.usage.status != .ok)
     }
+
+    /// The providers that are on.
+    public var enabledProviders: Set<Provider> { Set(Provider.allCases.filter(settings.isEnabled)) }
 
     public var lastUpdate: Date? { allUsages.compactMap(\.fetchedAt).max() }
 
@@ -173,6 +187,24 @@ public final class AppModel {
         update { s in
             s.hiddenAccounts.removeAll { $0 == accountID }
             if hidden { s.hiddenAccounts.append(accountID) }
+        }
+    }
+
+    /// Turns a provider on or off. On: its accounts are looked for and read from now on. Off: nothing of it
+    /// is opened or requested again, and its accounts leave the panel.
+    public func setProvider(_ provider: Provider, enabled: Bool) {
+        update { s in
+            s.enabledProviders.removeAll { $0 == provider.rawValue }
+            if enabled { s.enabledProviders.append(provider.rawValue) }
+        }
+        if enabled { rescanAndRefresh() } else { rescan() }
+    }
+
+    /// "Do not read": the account stays listed with its last numbers and is never read.
+    public func setUnread(_ unread: Bool, accountID: String) {
+        update { s in
+            s.unreadAccounts.removeAll { $0 == accountID }
+            if unread { s.unreadAccounts.append(accountID) }
         }
     }
 

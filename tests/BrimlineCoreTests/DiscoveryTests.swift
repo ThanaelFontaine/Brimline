@@ -42,18 +42,18 @@ struct DiscoveryTests {
         #expect(found.map(\.email) == ["you@example.com", "first@example.net", "team@example.org",
                                        "custom@example.com", nil])
         let main = try #require(found.first)
-        #expect(main.configDir == home.path(".claude"))
-        #expect(main.keychainService == "Claude Code-credentials")
+        #expect(main.source == home.path(".claude"))
+        #expect(main.keychainService! == "Claude Code-credentials")
         #expect(main.organization == "Example")
         #expect(main.seatTier == "max")
         #expect(!main.addedByHand)
 
         let work = found[2]
         #expect(work.organization == "Team Org")
-        #expect(work.keychainService == "Claude Code-credentials-" + KeychainServiceName.hashPrefix(of: home.path(".claude-work")))
+        #expect(work.keychainService! == "Claude Code-credentials-" + KeychainServiceName.hashPrefix(of: home.path(".claude-work")))
 
         #expect(found[3].addedByHand)
-        #expect(found[3].configDir == home.path("elsewhere/custom"))
+        #expect(found[3].source == home.path("elsewhere/custom"))
         #expect(found[4].folderName == "not-signed-in")
     }
 

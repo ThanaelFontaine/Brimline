@@ -47,7 +47,7 @@ struct FormattingTests {
     @Test("Limit names and state messages exist in both languages")
     func strings() {
         let fr = Strings(.fr), en = Strings(.en)
-        let fable = UsageLimit(kind: .weeklyModel, model: "Fable", percent: 0, resetsAt: nil)
+        let fable = UsageLimit(kind: .model, model: "Fable", percent: 0, resetsAt: nil)
         #expect(fr.limitName(fable) == "Semaine · Fable")
         #expect(en.limitName(fable) == "Week · Fable")
         #expect(fr.session == "Session 5 h")

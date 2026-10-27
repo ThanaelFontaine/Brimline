@@ -21,9 +21,12 @@ public struct ClaudeReader: ProviderReader {
     }
 
     public func read(account: Account, now: Date) async -> ProviderReading {
+        guard let service = account.keychainService else {
+            return .failure(status: .signedOut, detail: "no Keychain item", retryAfter: nil)
+        }
         let credential: ClaudeCredential
         do throws(CredentialError) {
-            credential = try await Self.read(credentials, service: account.keychainService)
+            credential = try await Self.read(credentials, service: service)
         } catch {
             switch error {
             case .notFound:

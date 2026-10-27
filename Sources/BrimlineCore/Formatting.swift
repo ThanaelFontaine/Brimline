@@ -84,7 +84,10 @@ public struct Strings: Sendable {
         switch limit.kind {
         case .session: return session
         case .weekly: return week
-        case .weeklyModel: return weekModel(limit.model ?? "?")
+        case .model: return limit.label ?? weekModel(limit.model ?? "?")
+        case .daily: return t("Day", "Jour")
+        case .monthly: return t("Month", "Mois")
+        case .period: return limit.label ?? t("Period", "Période")
         }
     }
     public var noGlobalWeekly: String { t("No weekly limit across all models", "Pas de limite hebdomadaire globale") }
@@ -104,6 +107,14 @@ public struct Strings: Sendable {
         t("Not signed in: run /login in Claude Code with this folder", "Pas connecté : lancez /login dans Claude Code avec ce dossier")
     }
     public var pendingMessage: String { t("Not read yet", "Pas encore lu") }
+    public var formatChangedMessage: String {
+        t("The provider changed its answer: update Brimline.", "Le fournisseur a changé sa réponse : mettez Brimline à jour.")
+    }
+    /// The generic sentence for an account with no readable limit. Each provider's own sentence (what
+    /// to open, where the limits are) is added with its reader.
+    public var notReadableMessage: String {
+        t("Brimline cannot read the limits of this account.", "Brimline ne peut pas lire les limites de ce compte.")
+    }
     public func lastKnown(_ age: String) -> String { t("Last known values, \(age)", "Dernières valeurs connues, \(age)") }
     public func dataAge(_ age: String) -> String { t("Data from \(age)", "Données d'\(age)") }
 
@@ -115,6 +126,8 @@ public struct Strings: Sendable {
         case .unavailable: return t("Unavailable", "Indisponible")
         case .signedOut: return t("Not signed in", "Pas connecté")
         case .pending: return t("Not read yet", "Pas encore lu")
+        case .notReadable: return t("Not readable", "Non lisible")
+        case .formatChanged: return t("Format changed", "Format modifié")
         }
     }
 
@@ -126,6 +139,8 @@ public struct Strings: Sendable {
         case .unavailable: return unavailableMessage
         case .signedOut: return signedOutMessage
         case .pending: return pendingMessage
+        case .notReadable: return notReadableMessage
+        case .formatChanged: return formatChangedMessage
         }
     }
 
@@ -157,7 +172,16 @@ public struct Strings: Sendable {
     public var folder: String { t("Folder", "Dossier") }
     public var removeFolder: String { t("Remove", "Retirer") }
     public var comingSoon: String { t("Coming soon", "Bientôt") }
-    public var otherProviders: String { t("Other providers", "Autres fournisseurs") }
+    public var providersTitle: String { t("Providers", "Fournisseurs") }
+    public var providersHelp: String {
+        t("A provider that is off is not touched at all: Brimline opens none of its files and asks it nothing.",
+          "Un fournisseur coupé n'est pas touché du tout : Brimline n'ouvre aucun de ses fichiers et ne lui demande rien.")
+    }
+    public var doNotRead: String { t("Do not read", "Ne pas lire") }
+    public var doNotReadHelp: String {
+        t("Brimline keeps the last numbers of this account and never reads it again until you turn this off.",
+          "Brimline garde les derniers chiffres de ce compte et ne le lit plus jusqu'à ce que vous décochiez.")
+    }
     public var accountsIntro: String {
         t("Brimline finds each Claude Code configuration folder by itself: ~/.claude, and every ~/.claude-\u{2060}* folder.",
           "Brimline trouve seul chaque dossier de configuration de Claude Code : ~/.claude, et chaque dossier ~/.claude-\u{2060}*.")

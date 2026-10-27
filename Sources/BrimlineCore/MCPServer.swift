@@ -164,7 +164,7 @@ public struct MCPServer: Sendable {
                 var entry: [String: Any] = [
                     "id": u.account.id,
                     "provider": u.account.provider.rawValue,
-                    "folder": u.account.configDir,
+                    "folder": u.account.source,
                     "hidden": settings.isHidden(u.account.id),
                     "status": u.status.rawValue,
                 ]

@@ -134,7 +134,7 @@ struct AccountCard: View {
                 .lineLimit(2)
                 .truncationMode(.middle)
                 .fixedSize(horizontal: false, vertical: true)
-                .help(usage.account.email ?? usage.account.configDir)
+                .help(usage.account.email ?? usage.account.source)
             if let subtitle = model.subtitle(for: usage.account) {
                 Text(subtitle)
                     .font(.system(size: 11))
@@ -187,7 +187,7 @@ struct AccountCard: View {
         case noGlobalWeekly
     }
 
-    /// Session, then the week (or the team seat sentence), then each model's week.
+    /// Session, then the week (or the team seat sentence), then every other limit in the provider's order.
     var rows: [Row] {
         var rows: [Row] = []
         if let s = usage.sessionLimit { rows.append(.limit(s)) }
@@ -196,7 +196,7 @@ struct AccountCard: View {
         } else if usage.hasNoGlobalWeeklyLimit {
             rows.append(.noGlobalWeekly)
         }
-        rows += usage.modelLimits.map(Row.limit)
+        rows += usage.limits.filter { $0.kind != .session && $0.kind != .weekly }.map(Row.limit)
         return rows
     }
 
@@ -226,6 +226,8 @@ struct AccountCard: View {
         case .expired, .reconnect: return "person.crop.circle.badge.exclamationmark"
         case .signedOut: return "person.crop.circle.badge.questionmark"
         case .pending: return "hourglass"
+        case .notReadable: return "eye.slash"
+        case .formatChanged: return "exclamationmark.triangle"
         }
     }
 }

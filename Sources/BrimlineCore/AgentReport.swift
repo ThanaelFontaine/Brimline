@@ -89,7 +89,7 @@ public struct AgentAccount: Codable, Sendable, Equatable {
         email = account.email
         organization = account.organization
         label = settings.label(for: account.id)
-        folder = account.configDir
+        folder = account.source
         hidden = settings.isHidden(account.id)
         status = usage.status.rawValue
         message = Strings(.en).statusMessage(usage.status)

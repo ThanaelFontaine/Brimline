@@ -33,7 +33,7 @@ let home = URL(fileURLWithPath: "/Users", isDirectory: true).appendingPathCompon
 
 func account(_ email: String, _ folder: String, org: String?, seat: String?, byHand: Bool = false) -> Account {
     let dir = home.appendingPathComponent(folder).path
-    return Account(configDir: dir, email: email, organization: org, seatTier: seat,
+    return Account(source: dir, email: email, organization: org, seatTier: seat,
                    keychainService: KeychainServiceName.forConfigDir(dir, isDefault: folder == ".claude"),
                    addedByHand: byHand)
 }
@@ -49,11 +49,11 @@ let mainAccounts: [AccountUsage] = [
     AccountUsage(account: you, status: .ok, limits: [
         UsageLimit(kind: .session, percent: 34, resetsAt: minutes(130)),
         UsageLimit(kind: .weekly, percent: 58, resetsAt: minutes(60 * 24 * 2 + 40)),
-        UsageLimit(kind: .weeklyModel, model: "Fable", percent: 12, resetsAt: minutes(60 * 24 * 2 + 40)),
+        UsageLimit(kind: .model, model: "Fable", percent: 12, resetsAt: minutes(60 * 24 * 2 + 40)),
     ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
     AccountUsage(account: team, status: .ok, limits: [
         UsageLimit(kind: .session, percent: 100, resetsAt: minutes(39)),
-        UsageLimit(kind: .weeklyModel, model: "Fable", percent: 74, resetsAt: minutes(60 * 24 * 3 + 15)),
+        UsageLimit(kind: .model, model: "Fable", percent: 74, resetsAt: minutes(60 * 24 * 3 + 15)),
     ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
     AccountUsage(account: long, status: .ok, limits: [
         UsageLimit(kind: .session, percent: 91, resetsAt: minutes(48)),
@@ -64,7 +64,7 @@ let mainAccounts: [AccountUsage] = [
 let stateAccounts: [AccountUsage] = [
     AccountUsage(account: team, status: .ok, limits: [
         UsageLimit(kind: .session, percent: 48, resetsAt: minutes(100)),
-        UsageLimit(kind: .weeklyModel, model: "Fable", percent: 0, resetsAt: minutes(60 * 24 + 30)),
+        UsageLimit(kind: .model, model: "Fable", percent: 0, resetsAt: minutes(60 * 24 + 30)),
     ], fetchedAt: minutes(-25), checkedAt: minutes(-25)),
     AccountUsage(account: expired, status: .expired, limits: [
         UsageLimit(kind: .session, percent: 62, resetsAt: minutes(-20)),
@@ -77,7 +77,7 @@ let stateAccounts: [AccountUsage] = [
 ]
 
 var settings = BrimlineSettings()
-settings.extraFolders = [unavailable.configDir]
+settings.extraFolders = [unavailable.source]
 settings.labels = [long.id: "Research lab"]
 if withPercent { settings.showPercentInMenuBar = true }
 // The default captures follow the app's default: no percentage in the menu bar.

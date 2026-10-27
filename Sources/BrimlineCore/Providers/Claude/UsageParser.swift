@@ -30,7 +30,7 @@ public enum UsageParser {
                     let scope = entry["scope"] as? [String: Any]
                     let model = (scope?["model"] as? [String: Any])?["display_name"] as? String
                     guard let model, !model.isEmpty else { continue }
-                    limits.append(UsageLimit(kind: .weeklyModel, model: model, percent: percent, resetsAt: resets))
+                    limits.append(UsageLimit(kind: .model, model: model, percent: percent, resetsAt: resets))
                 default:
                     continue
                 }
@@ -54,7 +54,7 @@ public enum UsageParser {
     /// Session first, then the weekly limit, then the per model limits by name.
     static func sorted(_ limits: [UsageLimit]) -> [UsageLimit] {
         func rank(_ l: UsageLimit) -> Int {
-            switch l.kind { case .session: 0; case .weekly: 1; case .weeklyModel: 2 }
+            switch l.kind { case .session: 0; case .weekly: 1; default: 2 }
         }
         return limits.sorted { a, b in
             rank(a) != rank(b) ? rank(a) < rank(b) : (a.model ?? "") < (b.model ?? "")
