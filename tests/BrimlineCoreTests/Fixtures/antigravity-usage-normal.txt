@@ -1,0 +1,3 @@
+Model quotas
+Gemini 3.1 Pro: 42% used (resets in 3h 12m)
+Gemini 3.5 Flash: 7% used (resets in 1d 2h)

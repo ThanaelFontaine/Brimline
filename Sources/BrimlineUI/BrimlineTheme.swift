@@ -27,6 +27,17 @@ public enum SGTheme {
     public static let crit      = dynamic(0xC0302B, 0xFF6F64)   // critical, 90% and over
     public static let muted     = dynamic(0x56606A, 0x9BA5AF)   // expired (last known value)
 
+    /// The dot of a provider (QUOTA-35 board): Brimline's own colors, not the brands', always beside the written name.
+    public static func provider(_ provider: Provider) -> Color {
+        switch provider {
+        case .claude: dynamic(0x7445D6, 0xB48CFF)
+        case .chatgpt: dynamic(0x1C68C9, 0x62AEF5)
+        case .gemini: dynamic(0xB03A86, 0xF08BCB)
+        case .grok: dynamic(0x5E7A12, 0xB3CC5C)
+        case .cursor: dynamic(0x15191D, 0xECEFF2)
+        }
+    }
+
     // MARK: Thresholds
 
     public static let warnThreshold = 0.70
@@ -65,6 +76,9 @@ public enum SGTheme {
     }
 
     public static let gaugeHeight: CGFloat = 6
+    /// The gauge of a sub-limit (one model, one pool): the same marks, 4 pt tall.
+    public static let compactGaugeHeight: CGFloat = 4
+    public static let providerDot: CGFloat = 8
     public static let windowWidth: CGFloat = 340
 }
 
@@ -94,16 +108,19 @@ public struct SGGauge: View {
     public var accessibilityName: String
     /// The value VoiceOver reads, already localized by the app (by default: the percentage).
     public var accessibilityValueText: String?
+    /// A sub-limit's gauge is 4 pt tall instead of 6.
+    public var compact: Bool
 
-    public init(_ state: SGGaugeState, accessibilityName: String, accessibilityValue: String? = nil) {
+    public init(_ state: SGGaugeState, accessibilityName: String, accessibilityValue: String? = nil, compact: Bool = false) {
         self.state = state
         self.accessibilityName = accessibilityName
         self.accessibilityValueText = accessibilityValue
+        self.compact = compact
     }
 
     public var body: some View {
         GeometryReader { geo in
-            let w = geo.size.width, h = SGTheme.gaugeHeight
+            let w = geo.size.width, h = height
             ZStack(alignment: .leading) {
                 Capsule().fill(SGTheme.track)
                 // Threshold marks, under the liquid.
@@ -126,11 +143,13 @@ public struct SGGauge: View {
             .frame(height: h)
             .frame(maxHeight: .infinity, alignment: .center)
         }
-        .frame(height: SGTheme.gaugeHeight)
+        .frame(height: height)
         .accessibilityElement()
         .accessibilityLabel(accessibilityName)
         .accessibilityValue(accessibilityValue)
     }
+
+    private var height: CGFloat { compact ? SGTheme.compactGaugeHeight : SGTheme.gaugeHeight }
 
     private var fill: (Double, Color)? {
         switch state {
@@ -148,5 +167,21 @@ public struct SGGauge: View {
         case .expired(let last): last.map { strings.accessibilityPercent($0 * 100, expired: true) } ?? strings.expiredShort
         case .unavailable: strings.unavailableShort
         }
+    }
+}
+
+/// The round dot of a provider, 8 pt. It is decoration: the provider's name is always written beside it.
+public struct SGProviderDot: View {
+    public var provider: Provider
+
+    public init(_ provider: Provider) {
+        self.provider = provider
+    }
+
+    public var body: some View {
+        Circle()
+            .fill(SGTheme.provider(provider))
+            .frame(width: SGTheme.providerDot, height: SGTheme.providerDot)
+            .accessibilityHidden(true)
     }
 }

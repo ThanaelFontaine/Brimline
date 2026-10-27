@@ -1,6 +1,6 @@
 import Foundation
 
-/// The providers Brimline has a reader for: Claude, ChatGPT (through Codex), Gemini (a sentence only, nothing is read),
+/// The providers Brimline has a reader for: Claude, ChatGPT (through Codex), Gemini (through the Antigravity CLI),
 /// Grok (through the Grok CLI) and Cursor (its sign-in database is looked at, no limit is read yet).
 ///
 /// Having a reader here does not mean it runs: every provider is off until the user turns it on

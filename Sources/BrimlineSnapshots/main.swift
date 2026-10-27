@@ -5,7 +5,8 @@ import SwiftUI
 
 // Renders the images of the README and of the visual QA into docs/images/, from fictitious data:
 // the menu bar window and each settings tab, light and dark, English (and the panel, its states and
-// the Accounts tab in French).
+// the Accounts tab in French), and the panel with one account per provider (grouped by provider, the board's
+// variant A) with sheets of every state.
 //
 //   swift run brimline-snapshots [--with-percent] [output folder]     (default: docs/images)
 //
@@ -76,14 +77,96 @@ let stateAccounts: [AccountUsage] = [
     ], fetchedAt: minutes(-12), checkedAt: minutes(-2), failureCount: 2, retryAfter: minutes(6), detail: "HTTP 503"),
 ]
 
+// One account per provider and every state: the panel grouped by provider (QUOTA-35, board D, variant A).
+func provider(_ provider: Provider, _ path: String, tier: String? = nil, byHand: Bool = false) -> Account {
+    Account(provider: provider, source: home.appendingPathComponent(path).path, email: nil, organization: nil,
+            seatTier: tier, keychainService: nil, addedByHand: byHand)
+}
+
+let lab = account("team@claude.ai", ".claude-lab", org: nil, seat: "team")
+let weekend = account("weekend@claude.ai", ".claude-weekend", org: nil, seat: "pro")
+let codexPlus = provider(.chatgpt, ".codex", tier: "plus")
+let codexWork = provider(.chatgpt, "codex-work", tier: "pro", byHand: true)
+let codexKey = provider(.chatgpt, "codex-key", byHand: true)
+let grok = provider(.grok, ".grok/auth.json")
+let cursor = provider(.cursor, "Library/Application Support/Cursor", tier: "pro")
+let gemini = provider(.gemini, ".gemini")
+
+let monthSeconds = 30 * 86_400
+
+let providerAccounts: [AccountUsage] = [
+    AccountUsage(account: you, status: .ok, limits: [
+        UsageLimit(kind: .session, percent: 34, resetsAt: minutes(130)),
+        UsageLimit(kind: .weekly, percent: 58, resetsAt: minutes(60 * 24 * 2 + 40)),
+        UsageLimit(kind: .model, model: "Fable", percent: 12, resetsAt: minutes(60 * 24 * 2 + 40)),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+    // A team seat: no weekly limit across all models, and a model limit that resets on its own day.
+    AccountUsage(account: lab, status: .ok, limits: [
+        UsageLimit(kind: .session, percent: 91, resetsAt: minutes(48)),
+        UsageLimit(kind: .model, model: "Fable", percent: 74, resetsAt: minutes(60 * 24 * 3 + 15)),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+    AccountUsage(account: codexPlus, status: .ok, limits: [
+        UsageLimit(kind: .session, percent: 22, resetsAt: minutes(185), windowSeconds: 18_000),
+        UsageLimit(kind: .weekly, percent: 71, resetsAt: minutes(60 * 24 * 4 + 120), windowSeconds: 604_800),
+        UsageLimit(kind: .model, model: "codex-mini", percent: 9, resetsAt: minutes(80), windowSeconds: 18_000),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+    AccountUsage(account: codexWork, status: .expired, limits: [
+        UsageLimit(kind: .weekly, percent: 40, resetsAt: minutes(60 * 24 * 4 + 120), windowSeconds: 604_800),
+    ], fetchedAt: minutes(-60 * 24 * 3), checkedAt: minutes(-2)),
+    AccountUsage(account: grok, status: .ok, limits: [
+        UsageLimit(kind: .period, percent: 46, resetsAt: minutes(60 * 24 * 3 + 240), windowSeconds: 604_800),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2), note: .sharedPool),
+    AccountUsage(account: cursor, status: .ok, limits: [
+        UsageLimit(kind: .monthly, percent: 63, resetsAt: minutes(60 * 24 * 12), windowSeconds: monthSeconds),
+        UsageLimit(kind: .model, model: "Auto", percent: 41, resetsAt: minutes(60 * 24 * 12), windowSeconds: monthSeconds),
+        UsageLimit(kind: .model, model: "API", percent: 88, resetsAt: minutes(60 * 24 * 12), windowSeconds: monthSeconds),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+    AccountUsage(account: gemini, status: .notReadable, checkedAt: minutes(-2), reason: .consumerPlan),
+]
+
+/// Each state of the board, one account each (the key is the name of the image).
+let providerStates: [(name: String, usage: AccountUsage)] = [
+    ("expired-codex", providerAccounts[3]),
+    ("format-changed", AccountUsage(account: cursor, status: .formatChanged, limits: [
+        UsageLimit(kind: .monthly, percent: 63, resetsAt: minutes(60 * 24 * 12), windowSeconds: monthSeconds),
+        UsageLimit(kind: .model, model: "API", percent: 88, resetsAt: minutes(60 * 24 * 12), windowSeconds: monthSeconds),
+    ], fetchedAt: minutes(-120), checkedAt: minutes(-2), detail: "unknown answer")),
+    ("do-not-read", AccountUsage(account: weekend, status: .ok, limits: [
+        UsageLimit(kind: .weekly, percent: 37, resetsAt: minutes(60 * 24 * 5)),
+    ], fetchedAt: minutes(-60 * 48), checkedAt: minutes(-60 * 48))),
+    ("sentence-gemini", providerAccounts[6]),
+    ("sentence-grok-no-cli", AccountUsage(account: grok, status: .notReadable, checkedAt: minutes(-2), reason: .noCLI)),
+    ("sentence-codex-api-key", AccountUsage(account: codexKey, status: .notReadable, checkedAt: minutes(-2), reason: .apiKey)),
+    ("sentence-codex-keychain", AccountUsage(account: codexPlus, status: .notReadable, checkedAt: minutes(-2), reason: .keychainOrSignedOut)),
+    ("no-figure-grok", AccountUsage(account: grok, status: .ok, fetchedAt: minutes(-2), checkedAt: minutes(-2), note: .noFigureYet)),
+    ("unavailable-grok", AccountUsage(account: grok, status: .unavailable, limits: [
+        UsageLimit(kind: .period, percent: 46, resetsAt: minutes(60 * 24 * 3 + 240), windowSeconds: 604_800),
+    ], fetchedAt: minutes(-12), checkedAt: minutes(-2), failureCount: 2, retryAfter: minutes(15), detail: "HTTP 429")),
+    ("pending-codex", AccountUsage(account: codexPlus, status: .pending)),
+]
+
 var settings = BrimlineSettings()
 settings.extraFolders = [unavailable.source]
 settings.labels = [long.id: "Research lab"]
+// The images of the README show the panel as it is once the hint about other providers has been dismissed.
+settings.providerHintDismissed = true
 if withPercent { settings.showPercentInMenuBar = true }
 // The default captures follow the app's default: no percentage in the menu bar.
 precondition(withPercent || !settings.showPercentInMenuBar, "default captures must have the percentage off")
 
 let icon = NSImage(contentsOf: root.appendingPathComponent("design/icons/AppIcon.icns"))
+
+/// The settings of the images with the providers: every provider on, a label on the team seat and on the
+/// work Codex folder, and one account marked "Do not read".
+var providerSettings: BrimlineSettings {
+    var s = settings
+    s.enabledProviders = Provider.allCases.map(\.rawValue)
+    s.labels[lab.id] = "Research lab"
+    s.labels[codexWork.id] = "Codex work"
+    s.unreadAccounts = [weekend.id]
+    s.extraCodexFolders = [codexWork.source, codexKey.source]
+    return s
+}
 
 @MainActor
 func model(_ accounts: [AccountUsage], language: Language, settings: BrimlineSettings = settings) -> AppModel {
@@ -161,6 +244,47 @@ struct WindowFrame<Content: View>: View {
     }
 }
 
+/// The settings of the Accounts images: Claude, ChatGPT and Gemini on, Grok off (and Cursor, not read yet).
+var accountsTabSettings: BrimlineSettings {
+    var s = providerSettings
+    s.enabledProviders = [Provider.claude, .chatgpt, .gemini].map(\.rawValue)
+    s.unreadAccounts = [codexWork.id]
+    return s
+}
+
+let accountsTabUsages = [providerAccounts[0], providerAccounts[1], providerAccounts[2], providerAccounts[3], providerAccounts[6]]
+
+/// A panel with the accounts of the providers in `enabled` only, for the sheets of states.
+@MainActor
+func statePanel(_ usages: [AccountUsage], enabled: [Provider], language: Language, hint: Bool = false,
+                unread: [String] = [], expand: [String] = []) -> AnyView {
+    var s = providerSettings
+    s.enabledProviders = enabled.map(\.rawValue)
+    s.providerHintDismissed = !hint
+    s.unreadAccounts = unread
+    let m = model(usages, language: language, settings: s)
+    for id in expand { m.toggleNote(accountID: id) }
+    return AnyView(PanelFrame(content: PanelView(model: m, opaqueBackground: true)))
+}
+
+/// Panels side by side, aligned at the top.
+@MainActor
+func sheet(_ panels: [AnyView]) -> some View {
+    HStack(alignment: .top, spacing: 0) {
+        ForEach(0..<panels.count, id: \.self) { panels[$0] }
+    }
+}
+
+@MainActor
+func stateUsage(_ name: String) -> AccountUsage { providerStates.first { $0.name == name }!.usage }
+
+@MainActor
+func statePanel(named name: String, language: Language, unread: [String] = [], expand: Bool = false) -> AnyView {
+    let usage = stateUsage(name)
+    return statePanel([usage], enabled: [usage.account.provider], language: language, unread: unread,
+                      expand: expand ? [usage.account.id] : [])
+}
+
 @MainActor
 func run() throws {
     _ = NSApplication.shared
@@ -182,8 +306,36 @@ func run() throws {
         try render(PanelFrame(content: PanelView(model: model(mainAccounts + stateAccounts.dropFirst(), language: .en), opaqueBackground: true)),
                    size: nil, dark: dark, name: "qa-panel-many-\(suffix)")
 
+        // One account per provider and every state (QUOTA-35, board D, variant A: grouped by provider).
+        for language in [Language.en, .fr] {
+            let fr = language == .fr ? "-fr" : ""
+            try render(PanelFrame(content: PanelView(model: model(providerAccounts, language: language, settings: providerSettings),
+                                                     opaqueBackground: true, maxCardsHeight: 4000)),
+                       size: nil, dark: dark, name: "panel-providers\(fr)-\(suffix)")
+        }
+        let wk = weekend.id
+        try render(sheet([statePanel(named: "expired-codex", language: .en), statePanel(named: "format-changed", language: .en),
+                          statePanel(named: "do-not-read", language: .en, unread: [wk]),
+                          statePanel(named: "sentence-gemini", language: .en)]),
+                   size: nil, dark: dark, name: "qa-panel-provider-states-1-\(suffix)")
+        try render(sheet([statePanel(named: "sentence-gemini", language: .en, expand: true),
+                          statePanel(named: "sentence-grok-no-cli", language: .en),
+                          statePanel(named: "sentence-codex-api-key", language: .en),
+                          statePanel(named: "sentence-codex-keychain", language: .en)]),
+                   size: nil, dark: dark, name: "qa-panel-provider-states-2-\(suffix)")
+        try render(sheet([statePanel(named: "no-figure-grok", language: .en), statePanel(named: "unavailable-grok", language: .en),
+                          statePanel(named: "pending-codex", language: .en),
+                          statePanel([], enabled: [.chatgpt], language: .en)]),
+                   size: nil, dark: dark, name: "qa-panel-provider-states-3-\(suffix)")
+        try render(sheet([statePanel([providerAccounts[0]], enabled: [.claude], language: .en, hint: true)]),
+                   size: nil, dark: dark, name: "qa-panel-provider-hint-\(suffix)")
+        try render(sheet([statePanel(named: "expired-codex", language: .fr), statePanel(named: "do-not-read", language: .fr, unread: [wk]),
+                          statePanel(named: "sentence-gemini", language: .fr, expand: true),
+                          statePanel([providerAccounts[0]], enabled: [.claude], language: .fr, hint: true)]),
+                   size: nil, dark: dark, name: "qa-panel-provider-states-fr-\(suffix)")
+
         for tab in SettingsTab.allCases {
-            let m = model(mainAccounts + [stateAccounts[1], stateAccounts[2]], language: .en)
+            let m = model(accountsTabUsages + [stateAccounts[2]], language: .en, settings: accountsTabSettings)
             m.settingsTab = tab
             let size = CGSize(width: SettingsView.size.width + 24, height: SettingsView.size.height + 31 + 24)
             try render(WindowFrame(title: m.strings.settingsTitle, content: SettingsView(model: m)),
@@ -191,14 +343,14 @@ func run() throws {
         }
         // The Accounts and Agents tabs scroll in the window: these images show them whole, for the QA.
         for tab in [SettingsTab.accounts, .agents] {
-            let m = model(mainAccounts + [stateAccounts[1], stateAccounts[2]], language: .en)
+            let m = model(accountsTabUsages + [stateAccounts[2]], language: .en, settings: accountsTabSettings)
             m.settingsTab = tab
             let height: CGFloat = 1180
             try render(WindowFrame(title: m.strings.settingsTitle, content: SettingsView(model: m, height: height)),
                        size: CGSize(width: SettingsView.size.width + 24, height: height + 31 + 24),
                        dark: dark, name: "qa-settings-\(tab.rawValue)-full-\(suffix)")
         }
-        let fr = model(mainAccounts, language: .fr)
+        let fr = model(accountsTabUsages, language: .fr, settings: accountsTabSettings)
         fr.settingsTab = .accounts
         try render(WindowFrame(title: fr.strings.settingsTitle, content: SettingsView(model: fr)),
                    size: CGSize(width: SettingsView.size.width + 24, height: SettingsView.size.height + 31 + 24),

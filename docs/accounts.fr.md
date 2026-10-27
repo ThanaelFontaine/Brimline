@@ -41,7 +41,7 @@ Brimline cherche les comptes à son lancement, et de nouveau quand vous cliquez 
 - chaque dossier `~/.claude-*` qui contient un `.claude.json` ;
 - les dossiers ajoutés avec **Ajouter un dossier Claude Code…** (le sélecteur montre les dossiers cachés).
 
-Dans **Réglages, Comptes**, vous pouvez masquer un compte dans la fenêtre de la barre des menus, lui donner un libellé, ou retirer un dossier ajouté à la main.
+Dans **Réglages, Comptes**, chaque fournisseur a son bloc : un interrupteur, une ligne qui dit ce que Brimline lit et où il le demande, et ses comptes. Pour un compte, vous pouvez le masquer dans la fenêtre de la barre des menus, lui donner un libellé, cocher **Ne pas lire ce compte** (Brimline garde ses derniers chiffres, en gris avec leur âge, et n'ouvre plus sa connexion), ou retirer un dossier ajouté à la main.
 
 ![Réglages des comptes](images/settings-accounts-fr-light.png)
 
@@ -60,7 +60,7 @@ Brimline lit les limites de ChatGPT par Codex, l'outil officiel : il n'y a rien 
 
 1. Connectez Codex à votre compte ChatGPT (`codex login`, ou l'écran de connexion de Codex). Par défaut, Codex range sa connexion dans `~/.codex/auth.json`. Si vous avez réglé Codex pour la ranger dans le Trousseau, Brimline ne peut pas la lire et le dit.
 2. Allumez ChatGPT dans **Réglages, Comptes** (ou `brimline providers enable chatgpt`) : il démarre coupé.
-3. Brimline montre une carte pour `~/.codex`. Un dossier Codex ailleurs (`CODEX_HOME`) s'ajoute à la main pour l'instant, dans `~/Library/Application Support/Brimline/settings.json`, sous `extraCodexFolders`.
+3. Brimline montre une carte pour `~/.codex`. Un dossier Codex ailleurs (`CODEX_HOME`) s'ajoute avec **Ajouter un dossier Codex…** dans **Réglages, Comptes**, sous ChatGPT (le sélecteur montre les dossiers cachés).
 
 Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de connexion, le jeton d'accès et l'identifiant du compte. Il ne renouvelle jamais la connexion : si Codex est resté fermé longtemps, la carte dit « Ouvrez Codex pour rafraîchir la connexion. » Un compte connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Détails dans [providers](providers.md) (en anglais).
 
@@ -68,9 +68,9 @@ Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de 
 
 Cursor n'a pas de compte à relier, et Brimline ne lit pas encore ses limites. Allumez Cursor dans **Réglages, Comptes** (ou `brimline providers enable cursor`) et Brimline regarde le seul fichier où Cursor range son état, pour voir si sa connexion est lisible. Si Cursor la protège (ou la garde en mode WAL et est fermé), la carte le dit et renvoie à cursor.com, Dashboard, Usage ; si elle est lisible, la carte dit « Pas encore lu » jusqu'à la prochaine version, qui lira les limites. Brimline ne lit jamais l'élément du Trousseau de Cursor et ouvre ce fichier en lecture seule, sans rien créer dans le dossier de Cursor (si Cursor garde ce fichier en mode WAL, seulement pendant que Cursor tourne). Détails dans [providers](providers.md) (en anglais).
 
-## Gemini
+## Gemini, par Antigravity
 
-Gemini n'a pas de compte à relier : Google ne publie aucune limite que Brimline puisse lire. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`) et, si `~/.gemini` existe sur votre Mac, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation, et `/stats model` dans Gemini CLI). Brimline vérifie seulement que le dossier existe et n'y ouvre rien. Détails dans [providers](providers.md) (en anglais).
+Gemini se lit par l'outil de Google, Antigravity CLI (`agy`), que vous installez et dans lequel vous vous connectez vous-même : Brimline ne vous connecte jamais. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`). Quand `agy` est dans `~/.local/bin/agy`, Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; l'outil de Google peut renouveler lui-même sa connexion) et montre l'usage de chaque modèle. Sans lui, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). **Gemini n'est pas encore lu et vérifié :** tant qu'un vrai Antigravity n'a pas été essayé, Brimline ne le lance pas. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
 
 ## Grok, par le CLI Grok
 

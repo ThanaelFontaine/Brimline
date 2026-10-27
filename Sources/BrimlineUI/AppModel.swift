@@ -18,6 +18,8 @@ public final class AppModel {
     public var settingsTab: SettingsTab = .accounts
     /// The text last copied from the Agents tab, to show "Copied" on its button for a moment.
     public private(set) var lastCopied: String?
+    /// The accounts whose "Learn more" is open in the panel (the rest of a "not readable" sentence).
+    public private(set) var expandedNotes: Set<String> = []
 
     public let strings: Strings
     public let time: TimeFormatter
@@ -148,29 +150,68 @@ public final class AppModel {
 
     public var visibleUsages: [AccountUsage] { allUsages.filter { !settings.isHidden($0.account.id) } }
 
-    /// Level of the menu bar glyph: the visible limit closest to its ceiling, among the providers that are on.
-    public var menuBarLevel: (percent: Double?, dimmed: Bool) {
-        let visible = visibleUsages
-        guard let top = Ranking.mostLoaded(visible, providers: enabledProviders, now: now) else { return (nil, false) }
-        return (top.percent, top.usage.status != .ok)
+    /// The accounts of each provider that is on, in the panel's order (see `PanelLayout`).
+    public var groups: [ProviderGroup] { PanelLayout.groups(visibleUsages, enabled: enabledProviders) }
+
+    /// What the menu bar glyph shows: the visible limit closest to its ceiling among the providers that are on,
+    /// up-to-date accounts first (see `PanelLayout.glyph`).
+    public var menuBarLevel: (percent: Double?, dimmed: Bool, provider: Provider?, account: String?) {
+        let unread = Set(settings.unreadAccounts)
+        guard let top = PanelLayout.glyph(visibleUsages, providers: enabledProviders, unread: unread, now: now) else {
+            return (nil, false, nil, nil)
+        }
+        return (top.percent, top.dimmed, top.usage.account.provider, title(for: top.usage.account))
     }
 
     /// The providers that are on.
     public var enabledProviders: Set<Provider> { Set(Provider.allCases.filter(settings.isEnabled)) }
 
-    public var lastUpdate: Date? { allUsages.compactMap(\.fetchedAt).max() }
+    /// When Brimline last looked at the accounts: a provider that gives a sentence only has no numbers, but it was checked.
+    public var lastUpdate: Date? { allUsages.flatMap { [$0.fetchedAt, $0.checkedAt] }.compactMap { $0 }.max() }
 
     /// Numbers older than two refresh intervals are shown with their age.
     public var staleAfter: TimeInterval { TimeInterval(settings.refreshMinutes * 60 * 2 + 60) }
 
+    /// The name of an account without its label: the address for Claude, the provider and its plan for the others
+    /// ("ChatGPT Plus"); a provider's address is never shown (the readers do not keep it).
+    public func identity(for account: Account) -> String {
+        if account.provider == .claude { return account.email ?? account.folderName }
+        return providerAndPlan(account)
+    }
+
+    private func providerAndPlan(_ account: Account) -> String {
+        [account.provider.displayName, account.seatTier?.capitalized].compactMap { $0 }.joined(separator: " ")
+    }
+
     public func title(for account: Account) -> String {
-        settings.label(for: account.id) ?? account.email ?? account.folderName
+        settings.label(for: account.id) ?? identity(for: account)
     }
 
     public func subtitle(for account: Account) -> String? {
-        if settings.label(for: account.id) != nil, let email = account.email { return email }
-        let parts = [account.organization, account.seatTier?.capitalized].compactMap { $0 }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        if account.provider == .claude {
+            if settings.label(for: account.id) != nil, let email = account.email { return email }
+            let parts = [account.organization, account.seatTier?.capitalized].compactMap { $0 }
+            return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        }
+        // Another provider: under a custom label the provider and plan come back; with several accounts of the
+        // provider, the place of the connection tells them apart.
+        if settings.label(for: account.id) != nil { return providerAndPlan(account) }
+        let siblings = allUsages.filter { $0.account.provider == account.provider }.count
+        return siblings > 1 ? displayPath(account.source) : nil
+    }
+
+    /// Opens or closes the rest of an account's "not readable" sentence.
+    public func toggleNote(accountID: String) {
+        if expandedNotes.contains(accountID) { expandedNotes.remove(accountID) } else { expandedNotes.insert(accountID) }
+    }
+
+    /// The one-time hint that other providers exist.
+    public var showsProviderHint: Bool {
+        PanelLayout.showsProviderHint(enabled: enabledProviders, dismissed: settings.providerHintDismissed)
+    }
+
+    public func dismissProviderHint() {
+        update { $0.providerHintDismissed = true }
     }
 
     // MARK: Settings
@@ -252,6 +293,26 @@ public final class AppModel {
     public func removeFolder(_ path: String) {
         update { s in s.extraFolders.removeAll { $0 == path } }
         rescan()
+    }
+
+    /// A Codex folder (the one `CODEX_HOME` points to): only its `auth.json` is ever read.
+    public func addCodexFolder(_ url: URL) {
+        let path = KeychainServiceName.normalize(url.path)
+        update { s in
+            if !s.extraCodexFolders.contains(path) { s.extraCodexFolders.append(path) }
+        }
+        rescanAndRefresh()
+    }
+
+    /// Takes away a folder added by hand, whichever provider it belongs to.
+    public func removeAddedFolder(of account: Account) {
+        switch account.provider {
+        case .chatgpt:
+            update { s in s.extraCodexFolders.removeAll { $0 == account.source } }
+            rescan()
+        default:
+            removeFolder(account.source)
+        }
     }
 
     public func setLaunchAtLogin(_ enabled: Bool) {

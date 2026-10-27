@@ -38,4 +38,11 @@ public protocol ProviderReader: Sendable {
     func discover(home: URL, settings: BrimlineSettings) -> [Account]
     /// Reads one account. Never throws: every outcome is a `ProviderReading`.
     func read(account: Account, now: Date) async -> ProviderReading
+    /// The shortest time between two reads of the same account, in seconds. 0 for a provider read by one
+    /// request; Gemini launches a program, so the service lets 15 minutes pass between two reads, forced or not.
+    var minimumReadInterval: TimeInterval { get }
+}
+
+extension ProviderReader {
+    public var minimumReadInterval: TimeInterval { 0 }
 }

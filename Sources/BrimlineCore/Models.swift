@@ -126,6 +126,8 @@ public enum AccountNote: String, Codable, Sendable {
     case noFigureYet = "no_figure_yet"
     /// The limit is a pool shared by several products of the provider (Grok's unified billing).
     case sharedPool = "shared_pool"
+    /// Some limits have no reset time because the provider's text gives none (Gemini, through Antigravity).
+    case resetNotPublished = "reset_not_published"
 }
 
 /// The usage of one account: the last known numbers and the state of the last attempt.

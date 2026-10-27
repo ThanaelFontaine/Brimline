@@ -61,9 +61,16 @@ public struct UsageService: Sendable {
         if !force, let retryAfter = usage.retryAfter, retryAfter > now, Self.backsOff(usage.status) {
             return usage
         }
+        let reader = readers.first(where: { $0.provider == account.provider })
+        // A reader that launches a program is not asked twice in a short time, forced or not: the last
+        // attempt kept in the cache is what counts (the app's own refreshes; `status --live` does not write the cache).
+        if let reader, reader.minimumReadInterval > 0, let last = usage.checkedAt {
+            let age = now.timeIntervalSince(last)
+            if age >= 0, age < reader.minimumReadInterval { return usage }
+        }
         usage.checkedAt = now
 
-        guard let reader = readers.first(where: { $0.provider == account.provider }) else {
+        guard let reader else {
             return failed(usage, status: .unavailable, detail: "no reader for \(account.provider.rawValue)",
                           now: now, backoff: false)
         }

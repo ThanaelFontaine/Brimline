@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brimline : plusieurs fournisseurs côte à côte (planche, QUOTA-35)</title>
+<!-- Planche autonome : aucun réseau, aucune police web, aucun logo de tiers.
+     Couleurs : uniquement les jetons de tokens.json (le test tests/test_design_tokens.py le vérifie),
+     plus les deux gris de la barre des menus simulée. Langue et thème des maquettes :
+     #fr-light, #fr-dark, #en-light, #en-dark (ou les boutons en tête). 1 px de la planche = 1 pt de l'app. -->
+<style>
+  :root, .light {
+    --bg:#F5F6F7; --surface:#FFFFFF; --text:#15191D; --text2:#56606A; --border:#D3D8DD; --track:#E7EAED;
+    --accent:#0B6E7A; --ok:#127A82; --warn:#9A5800; --crit:#C0302B; --muted:rgb(86 96 106 / .55);
+    --p-claude:#7445D6; --p-chatgpt:#1C68C9; --p-gemini:#B03A86; --p-grok:#5E7A12; --p-cursor:#15191D;
+    --page:var(--surface); --panel:var(--bg); --card:rgb(21 25 29 / .05); --field:var(--surface);
+    --shadow:0 10px 30px rgb(21 25 29 / .14), 0 0 0 .5px rgb(21 25 29 / .18); --menubar:#DADDE0;
+  }
+  .dark {
+    --bg:#111315; --surface:#1B1E21; --text:#ECEFF2; --text2:#9BA5AF; --border:#30353A; --track:#2B3035;
+    --accent:#5CC8D0; --ok:#3BBDC2; --warn:#EFA63A; --crit:#FF6F64; --muted:rgb(155 165 175 / .55);
+    --p-claude:#B48CFF; --p-chatgpt:#62AEF5; --p-gemini:#F08BCB; --p-grok:#B3CC5C; --p-cursor:#ECEFF2;
+    --page:var(--bg); --panel:var(--surface); --card:rgb(236 239 242 / .06); --field:var(--bg);
+    --shadow:0 10px 30px rgb(0 0 0 / .5), 0 0 0 .5px rgb(236 239 242 / .16); --menubar:#2F3338;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--page); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 1408px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin: 0 0 8px; }
+  h2 { font-size: 22px; line-height: 1.2; margin: 56px 0 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+  h3 { font-size: 15px; margin: 0 0 8px; }
+  p { max-width: 760px; margin: 0 0 12px; }
+  .lead { font-size: 17px; }
+  .muted, .cap { color: var(--text2); }
+  .cap { font-size: 13px; margin: 8px 0 0; max-width: 360px; }
+  code, .mono { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; }
+  ul.tight { margin: 0 0 12px; padding-left: 20px; max-width: 760px; } ul.tight li { margin: 2px 0; }
+  .switch { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; }
+  .switch a { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); color: var(--text); text-decoration: none; font-size: 13px; }
+  .switch a[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--page); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); vertical-align: 2px; }
+  .row-wrap { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; margin-top: 16px; }
+  .fig { flex: 0 0 auto; max-width: 100%; }
+  .fig > h3 { display: flex; gap: 8px; align-items: center; }
+  .grid-states { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px 32px; margin-top: 16px; }
+  table.spec { border-collapse: collapse; font-size: 13px; width: 100%; max-width: 1100px; margin: 8px 0 16px; }
+  table.spec th, table.spec td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  table.spec th { color: var(--text2); font-weight: 600; }
+  .scroll-x { overflow-x: auto; }
+
+  /* Fenêtre de la barre des menus (340 pt) */
+  .mac-panel { width: 340px; max-width: 100%; background: var(--panel); color: var(--text); border-radius: 12px; box-shadow: var(--shadow);
+    font-size: 13px; line-height: 1.3; overflow: hidden; }
+  .ph { display: flex; align-items: center; gap: 8px; padding: 12px 16px 8px; font-weight: 600; }
+  .ph .spin { margin-left: auto; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--text2); }
+  .cards { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 8px; }
+  .pf { display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-top: .5px solid var(--border); font-size: 12px; }
+  .pf .upd { font-size: 11px; color: var(--text2); margin-right: auto; white-space: nowrap; }
+  .pf .acc { color: var(--accent); }
+  .grp { display: flex; align-items: baseline; gap: 6px; padding: 8px 4px 0; font-size: 12px; font-weight: 600; }
+  .grp:first-child { padding-top: 0; }
+  .grp .via { font-weight: 400; font-size: 11px; color: var(--text2); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: 0 0 8px; transform: translateY(-1px); }
+  .card { background: var(--card); border-radius: 10px; padding: 12px; }
+  .prov { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
+  .prov .dot { transform: none; }
+  .t { font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+  .s { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .lims { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .lim .l { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+  .lim .l .n { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lim .l .n.m { color: var(--text2); }
+  .lim .d { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .lim.sub { margin-top: -4px; }
+  .lim.sub .l { font-size: 11px; }
+  .lim.sub .g { height: 4px; margin-top: 6px; }
+  .lim.sub .g i.f { min-width: 4px; }
+  .phrase { font-size: 11px; color: var(--text2); }
+  .g { position: relative; height: 6px; border-radius: 3px; background: var(--track); box-shadow: 0 0 0 .5px var(--border); margin-top: 8px; overflow: hidden; }
+  .g i { position: absolute; top: 0; bottom: 0; }
+  .g i.tk { width: 1px; background: var(--border); }
+  .g i.f { left: 0; border-radius: 3px; min-width: 6px; background: var(--ok); }
+  .g i.f.warn { background: var(--warn); } .g i.f.crit { background: var(--crit); } .g i.f.mu { background: var(--muted); }
+  .g.down { background: none; box-shadow: none; border: 1px dashed var(--text2); }
+  .note { display: flex; gap: 6px; align-items: flex-start; font-size: 11px; color: var(--text2); margin-top: 10px; }
+  .note svg { flex: 0 0 12px; margin-top: 1px; }
+  .more { color: var(--accent); font-size: 11px; margin-top: 4px; display: inline-block; }
+  .more-text { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .hint { border: 1px solid var(--border); background: none; }
+  .btns { display: flex; gap: 14px; margin-top: 8px; font-size: 12px; } .btns .acc { color: var(--accent); }
+  .empty { text-align: center; }
+
+  /* Barre des menus simulée */
+  .menubar { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; background: var(--menubar); color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .menubar svg { width: 18px; height: 18px; fill: currentColor; }
+  .menubar.dim svg { opacity: .45; }
+
+  /* Fenêtre des Réglages */
+  .mac-win { width: 620px; max-width: 100%; background: var(--panel); color: var(--text); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; font-size: 13px; line-height: 1.35; }
+  .tb { position: relative; text-align: center; font-weight: 600; padding: 10px 0 6px; }
+  .tb .lights { position: absolute; left: 14px; top: 13px; display: flex; gap: 8px; }
+  .tb .lights i { width: 12px; height: 12px; border-radius: 50%; background: rgb(128 128 128 / .35); }
+  .tabs { display: flex; justify-content: center; gap: 4px; padding: 4px 8px 8px; border-bottom: .5px solid var(--border); }
+  .tabs span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 14px; border-radius: 6px; font-size: 11px; color: var(--text2); }
+  .tabs span svg { width: 20px; height: 20px; }
+  .tabs span.on { background: var(--card); color: var(--accent); }
+  .form { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .box { background: var(--card); border-radius: 8px; padding: 10px 12px; }
+  .box .s { font-size: 12px; }
+  .sec-h { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+  .sec-h .name { font-weight: 600; font-size: 13px; }
+  .sec-h .name .via { font-weight: 400; color: var(--text2); }
+  .sec-h .tg { margin-left: auto; }
+  .sec-cap { font-size: 11px; color: var(--text2); padding: 2px 4px 0 20px; }
+  .sec-cap .more { margin: 0 0 0 4px; font-size: 11px; }
+  .sec-body { margin-top: 8px; background: var(--card); border-radius: 8px; padding: 0 12px; }
+  .acct { padding: 10px 0; border-bottom: .5px solid var(--border); display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: start; }
+  .acct:last-child { border-bottom: 0; }
+  .acct .t { font-size: 13px; }
+  .acct .s { font-size: 11px; }
+  .acct .path { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; color: var(--text2); }
+  .acct .show { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); white-space: nowrap; }
+  .acct .full { grid-column: 1 / -1; }
+  .input { margin-top: 6px; border: .5px solid var(--border); background: var(--field); border-radius: 6px; padding: 3px 8px; font-size: 12px; color: var(--text2); }
+  .input.v { color: var(--text); }
+  .chk { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; font-size: 12px; }
+  .chk .box2 { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--text2); flex: 0 0 14px; margin-top: 1px; display: grid; place-items: center; }
+  .chk .box2.on { background: var(--accent); border-color: var(--accent); }
+  .chk .box2.on svg { width: 10px; height: 10px; stroke: var(--panel); }
+  .chk .h { display: block; font-size: 11px; color: var(--text2); }
+  .actions { display: flex; gap: 8px; padding: 10px 0; flex-wrap: wrap; }
+  .btn { border: .5px solid var(--border); background: var(--field); border-radius: 6px; padding: 2px 10px; font-size: 12px; }
+  .tg { width: 32px; height: 18px; border-radius: 9px; background: var(--track); box-shadow: inset 0 0 0 .5px var(--border); position: relative; flex: 0 0 32px; }
+  .tg::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgb(0 0 0 / .3); }
+  .light .tg::after { background: var(--surface); } .dark .tg::after { background: var(--text); }
+  .tg.on { background: var(--accent); box-shadow: none; } .tg.on::after { left: 16px; }
+  .tg.sm { width: 26px; height: 15px; flex-basis: 26px; } .tg.sm::after { width: 11px; height: 11px; } .tg.sm.on::after { left: 13px; }
+
+  .sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; max-width: 1100px; }
+  .sw div { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--panel); font-size: 13px; }
+  .sw b { display: flex; align-items: center; gap: 8px; }
+  .sw .big { width: 16px; height: 16px; border-radius: 50%; background: var(--c); }
+  @media (max-width: 480px) { .row-wrap { gap: 24px; } h2 { margin-top: 40px; } }
+</style>
+</head>
+<body class="light">
+<main>
+<h1>Brimline : plusieurs fournisseurs côte à côte</h1>
+<p class="lead">Planche du lot D de QUOTA-35 (chantier THA-1262). Le panneau montre des comptes de Claude, ChatGPT (par Codex), Gemini, Grok et Cursor ; les Réglages allument chaque fournisseur et peuvent couper la lecture d'un compte.</p>
+<p><b>Ce qui change.</b> Chaque compte porte son fournisseur, écrit en toutes lettres et marqué d'une pastille de couleur (aucun logo de tiers). Les fenêtres ne sont plus seulement « 5 h » et « semaine » : jour, mois, période, crédits et sous-limites. Trois statuts nouveaux ont leur forme : <code>expired</code> chez Codex, <code>not_readable</code> (une phrase, jamais un chiffre inventé) et <code>format_changed</code>. Les Réglages ont un interrupteur par fournisseur, coupé par défaut sauf Claude, et une case « Ne pas lire » par compte.</p>
+<p><b>Pourquoi.</b> Voir d'un regard où en sont tous les abonnements IA, sans confondre un fournisseur avec un autre, sans laisser croire qu'un chiffre existe quand le fournisseur n'en publie pas, et sans rien lire sans consentement. Base : la DA actuelle (<code>DA.md</code>, <code>tokens.json</code>) ; la piste d'icône de THA-1274 n'étant pas encore validée, l'en-tête garde le glyphe actuel, qui sera remplacé tel quel.</p>
+<nav class="switch" aria-label="Langue et thème des maquettes">
+  <a href="#fr-light" data-k="fr-light">FR · clair</a><a href="#fr-dark" data-k="fr-dark">FR · sombre</a>
+  <a href="#en-light" data-k="en-light">EN · clair</a><a href="#en-dark" data-k="en-dark">EN · sombre</a>
+</nav>
+
+<h2 id="panneau">1. Le panneau : deux variantes</h2>
+<p>Mêmes comptes, mêmes chiffres. Thanaël tranche à la validation. <b>Recommandation : A</b>, regroupé par fournisseur. Les comptes d'un même fournisseur ont les mêmes fenêtres et se comparent ligne à ligne ; l'ordre ne bouge pas d'une actualisation à l'autre (on retrouve un compte à sa place) ; la phrase d'un fournisseur sans limite lisible prend une seule carte compacte. Le compte le plus chargé reste visible d'un regard : c'est lui que suit le glyphe de la barre des menus. B répond mieux à « lequel est presque plein ? », mais les cartes changent de place pendant qu'on lit et le nom du fournisseur se répète sur chaque carte.</p>
+<div class="row-wrap">
+  <div class="fig" id="fig-a"><h3>A · Regroupé par fournisseur <span class="tag">recommandé</span></h3><div data-render="panelA"></div>
+    <p class="cap">Ordre des groupes : celui des Réglages (Claude, ChatGPT, Grok, Cursor), les fournisseurs à phrase seule (Gemini) en dernier. Dans un groupe, l'ordre des Réglages. Hauteur réelle : 760 pt au plus, puis défilement.</p></div>
+  <div class="fig" id="fig-b"><h3>B · Trié par charge</h3><div data-render="panelB"></div>
+    <p class="cap">Tri par la limite la plus proche de son plafond (sous-limites comprises) ; puis les comptes aux chiffres anciens (expiré, « Ne pas lire », format changé) ; les phrases en dernier.</p></div>
+</div>
+
+<h2 id="fenetres">2. Fenêtres de toutes sortes</h2>
+<p>Une fenêtre = une ligne : libellé, pourcentage, jauge, remise à zéro. Une <b>sous-limite</b> (un modèle, un pool Auto ou API) est une ligne compacte : texte de 11 pt, jauge de 4 pt, et sa remise à zéro n'est écrite que si elle diffère de la ligne au-dessus. Au-delà de 6 jours, la remise à zéro dit la date (« dim. 8 nov. »), jamais un jour de semaine seul qui serait ambigu.</p>
+<div class="row-wrap">
+  <div class="fig" id="fig-windows"><div data-render="windows"></div></div>
+  <div class="fig scroll-x" style="flex:1 1 520px"><table class="spec"><thead><tr><th>Fenêtre (<code>LimitKind</code>)</th><th>Libellé FR</th><th>Libellé EN</th><th>Chez</th></tr></thead><tbody>
+    <tr><td><code>session</code> (18 000 s)</td><td>Session 5 h</td><td>5 h session</td><td>Claude, ChatGPT</td></tr>
+    <tr><td><code>weekly</code> (604 800 s)</td><td>Semaine</td><td>Week</td><td>Claude, ChatGPT (seule chez Pro)</td></tr>
+    <tr><td><code>model</code>, sous-limite</td><td>Semaine · Fable, 5 h · codex-mini</td><td>Week · Fable, 5 h · codex-mini</td><td>Claude, ChatGPT</td></tr>
+    <tr><td><code>daily</code></td><td>Jour · gemini-2.5-pro</td><td>Day · gemini-2.5-pro</td><td>Gemini, seulement si P2b s'ouvre</td></tr>
+    <tr><td><code>monthly</code> et sous-limites</td><td>Mois, Mois · Auto, Mois · API</td><td>Month, Month · Auto, Month · API</td><td>Cursor (P3b)</td></tr>
+    <tr><td><code>period</code> de Grok</td><td>Crédits · semaine, Crédits · mois</td><td>Credits · week, Credits · month</td><td>Grok (selon <code>currentPeriod.type</code>)</td></tr>
+    <tr><td><code>period</code> avec <code>windowSeconds</code></td><td>Période de 30 j, Période de 12 h</td><td>30-day period, 12-hour period</td><td>ChatGPT (plan gratuit)</td></tr>
+    <tr><td>pourcentage absent</td><td>pas de jauge, « Pas encore de chiffre pour cette période. »</td><td>« No number yet for this period. »</td><td>Grok en début de période</td></tr>
+  </tbody></table>
+  <p class="muted" style="font-size:13px">Un nom venu du fournisseur (modèle, plan) passe le filtre du plan (64 caractères, <code>[A-Za-z0-9._ -]</code>) avant d'être affiché ; trop long pour la ligne, il est coupé au milieu, entier en infobulle.</p></div>
+</div>
+
+<h2 id="etats">3. États</h2>
+<p>Une couleur ne porte jamais seule un état : chaque état a son texte et, quand il le faut, son icône (symboles SF entre parenthèses). Les chiffres d'un compte qui n'est plus lu restent, en gris, avec leur âge ; un fournisseur qui ne publie rien ne montre jamais de jauge.</p>
+<div class="grid-states" data-render="states"></div>
+
+<h2 id="barre">4. La barre des menus</h2>
+<p>Le glyphe suit la limite la plus proche de son plafond parmi les comptes affichés des fournisseurs allumés, quel que soit le fournisseur. Il reste sans couleur (gabarit). Un compte expiré, « Ne pas lire » ou au format changé ne compte que si aucun compte à jour n'existe ; le glyphe est alors atténué.</p>
+<div class="row-wrap" data-render="menubar"></div>
+
+<h2 id="reglages">5. Les Réglages, onglet Comptes</h2>
+<p>Un bloc par fournisseur, dans l'ordre du panneau : pastille, nom, interrupteur à droite, puis une ligne qui dit ce que Brimline lit et où il le demande. Coupé, le bloc dit qu'il ne lit rien et ce qu'il lirait une fois allumé ; aucun compte n'est cherché. Allumé, les comptes trouvés suivent, avec « Afficher » (le panneau), le libellé et la case « Ne pas lire ce compte » (la lecture). Exemple : Grok et Cursor coupés, un compte Codex en « Ne pas lire ».</p>
+<div class="row-wrap"><div class="fig" id="fig-settings" data-render="settings"></div></div>
+
+<h2 id="pastilles">6. Les pastilles</h2>
+<p>Couleurs propres à Brimline, pas celles des marques : rien ne laisse croire à un partenariat, et aucune ne se confond avec le sarcelle, l'ambre et le rouge des jauges (l'encre de Cursor non plus avec le gris d'une jauge expirée). Pastille ronde de 8 pt, toujours à côté du nom écrit. Contraste au moins 4,5:1 sur le fond et la surface, en clair et en sombre (calculé par <code>tests/test_design_tokens.py</code>).</p>
+<div class="sw" data-render="swatches"></div>
+
+<h2 id="regles">7. Pour le développeur (P1b)</h2>
+<ul class="tight">
+  <li><b>Mesures</b> : celles de <code>DA.md</code>. En-tête de groupe : 12 pt semi-gras, pastille 8 pt, 6 pt d'écart, « par Codex » en 11 pt secondaire ; 8 pt au-dessus d'un groupe (sauf le premier), 8 pt entre l'en-tête et sa première carte.</li>
+  <li><b>Sous-limite</b> : 11 pt, chiffre semi-gras, jauge de 4 pt (mêmes seuils, mêmes repères à 70 et 90 %), 8 pt après la ligne au-dessus.</li>
+  <li><b>Phrase sans limite lisible</b> : la première phrase du cadrage, deux lignes au plus à 11 pt ; la suite (« où voir ») derrière « En savoir plus », qui la déplie sur place. La phrase entière est aussi l'infobulle et le libellé VoiceOver de la carte : la phrase exacte du cadrage reste toujours lisible (C7).</li>
+  <li><b>Titre d'une carte Codex, Grok, Cursor</b> : le libellé choisi, sinon le fournisseur suivi du plan (« ChatGPT Plus », « Cursor Pro »), jamais l'adresse renvoyée par le fournisseur.</li>
+  <li><b>VoiceOver</b> : chaque carte commence par le fournisseur (« ChatGPT, ChatGPT Plus ») ; chaque jauge garde son libellé et sa valeur ; l'en-tête de groupe est un titre (<code>.isHeader</code>).</li>
+  <li><b>Interrupteur</b> : <code>Toggle</code> natif teinté de l'accent, libellé accessible « Lire Grok » ; « Ne pas lire ce compte » : case à cocher native.</li>
+  <li><b>Captures (<code>brimline-snapshots</code>)</b> : reprendre les comptes de la variante retenue, un par fournisseur et chaque état de la section 3.</li>
+</ul>
+<h3 style="margin-top:24px">Textes nouveaux, EN et FR</h3>
+<div class="scroll-x"><table class="spec" data-render="strings"></table></div>
+</main>
+
+<script>
+// Textes de chaque langue. Les phrases sans limite lisible et celles de Codex et Grok sont celles du cadrage (C7).
+const T = {
+  fr: {
+    refresh: 'Actualiser', settings: 'Réglages…', quit: 'Quitter', updated: 'Actualisé à 12:18', via: 'par Codex',
+    session: 'Session 5 h', week: 'Semaine', weekM: m => 'Semaine · ' + m, sessM: m => '5 h · ' + m, dayM: m => 'Jour · ' + m,
+    month: 'Mois', monthM: m => 'Mois · ' + m, credW: 'Crédits · semaine', credM: 'Crédits · mois', period: n => 'Période de ' + n + ' j',
+    pct: p => p + ' %', noGlobalWeekly: 'Pas de limite hebdomadaire globale', noNumber: 'Pas encore de chiffre pour cette période.',
+    limitReached: 'Limite atteinte', valueFrom: a => "valeur d'" + a, unavailable: 'Indisponible',
+    r: { a: 'repart dans 2 h 10 (14:30)', b: 'repart dans 2 j (jeu. 13:00)', c: 'repart dans 48 min (13:08)', d: 'repart dans 3 j (ven. 12:35)',
+         e: 'repart dans 3 h 05 (15:25)', f: 'repart dans 4 j 2 h (sam. 14:20)', g: 'repart dans 3 j 4 h (ven. 16:30)', h: 'repart dans 12 j (dim. 8 nov.)',
+         i: 'repart dans 9 h 40 (22:00)', j: 'repart dans 19 j (dim. 15 nov.)', k: 'repart dans 39 min (12:59)', l: 'repart dans 1 h 20 (13:40)', m: 'repart dans 20 j (lun. 16 nov.)' },
+    ago3d: 'il y a 3 j', ago2h: 'il y a 2 h', ago2d: 'il y a 2 j',
+    shared: 'Crédits partagés entre les produits Grok', research: 'Research lab', codexWork: 'Codex travail',
+    expiredCodex: 'Ouvrez Codex pour rafraîchir la connexion.',
+    formatChanged: 'Le fournisseur a changé sa réponse : mettez Brimline à jour.',
+    notRead: 'Lecture coupée dans les Réglages',
+    pending: 'Pas encore lu', unavailableNote: 'Indisponible : trop de requêtes, nouvel essai à 12:35',
+    noSignIn: 'Aucune connexion de Codex trouvée sur ce Mac. Connectez-vous à Codex, puis actualisez.',
+    more: 'En savoir plus',
+    nr: {
+      consumer_plan: ['Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire.', 'Elles sont dans l\'app Gemini (Réglages, Limites d\'utilisation) et dans Gemini CLI (/stats model).'],
+      protected_sign_in: ['Cursor protège sa connexion sur ce Mac : Brimline ne la lit pas.', 'L\'usage est sur cursor.com, Dashboard, Usage.'],
+      no_cli: ['xAI ne publie les limites de Grok que pour le CLI Grok.', 'Sans lui, elles sont dans les réglages de votre compte Grok.'],
+      api_key: ['Codex est connecté par une clé d\'API : il n\'a pas de limite d\'abonnement à montrer.', null],
+      keychain_or_signed_out: ['Codex range sa connexion dans le Trousseau ou n\'est pas connecté : Brimline ne lit que ~/.codex/auth.json.', null],
+    },
+    hint: 'Brimline peut aussi lire ChatGPT (par Codex), Grok et Cursor, et vous dire où voir les limites de Gemini. Chacun reste coupé tant que vous ne l\'allumez pas.',
+    hide: 'Masquer', noAccountTitle: 'Aucun compte trouvé', noAccountBody: 'Connectez-vous à Claude Code, ou ajoutez son dossier dans les réglages.',
+    // Réglages
+    winTitle: 'Réglages de Brimline', tabs: ['Comptes', 'Général', 'Agents', 'À propos'],
+    intro: 'Brimline ne lit que les fournisseurs que vous allumez ici. Un fournisseur coupé n\'est jamais lu : aucun fichier ouvert, aucune requête.',
+    howTo: 'Comment associer un compte ?', whatRead: 'Ce qui est lu',
+    capOn: {
+      claude: 'Lit la connexion de Claude Code dans le Trousseau et demande l\'usage à api.anthropic.com.',
+      chatgpt: 'Lit ~/.codex/auth.json et demande l\'usage à chatgpt.com.',
+      gemini: 'Ne lit rien : Google ne publie pas ces limites. Brimline dit où les voir.',
+      grok: 'Lit ~/.grok/auth.json et demande l\'usage à grok.com.',
+      cursor: 'Lit la connexion de l\'app Cursor, en lecture seule, et demande l\'usage à cursor.com.' },
+    capOff: x => 'Coupé : Brimline ne lit rien. Allumé, il ' + x,
+    capOffVerb: {
+      grok: 'lit ~/.grok/auth.json et demande l\'usage à grok.com.',
+      cursor: 'lit la connexion de l\'app Cursor, en lecture seule, et demande l\'usage à cursor.com.' },
+    show: 'Afficher', label: 'Libellé personnalisé', dontRead: 'Ne pas lire ce compte',
+    dontReadHelp: 'Brimline garde ses derniers chiffres et n\'ouvre plus sa connexion.',
+    upToDate: 'À jour', expiredSt: 'Session expirée', notReadSt: 'Lecture coupée',
+    addClaude: 'Ajouter un dossier Claude Code…', addCodex: 'Ajouter un dossier Codex…', rescan: 'Rechercher à nouveau',
+    readAria: p => 'Lire ' + p,
+  },
+  en: {
+    refresh: 'Refresh', settings: 'Settings…', quit: 'Quit', updated: 'Updated at 12:18', via: 'via Codex',
+    session: '5 h session', week: 'Week', weekM: m => 'Week · ' + m, sessM: m => '5 h · ' + m, dayM: m => 'Day · ' + m,
+    month: 'Month', monthM: m => 'Month · ' + m, credW: 'Credits · week', credM: 'Credits · month', period: n => n + '-day period',
+    pct: p => p + '%', noGlobalWeekly: 'No weekly limit across all models', noNumber: 'No number yet for this period.',
+    limitReached: 'Limit reached', valueFrom: a => 'value from ' + a, unavailable: 'Unavailable',
+    r: { a: 'resets in 2 h 10 (14:30)', b: 'resets in 2 d (Thu 13:00)', c: 'resets in 48 min (13:08)', d: 'resets in 3 d (Fri 12:35)',
+         e: 'resets in 3 h 05 (15:25)', f: 'resets in 4 d 2 h (Sat 14:20)', g: 'resets in 3 d 4 h (Fri 16:30)', h: 'resets in 12 d (Sun Nov 8)',
+         i: 'resets in 9 h 40 (22:00)', j: 'resets in 19 d (Sun Nov 15)', k: 'resets in 39 min (12:59)', l: 'resets in 1 h 20 (13:40)', m: 'resets in 20 d (Mon Nov 16)' },
+    ago3d: '3 d ago', ago2h: '2 h ago', ago2d: '2 d ago',
+    shared: 'Credits shared across Grok products', research: 'Research lab', codexWork: 'Codex work',
+    expiredCodex: 'Open Codex to refresh the sign-in.',
+    formatChanged: 'The provider changed its response: update Brimline.',
+    notRead: 'Reading turned off in Settings',
+    pending: 'Not read yet', unavailableNote: 'Unavailable: too many requests, next try at 12:35',
+    noSignIn: 'No Codex sign-in found on this Mac. Sign in to Codex, then refresh.',
+    more: 'Learn more',
+    nr: {
+      consumer_plan: ['Google does not publish Gemini limits in a form Brimline can read.', 'They are in the Gemini app (Settings, Usage limits) and in Gemini CLI (/stats model).'],
+      protected_sign_in: ['Cursor protects its sign-in on this Mac: Brimline does not read it.', 'Usage is on cursor.com, Dashboard, Usage.'],
+      no_cli: ['xAI only publishes Grok limits for the Grok CLI.', 'Without it, they are in your Grok account settings.'],
+      api_key: ['Codex is signed in with an API key: there is no subscription limit to show.', null],
+      keychain_or_signed_out: ['Codex keeps its sign-in in the Keychain or is signed out: Brimline only reads ~/.codex/auth.json.', null],
+    },
+    hint: 'Brimline can also read ChatGPT (via Codex), Grok and Cursor, and tell you where to see Gemini limits. Each stays off until you turn it on.',
+    hide: 'Dismiss', noAccountTitle: 'No account found', noAccountBody: 'Sign in to Claude Code, or add its folder in the settings.',
+    winTitle: 'Brimline Settings', tabs: ['Accounts', 'General', 'Agents', 'About'],
+    intro: 'Brimline only reads the providers you turn on here. A provider that is off is never read: no file opened, no request sent.',
+    howTo: 'How do I link an account?', whatRead: 'What is read',
+    capOn: {
+      claude: 'Reads the Claude Code sign-in from the Keychain and asks api.anthropic.com for usage.',
+      chatgpt: 'Reads ~/.codex/auth.json and asks chatgpt.com for usage.',
+      gemini: 'Reads nothing: Google does not publish these limits. Brimline says where to see them.',
+      grok: 'Reads ~/.grok/auth.json and asks grok.com for usage.',
+      cursor: 'Reads the Cursor app sign-in, read only, and asks cursor.com for usage.' },
+    capOff: x => 'Off: Brimline reads nothing. When on, it ' + x,
+    capOffVerb: {
+      grok: 'reads ~/.grok/auth.json and asks grok.com for usage.',
+      cursor: 'reads the Cursor app sign-in, read only, and asks cursor.com for usage.' },
+    show: 'Show', label: 'Custom label', dontRead: "Don't read this account",
+    dontReadHelp: 'Brimline keeps its last numbers and no longer opens its sign-in.',
+    upToDate: 'Up to date', expiredSt: 'Session expired', notReadSt: 'Reading off',
+    addClaude: 'Add a Claude Code folder…', addCodex: 'Add a Codex folder…', rescan: 'Search again',
+    readAria: p => 'Read ' + p,
+  },
+};
+const PROV = { claude: 'Claude', chatgpt: 'ChatGPT', gemini: 'Gemini', grok: 'Grok', cursor: 'Cursor' };
+// Espace insécable entre un nombre et son unité (« 2 j », « 72 % ») : une unité ne passe jamais seule à la ligne.
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/(\d) (?=(h|j|d|min|%)(\b|$|[ ).,]))/g, '$1&nbsp;');
+
+// Icônes (dessins simples à la place des symboles SF nommés en commentaire).
+const ICON = {
+  clock: '<circle cx="6" cy="6" r="5" fill="none" stroke="currentColor"/><path d="M6 3v3l2 1.5" fill="none" stroke="currentColor"/>',            // clock
+  person: '<circle cx="5" cy="4" r="2.2" fill="none" stroke="currentColor"/><path d="M1 11c.5-2.5 2-3.6 4-3.6" fill="none" stroke="currentColor"/><path d="M9.5 6.5v2.6M9.5 10.6v.4" stroke="currentColor"/>', // person.crop.circle.badge.exclamationmark
+  info: '<circle cx="6" cy="6" r="5" fill="none" stroke="currentColor"/><path d="M6 5.2v3.6M6 3.4v.4" stroke="currentColor"/>',                   // info.circle
+  warn: '<path d="M6 1.2 11 10.5H1z" fill="none" stroke="currentColor" stroke-linejoin="round"/><path d="M6 4.6v3M6 8.8v.4" stroke="currentColor"/>', // exclamationmark.triangle
+  pause: '<circle cx="6" cy="6" r="5" fill="none" stroke="currentColor"/><path d="M4.7 4v4M7.3 4v4" stroke="currentColor"/>',                     // pause.circle
+  hour: '<path d="M3 1.5h6M3 10.5h6M3.5 1.5c0 3 5 3 5 4.5s-5 1.5-5 4.5M8.5 1.5c0 3-5 3-5 4.5s5 1.5 5 4.5" fill="none" stroke="currentColor"/>',    // hourglass
+  cloud: '<path d="M3.5 9.5h5.2a2 2 0 0 0 .2-4 3 3 0 0 0-5.7-.6A2.3 2.3 0 0 0 3.5 9.5z" fill="none" stroke="currentColor"/><path d="M2 2l8.5 9" stroke="currentColor"/>', // icloud.slash
+  question: '<circle cx="5" cy="4" r="2.2" fill="none" stroke="currentColor"/><path d="M1 11c.5-2.5 2-3.6 4-3.6" fill="none" stroke="currentColor"/><path d="M8.6 6.8c0-1.4 2-1.4 2 0 0 .8-1 .9-1 1.8M9.6 10.6v.4" fill="none" stroke="currentColor"/>', // person.crop.circle.badge.questionmark
+  sparkle: '<path d="M6 1.5 7 5l3.5 1L7 7l-1 3.5L5 7 1.5 6 5 5z" fill="none" stroke="currentColor" stroke-linejoin="round"/>',                  // sparkles
+};
+const icon = k => `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">${ICON[k]}</svg>`;
+// Glyphe gabarit actuel (DA.md), niveau 0 à 1.
+const glyph = (lv, size = 18) => {
+  let liquid = '';
+  if (lv != null && lv > 0) { const h = lv >= 1 ? 11 : Math.max(1, Math.min(10.5, Math.round(lv * 11 * 2) / 2)); liquid = `<rect x="7" y="${14.5 - h}" width="4" height="${h}"/>`; }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><rect x="3" y="1" width="12" height="1.5" rx="0.5"/><rect x="3" y="15.5" width="12" height="1.5" rx="0.5"/><rect x="4.5" y="2.5" width="1.5" height="13"/><rect x="12" y="2.5" width="1.5" height="13"/>${liquid}</svg>`;
+};
+const dot = p => `<i class="dot" style="--c:var(--p-${p})" aria-hidden="true"></i>`;
+
+function gauge(p, mode) {
+  if (mode === 'down') return '<div class="g down" aria-hidden="true"></div>';
+  const cls = mode === 'muted' ? 'mu' : p >= 90 ? 'crit' : p >= 70 ? 'warn' : '';
+  const fill = p > 0 ? `<i class="f ${cls}" style="width:${Math.min(100, p)}%"></i>` : '';
+  return `<div class="g" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}"><i class="tk" style="left:70%"></i><i class="tk" style="left:90%"></i>${fill}</div>`;
+}
+function limRow(t, x, muted) {
+  if (x.phrase) return `<div class="phrase">${esc(x.phrase)}</div>`;
+  if (x.none) return `<div class="lim${x.sub ? ' sub' : ''}"><div class="l"><span>${esc(x.label)}</span></div><div class="d">${esc(t.noNumber)}</div>${x.r ? `<div class="d">${esc(x.r)}</div>` : ''}</div>`;
+  const down = x.down;
+  const num = down ? t.unavailable : t.pct(x.p);
+  let det = [];
+  if (muted && x.age) det.push(t.valueFrom(x.age));
+  if (x.r) det.push(x.r);
+  let d = det.join(' · ');
+  if (x.p >= 100 && !muted && d) d = t.limitReached + ' · ' + d;
+  return `<div class="lim${x.sub ? ' sub' : ''}"><div class="l"><span>${esc(x.label)}</span><span class="n${muted ? ' m' : ''}">${esc(num)}</span></div>${gauge(x.p, down ? 'down' : muted ? 'muted' : '')}${d ? `<div class="d">${esc(d)}</div>` : ''}</div>`;
+}
+function card(t, a, withProv) {
+  let h = `<div class="card${a.hint ? ' hint' : ''}${a.empty ? ' empty' : ''}"${a.aria ? ` aria-label="${esc(a.aria)}"` : ''}>`;
+  if (withProv && a.prov) h += `<div class="prov">${dot(a.prov)}${esc(PROV[a.prov])}${a.prov === 'chatgpt' ? ' <span style="font-weight:400">' + esc(t.via) + '</span>' : ''}</div>`;
+  if (a.title) h += `<div class="t">${esc(a.title)}</div>`;
+  if (a.sub) h += `<div class="s">${esc(a.sub)}</div>`;
+  if (a.nr) {
+    const [first, rest] = t.nr[a.nr];
+    h += `<div class="note" style="margin-top:${a.title ? 8 : 0}px">${icon('info')}<span>${esc(first)}${rest ? `<br><span class="more">${esc(t.more)}</span>` : ''}</span></div>`;
+    if (rest && a.open) h = h.replace(`<span class="more">${esc(t.more)}</span>`, `<span class="more-text" style="display:block;margin-top:4px">${esc(rest)}</span>`);
+  }
+  if (a.body) h += `<div class="s" style="margin-top:4px">${esc(a.body)}</div>`;
+  if (a.rows && a.rows.length) h += `<div class="lims">${a.rows.map(x => x.text ? `<div class="phrase">${esc(x.text)}</div>` : limRow(t, x, a.muted)).join('')}</div>`;
+  if (a.note) h += `<div class="note">${icon(a.icon)}<span>${esc(a.note)}</span></div>`;
+  if (a.btns) h += `<div class="btns" style="justify-content:${a.empty ? 'center' : 'flex-start'}">${a.btns.map((b, i) => `<span class="${i === 0 ? 'acc' : ''}">${esc(b)}</span>`).join('')}</div>`;
+  return h + '</div>';
+}
+function panel(t, inner, opts = {}) {
+  return `<div class="mac-panel" role="group" aria-label="Brimline"><div class="ph">${glyph(opts.level ?? 0.91)}<span>Brimline</span>${opts.spin ? '<span class="spin" aria-label="…"></span>' : ''}</div><div class="cards">${inner}</div><div class="pf"><span class="upd">${esc(t.updated)}</span><span class="acc">${esc(t.refresh)}</span><span>${esc(t.settings)}</span><span>${esc(t.quit)}</span></div></div>`;
+}
+
+// Les comptes d'exemple (un par fournisseur au moins, et quelques états).
+function accounts(t) {
+  return {
+    you: { prov: 'claude', title: 'your@claude.ai', sub: 'Max', load: 58, rows: [
+      { label: t.session, p: 34, r: t.r.a }, { label: t.week, p: 58, r: t.r.b }, { label: t.weekM('Fable'), p: 12, sub: true }] },
+    lab: { prov: 'claude', title: t.research, sub: 'team@open.ai', load: 91, rows: [
+      { label: t.session, p: 91, r: t.r.c }, { text: t.noGlobalWeekly }, { label: t.weekM('Fable'), p: 74, r: t.r.d, sub: true }] },
+    plus: { prov: 'chatgpt', title: 'ChatGPT Plus', load: 71, rows: [
+      { label: t.session, p: 22, r: t.r.e }, { label: t.week, p: 71, r: t.r.f }, { label: t.sessM('codex-mini'), p: 9, r: t.r.l, sub: true }] },
+    work: { prov: 'chatgpt', title: t.codexWork, sub: 'ChatGPT Pro', muted: true, load: -1, rows: [
+      { label: t.week, p: 40, r: t.r.f, age: t.ago3d }], note: t.expiredCodex, icon: 'person' },
+    grok: { prov: 'grok', title: 'SuperGrok', sub: t.shared, load: 46, rows: [{ label: t.credW, p: 46, r: t.r.g }] },
+    cursor: { prov: 'cursor', title: 'Cursor Pro', load: 88, rows: [
+      { label: t.month, p: 63, r: t.r.h }, { label: t.monthM('Auto'), p: 41, sub: true }, { label: t.monthM('API'), p: 88, sub: true }] },
+    gemini: { prov: 'gemini', nr: 'consumer_plan', load: -2 },
+  };
+}
+const grp = (t, p) => `<div class="grp" role="heading" aria-level="3">${dot(p)}<span>${esc(PROV[p])}</span>${p === 'chatgpt' ? `<span class="via">${esc(t.via)}</span>` : ''}</div>`;
+
+const R = {
+  panelA(t) {
+    const A = accounts(t);
+    return panel(t, [grp(t, 'claude'), card(t, A.you), card(t, A.lab), grp(t, 'chatgpt'), card(t, A.plus), card(t, A.work),
+      grp(t, 'grok'), card(t, A.grok), grp(t, 'cursor'), card(t, A.cursor), grp(t, 'gemini'), card(t, A.gemini)].join(''));
+  },
+  panelB(t) {
+    const A = accounts(t);
+    const order = Object.values(A).sort((a, b) => b.load - a.load);
+    return panel(t, order.map(a => card(t, a, true)).join(''));
+  },
+  windows(t) {
+    const rows = c => `<div class="card">${c}</div>`;
+    const h = [
+      grp(t, 'claude'), rows(`<div class="lims" style="margin-top:0">${[{ label: t.session, p: 100, r: t.r.k }, { label: t.week, p: 58, r: t.r.b }, { label: t.weekM('Fable'), p: 12, sub: true }].map(x => limRow(t, x)).join('')}</div>`),
+      grp(t, 'chatgpt'), rows(`<div class="lims" style="margin-top:0">${[{ label: t.period(30), p: 27, r: t.r.j }, { label: t.sessM('codex-mini'), p: 9, r: t.r.l, sub: true }].map(x => limRow(t, x)).join('')}</div>`),
+      grp(t, 'gemini'), rows(`<div class="s" style="margin-top:0;margin-bottom:8px">P2b, Code Assist Standard</div><div class="lims" style="margin-top:0">${[{ label: t.dayM('gemini-2.5-pro'), p: 64, r: t.r.i }, { label: t.dayM('gemini-2.5-flash'), p: 5, sub: true }].map(x => limRow(t, x)).join('')}</div>`),
+      grp(t, 'grok'), rows(`<div class="lims" style="margin-top:0">${[{ label: t.credM, none: true, r: t.r.m }].map(x => limRow(t, x)).join('')}</div>`),
+      grp(t, 'cursor'), rows(`<div class="lims" style="margin-top:0">${[{ label: t.month, p: 63, r: t.r.h }, { label: t.monthM('Auto'), p: 41, sub: true }, { label: t.monthM('API'), p: 93, sub: true }].map(x => limRow(t, x)).join('')}</div>`),
+    ];
+    return panel(t, h.join(''), { level: 1 });
+  },
+  states(t) {
+    const st = (title, techn, a, opts) => `<div class="fig"><h3>${esc(title)} <code class="muted" style="font-weight:400">${esc(techn)}</code></h3>${panel(t, a, opts)}</div>`;
+    const A = accounts(t);
+    return [
+      st('Expiré, Codex', 'expired', grp(t, 'chatgpt') + card(t, A.work), { level: 0.4 }),
+      st('Format changé', 'format_changed', grp(t, 'cursor') + card(t, { prov: 'cursor', title: 'Cursor Pro', muted: true, rows: [{ label: t.month, p: 63, r: t.r.h, age: t.ago2h }, { label: t.monthM('API'), p: 88, sub: true, age: t.ago2h }], note: t.formatChanged, icon: 'warn' })),
+      st('Ne pas lire', 'settings.unreadAccounts', grp(t, 'claude') + card(t, { prov: 'claude', title: 'weekend@claude.ai', sub: 'Pro', muted: true, rows: [{ label: t.week, p: 37, age: t.ago2d }], note: t.notRead, icon: 'pause' })),
+      st('Sans limite lisible, Gemini', 'not_readable · consumer_plan', grp(t, 'gemini') + card(t, { nr: 'consumer_plan' })),
+      st('« En savoir plus » déplié', 'not_readable · consumer_plan', grp(t, 'gemini') + card(t, { nr: 'consumer_plan', open: true })),
+      st('Sans limite lisible, Cursor', 'not_readable · protected_sign_in', grp(t, 'cursor') + card(t, { nr: 'protected_sign_in' })),
+      st('Sans limite lisible, Grok', 'not_readable · no_cli', grp(t, 'grok') + card(t, { nr: 'no_cli' })),
+      st('Codex par clé d\'API', 'not_readable · api_key', grp(t, 'chatgpt') + card(t, { title: 'Codex', nr: 'api_key' })),
+      st('Codex au Trousseau ou déconnecté', 'not_readable · keychain_or_signed_out', grp(t, 'chatgpt') + card(t, { nr: 'keychain_or_signed_out' })),
+      st('Pas encore de chiffre, Grok', 'ok, pourcentage absent', grp(t, 'grok') + card(t, { title: 'SuperGrok', sub: t.shared, rows: [{ label: t.credW, none: true, r: t.r.g }] })),
+      st('Indisponible', 'unavailable', grp(t, 'grok') + card(t, { title: 'SuperGrok', rows: [{ label: t.credW, p: 46, down: true, r: t.r.g }], note: t.unavailableNote, icon: 'cloud' })),
+      st('Premier chargement', 'pending', grp(t, 'chatgpt') + card(t, { title: 'ChatGPT', note: t.pending, icon: 'hour' }), { spin: true, level: null }),
+      st('Allumé, aucune connexion', 'discover : aucun compte', grp(t, 'chatgpt') + card(t, { note: t.noSignIn, icon: 'question' }), { level: 0.34 }),
+      st('Après la mise à jour', 'un seul fournisseur allumé', grp(t, 'claude') + card(t, { title: 'your@claude.ai', sub: 'Max', rows: [{ label: t.session, p: 34, r: t.r.a }] }) + card(t, { hint: true, note: t.hint, icon: 'sparkle', btns: [t.settings, t.hide] }), { level: 0.34 }),
+      st('Aucun compte', 'vide', card(t, { empty: true, title: t.noAccountTitle, body: t.noAccountBody, btns: [t.settings] }), { level: null }),
+    ].join('');
+  },
+  menubar(t) {
+    const fr = t === T.fr;
+    const item = (lv, pct, cap, dim) => `<figure style="margin:0"><span class="menubar${dim ? ' dim' : ''}">${glyph(lv)}${pct != null ? `<span>${esc(t.pct(pct))}</span>` : ''}</span><figcaption class="cap">${esc(cap)}</figcaption></figure>`;
+    return item(0.91, 91, fr ? 'Suit Research lab (Claude, 91 %), le plus chargé parmi tous les fournisseurs. VoiceOver : « Brimline, 91 %, Claude, Research lab ».' : 'Follows Research lab (Claude, 91%), the most loaded across all providers. VoiceOver: "Brimline, 91%, Claude, Research lab".')
+      + item(0.88, 88, fr ? 'Si Claude est coupé : Cursor Pro, sous-limite API à 88 %.' : 'With Claude off: Cursor Pro, API sub-limit at 88%.')
+      + item(0.4, 40, fr ? 'Seul compte allumé expiré (Codex travail) : glyphe atténué, dernière valeur.' : 'Only enabled account expired (Codex work): dimmed glyph, last value.', true)
+      + item(null, null, fr ? 'Seulement des phrases (Gemini) : tube vide, rien d\'inventé.' : 'Only sentences (Gemini): empty tube, nothing made up.');
+  },
+  settings(t) {
+    const sec = (p, on, cap, body) => `<div><div class="sec-h">${dot(p)}<span class="name">${esc(PROV[p])}${p === 'chatgpt' ? ` <span class="via">${esc(t.via)}</span>` : ''}</span><span class="tg${on ? ' on' : ''}" role="switch" aria-checked="${on}" aria-label="${esc(t.readAria(PROV[p]))}"></span></div><div class="sec-cap">${esc(cap)}<span class="more">${esc(t.whatRead)}</span></div>${body ? `<div class="sec-body">${body}</div>` : ''}</div>`;
+    const acct = (title, sub, path, show, label, unread) => `<div class="acct"><div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}</div><div class="path">${esc(path)}</div></div><div class="show">${esc(t.show)} <span class="tg sm${show ? ' on' : ''}" role="switch" aria-checked="${show}"></span></div><div class="full"><div class="input${label ? ' v' : ''}">${esc(label || t.label)}</div><div class="chk"><span class="box2${unread ? ' on' : ''}" role="checkbox" aria-checked="${unread}">${unread ? '<svg viewBox="0 0 10 10" fill="none" stroke-width="1.8"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg>' : ''}</span><span>${esc(t.dontRead)}<span class="h">${esc(t.dontReadHelp)}</span></span></div></div></div>`;
+    const actions = (...b) => `<div class="actions">${b.map(x => `<span class="btn">${esc(x)}</span>`).join('')}</div>`;
+    const tabIcons = [
+      '<circle cx="7" cy="7" r="3" fill="none" stroke="currentColor"/><circle cx="14" cy="7" r="3" fill="none" stroke="currentColor"/><path d="M2 17c0-3 2.4-5 5-5s5 2 5 5M10 13c1-1 2.4-1.2 4-1.2 2.6 0 4.5 2 4.5 5" fill="none" stroke="currentColor"/>',
+      '<circle cx="10" cy="10" r="3" fill="none" stroke="currentColor"/><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-dasharray="3 2"/>',
+      '<rect x="2" y="4" width="16" height="12" rx="2" fill="none" stroke="currentColor"/><path d="M5 8l3 2-3 2M10 12h4" fill="none" stroke="currentColor"/>',
+      '<circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor"/><path d="M10 9v5M10 6v1" stroke="currentColor"/>'];
+    const tabs = t.tabs.map((x, i) => `<span class="${i === 0 ? 'on' : ''}"><svg viewBox="0 0 20 20" aria-hidden="true">${tabIcons[i]}</svg>${esc(x)}</span>`).join('');
+    return `<div class="mac-win" role="group" aria-label="${esc(t.winTitle)}"><div class="tb"><span class="lights"><i></i><i></i><i></i></span>${esc(t.winTitle)}</div><div class="tabs">${tabs}</div><div class="form">
+      <div class="box"><div class="s">${esc(t.intro)}</div><div class="more" style="font-size:13px;margin-top:6px">${esc(t.howTo)}</div></div>
+      ${sec('claude', true, t.capOn.claude, acct('your@claude.ai', `Claude · Max · ${t.upToDate}`, '~/.claude', true, '', false) + acct('team@open.ai', `Claude · Team · ${t.upToDate}`, '~/.claude-team', true, t.research, false) + actions(t.addClaude, t.rescan))}
+      ${sec('chatgpt', true, t.capOn.chatgpt, acct('ChatGPT Plus', `ChatGPT · Plus · ${t.upToDate}`, '~/.codex/auth.json', true, '', false) + acct(t.codexWork, `ChatGPT · Pro · ${t.notReadSt}`, '~/codex-travail/auth.json', true, t.codexWork, true) + actions(t.addCodex))}
+      ${sec('gemini', true, t.capOn.gemini, '')}
+      ${sec('grok', false, t.capOff(t.capOffVerb.grok), '')}
+      ${sec('cursor', false, t.capOff(t.capOffVerb.cursor), '')}
+    </div></div>`;
+  },
+  swatches() {
+    const L = { claude: ['#7445D6', '#B48CFF', 'violet'], chatgpt: ['#1C68C9', '#62AEF5', 'bleu'], gemini: ['#B03A86', '#F08BCB', 'magenta'], grok: ['#5E7A12', '#B3CC5C', 'olive'], cursor: ['#15191D', '#ECEFF2', 'encre (texte)'] };
+    return Object.entries(L).map(([p, [l, d, n]]) => `<div><b><i class="big" style="--c:var(--p-${p})"></i>${PROV[p]}</b><span class="muted">${n} · <code>provider${p[0].toUpperCase() + p.slice(1)}</code><br>clair <code>${l}</code> · sombre <code>${d}</code></span></div>`).join('');
+  },
+  strings() {
+    const f = T.fr, e = T.en;
+    const rows = [
+      ['Groupe ChatGPT', f.via, e.via], ['Sous-limite', f.sessM('codex-mini'), e.sessM('codex-mini')],
+      ['Jour', f.dayM('gemini-2.5-pro'), e.dayM('gemini-2.5-pro')], ['Mois', f.month + ', ' + f.monthM('Auto'), e.month + ', ' + e.monthM('Auto')],
+      ['Crédits Grok', f.credW + ', ' + f.credM, e.credW + ', ' + e.credM], ['Période', f.period(30), e.period(30)],
+      ['Remise à zéro au-delà de 6 jours', f.r.h, e.r.h], ['Grok sans chiffre', f.noNumber, e.noNumber], ['Grok, pool partagé', f.shared, e.shared],
+      ['expired (Codex)', f.expiredCodex, e.expiredCodex], ['format_changed', f.formatChanged, e.formatChanged],
+      ['Ne pas lire (panneau)', f.notRead, e.notRead], ['Allumé, aucune connexion', f.noSignIn, e.noSignIn],
+      ...Object.keys(f.nr).map(k => ['not_readable · ' + k, f.nr[k].filter(Boolean).join(' '), e.nr[k].filter(Boolean).join(' ')]),
+      ['Lien de la phrase', f.more, e.more], ['Carte « après la mise à jour »', f.hint, e.hint], ['Bouton', f.hide, e.hide],
+      ['Réglages : introduction', f.intro, e.intro], ['Lien', f.whatRead, e.whatRead],
+      ...Object.keys(f.capOn).map(k => ['Allumé · ' + PROV[k], f.capOn[k], e.capOn[k]]),
+      ...Object.keys(f.capOffVerb).map(k => ['Coupé · ' + PROV[k], f.capOff(f.capOffVerb[k]), e.capOff(e.capOffVerb[k])]),
+      ['Case', f.dontRead, e.dontRead], ['Aide de la case', f.dontReadHelp, e.dontReadHelp], ['Statut', f.notReadSt, e.notReadSt],
+      ['Bouton', f.addCodex, e.addCodex], ['VoiceOver de l\'interrupteur', f.readAria('Grok'), e.readAria('Grok')], ['Titre de la fenêtre', f.winTitle, e.winTitle],
+    ];
+    return '<thead><tr><th>Où</th><th>FR</th><th>EN</th></tr></thead><tbody>' + rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('') + '</tbody>';
+  },
+};
+
+function render() {
+  const k = (location.hash || '#fr-light').slice(1);
+  const [lang, theme] = /^(fr|en)-(light|dark)$/.test(k) ? k.split('-') : ['fr', 'light'];
+  document.body.className = theme;
+  const t = T[lang];
+  document.querySelectorAll('[data-render]').forEach(el => {
+    const html = R[el.dataset.render](t);
+    el.innerHTML = html;
+    if (['panelA', 'panelB', 'windows', 'states', 'settings', 'menubar'].includes(el.dataset.render)) el.lang = lang;
+  });
+  document.querySelectorAll('.switch a').forEach(a => a.setAttribute('aria-current', String(a.dataset.k === lang + '-' + theme)));
+}
+addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>

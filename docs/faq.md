@@ -2,7 +2,7 @@
 
 ## Which providers does Brimline support?
 
-Claude, through Claude Code sign-ins; ChatGPT, through the Codex sign-in (the 5 hour session and the week that Codex shows with `/status`); Grok, through the sign-in of the Grok CLI (the credits of the current period); and Gemini as a sentence only: Google publishes no Gemini limit Brimline can read, so the Gemini card says where the limits are instead of showing a number (see [providers](providers.md)); and Cursor, detected only for now: Brimline sees whether Cursor's sign-in is readable, and its limits come in a later version. ChatGPT, Gemini, Grok and Cursor are off until you turn them on. Each provider is a small plugin; the ones that read limits use the sign-in their official tool already keeps.
+Claude, through Claude Code sign-ins; ChatGPT, through the Codex sign-in (the 5 hour session and the week that Codex shows with `/status`); Grok, through the sign-in of the Grok CLI (the credits of the current period); and Gemini through Google's Antigravity CLI (Brimline launches its official command `agy --print /usage`, and says where the limits are when Antigravity is not installed; it is not launched until it has been tried on a real account, see [providers](providers.md)); and Cursor, detected only for now: Brimline sees whether Cursor's sign-in is readable, and its limits come in a later version. ChatGPT, Gemini, Grok and Cursor are off until you turn them on. Each provider is a small plugin; the ones that read limits use the sign-in their official tool already keeps.
 
 ## Where do the numbers come from?
 
@@ -29,7 +29,7 @@ Only the usage requests, sent to Anthropic with each account's own token and the
 In `~/Library/Application Support/Brimline/`:
 
 - `usage.json`: the last numbers of each account (percentages, reset times, status, the account's address and folder). No token, ever: the type that is written has no field for one, and a test checks the file.
-- `settings.json`: your preferences (refresh interval, hidden accounts, labels, folders added by hand, the providers that are on, the accounts marked "Do not read").
+- `settings.json`: your preferences (refresh interval, hidden accounts, labels, folders added by hand, the providers that are on, the accounts marked "Don't read this account").
 
 Both are readable by your user only.
 
