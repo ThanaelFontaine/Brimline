@@ -64,9 +64,9 @@ Brimline lit les limites de ChatGPT par Codex, l'outil officiel : il n'y a rien 
 
 Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de connexion, le jeton d'accès et l'identifiant du compte. Il ne renouvelle jamais la connexion : si Codex est resté fermé longtemps, la carte dit « Ouvrez Codex pour rafraîchir la connexion. » Un compte connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Détails dans [providers](providers.md) (en anglais).
 
-## Gemini
+## Gemini, par Antigravity
 
-Gemini n'a pas de compte à relier : Google ne publie aucune limite que Brimline puisse lire. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`) et, si `~/.gemini` existe sur votre Mac, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation, et `/stats model` dans Gemini CLI). Brimline vérifie seulement que le dossier existe et n'y ouvre rien. Détails dans [providers](providers.md) (en anglais).
+Gemini se lit par l'outil de Google, Antigravity CLI (`agy`), que vous installez et dans lequel vous vous connectez vous-même : Brimline ne vous connecte jamais. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`). Quand `agy` est dans `~/.local/bin/agy`, Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; l'outil de Google peut renouveler lui-même sa connexion) et montre l'usage de chaque modèle. Sans lui, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). **Gemini n'est pas encore lu et vérifié :** tant qu'un vrai Antigravity n'a pas été essayé, Brimline ne le lance pas. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
 
 ## Grok, par le CLI Grok
 

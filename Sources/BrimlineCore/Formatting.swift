@@ -180,6 +180,14 @@ public struct Strings: Sendable {
         t("Google does not publish Gemini limits in a form Brimline can read. They are in the Gemini app (Settings, Usage limits) and in Gemini CLI (/stats model).",
           "Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire. Elles sont dans l'app Gemini (Réglages, Limites d'utilisation) et dans Gemini CLI (/stats model).")
     }
+    /// Antigravity's sign-in has expired or was refused: Google's program renews it itself when it is opened.
+    public var geminiExpiredMessage: String {
+        t("Open Antigravity to refresh the sign-in.", "Ouvrez Antigravity pour rafraîchir la connexion.")
+    }
+    /// An Antigravity that Brimline has not verified (a new version, another build): nothing is launched.
+    public var geminiFormatChangedMessage: String {
+        t("Antigravity was updated: update Brimline.", "Antigravity a été mis à jour : mettez Brimline à jour.")
+    }
     /// Codex is signed in with an API key: there is no subscription limit.
     public var chatgptAPIKeyMessage: String {
         t("Codex is signed in with an API key: there is no subscription limit to show.",
@@ -235,6 +243,9 @@ public struct Strings: Sendable {
     }
     /// Under a Grok account's title when its credits are a pool shared by the Grok products.
     public var sharedPoolSubtitle: String { t("Credits shared across Grok products", "Crédits partagés entre les produits Grok") }
+    public var resetNotPublishedMessage: String {
+        t("Reset time not published by Google", "Remise à zéro non publiée par Google")
+    }
     public var sharedPoolMessage: String {
         t("This limit is a pool shared by the Grok products.", "Cette limite est un pool partagé entre les produits Grok.")
     }
@@ -258,6 +269,8 @@ public struct Strings: Sendable {
         if usage.status == .ok, let note = usage.note { return noteMessage(note) }
         switch (usage.account.provider, usage.status, usage.reason) {
         case (.gemini, .notReadable, .consumerPlan?): return geminiNotReadableMessage
+        case (.gemini, .expired, _): return geminiExpiredMessage
+        case (.gemini, .formatChanged, _): return geminiFormatChangedMessage
         case (.chatgpt, .notReadable, .apiKey?): return chatgptAPIKeyMessage
         case (.chatgpt, .notReadable, .keychainOrSignedOut?): return chatgptSignedOutMessage
         case (.chatgpt, .expired, _): return chatgptExpiredMessage
@@ -274,6 +287,7 @@ public struct Strings: Sendable {
         switch note {
         case .noFigureYet: return noFigureYetMessage
         case .sharedPool: return sharedPoolMessage
+        case .resetNotPublished: return resetNotPublishedMessage
         }
     }
 
@@ -333,8 +347,8 @@ public struct Strings: Sendable {
             verb = t("reads ~/.codex/auth.json and asks chatgpt.com for usage.",
                      "lit ~/.codex/auth.json et demande l'usage à chatgpt.com.")
         case .gemini:
-            verb = t("reads nothing: Google does not publish these limits. Brimline says where to see them.",
-                     "ne lit rien : Google ne publie pas ces limites. Brimline dit où les voir.")
+            verb = t("launches Antigravity (agy --print /usage) when it is installed and shows the limits it reports; without it, Brimline says where to see them.",
+                     "lance Antigravity (agy --print /usage) quand il est installé et montre les limites qu'il donne ; sans lui, Brimline dit où les voir.")
         case .grok:
             verb = t("reads ~/.grok/auth.json and asks cli-chat-proxy.grok.com for usage.",
                      "lit ~/.grok/auth.json et demande l'usage à cli-chat-proxy.grok.com.")
