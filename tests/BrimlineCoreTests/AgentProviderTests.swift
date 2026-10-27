@@ -5,16 +5,16 @@ import Testing
 @Suite("Agents: provider, windows, source")
 struct AgentProviderTests {
     static let now = date("2026-10-27T10:00:00Z")
-    static let homeURL = URL(fileURLWithPath: "/opt/home/you")
+    static let homeURL = URL(fileURLWithPath: "/opt/box/you")
     static let later = date("2026-10-28T10:00:00Z")
 
     static func other(_ provider: Provider, _ name: String) -> Account {
-        Account(provider: provider, source: "/opt/home/you/.\(name)/auth.json", email: nil, organization: nil,
+        Account(provider: provider, source: "/opt/box/you/.\(name)/auth.json", email: nil, organization: nil,
                 seatTier: nil, keychainService: nil)
     }
 
     static var snapshot: UsageSnapshot {
-        let claude = AccountUsage(account: account("you@example.com", dir: "/opt/home/you/.claude"), status: .ok,
+        let claude = AccountUsage(account: account("you@example.com", dir: "/opt/box/you/.claude"), status: .ok,
                                   limits: [UsageLimit(kind: .session, percent: 60, resetsAt: later),
                                            UsageLimit(kind: .weekly, percent: 40, resetsAt: later)], fetchedAt: now)
         let chatgpt = AccountUsage(account: other(.chatgpt, "codex"), status: .ok,
@@ -53,14 +53,14 @@ struct AgentProviderTests {
         let accounts = try #require(try data(try call(server(), "list_accounts"))["accounts"] as? [[String: Any]])
         #expect(accounts.map { $0["provider"] as? String } == ["claude", "chatgpt", "grok", "grok", "gemini"])
         #expect(accounts[0]["source"] as? String == "~/.claude")
-        #expect(accounts[0]["folder"] as? String == "/opt/home/you/.claude")
+        #expect(accounts[0]["folder"] as? String == "/opt/box/you/.claude")
         #expect(accounts[1]["source"] as? String == "~/.codex/auth.json")
         #expect(accounts[1]["folder"] is NSNull)
         #expect(accounts[4]["status"] as? String == "not_readable")
         #expect(accounts[4]["reason"] as? String == "consumer_plan")
         #expect(accounts[0]["reason"] is NSNull)
         for entry in accounts {
-            #expect(!(entry["source"] as? String ?? "").contains("/opt/home"))
+            #expect(!(entry["source"] as? String ?? "").contains("/opt/box"))
         }
     }
 
