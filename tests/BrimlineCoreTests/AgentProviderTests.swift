@@ -85,11 +85,11 @@ struct AgentProviderTests {
         var settings = BrimlineSettings()
         settings.enabledProviders = ["claude"]
         let empty = UsageSnapshot(generatedAt: Self.now, accounts: [Self.snapshot.accounts[0]])
-        let result = try data(try call(server(empty, settings: settings), "get_usage", #"{"provider":"cursor"}"#))
+        let result = try data(try call(server(empty, settings: settings), "get_usage", #"{"provider":"grok"}"#))
         #expect((result["accounts"] as? [Any])?.isEmpty == true)
         let note = result["note"] as? String
-        // No reader for Cursor in this version: the note must not promise a switch that is refused.
-        #expect(note?.contains("does not read cursor yet") == true)
+        // No reader for Grok in this version: the note must not promise a switch that is refused.
+        #expect(note?.contains("does not read grok yet") == true)
         #expect(note?.contains("providers enable") == false)
     }
 

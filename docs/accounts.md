@@ -64,6 +64,10 @@ Brimline reads the limits of ChatGPT through Codex, the official tool: there is 
 
 Brimline reads only `auth.json` in that folder, and of it the sign-in mode, the access token and the account id. It never renews the sign-in: if Codex has been closed for a long time the card says "Open Codex to refresh the sign-in." An account signed in with an API key has no subscription limit to show. Details in [providers](providers.md).
 
+## Cursor
+
+Cursor has no account to link, and Brimline does not read its limits yet. Turn Cursor on in **Settings, Accounts** (or `brimline providers enable cursor`) while Cursor is running, and Brimline looks at the one file where Cursor keeps its state to see whether its sign-in is readable. If Cursor protects it (or Cursor is closed), the card says so and points to cursor.com, Dashboard, Usage; if it is readable, the card says "Not read yet" until the next version reads the limits. Brimline never reads Cursor's Keychain item and opens that file read-only, only while Cursor is running. Details in [providers](providers.md).
+
 ## Gemini
 
 Gemini has no account to link: Google publishes no limit Brimline can read. Turn Gemini on in **Settings, Accounts** (or `brimline providers enable gemini`) and, if `~/.gemini` exists on your Mac, one card tells you where your limits are (the Gemini app, Settings, Usage limits, and `/stats model` in Gemini CLI). Brimline only checks that the folder exists and opens nothing in it. Details in [providers](providers.md).

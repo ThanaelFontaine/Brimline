@@ -54,6 +54,12 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 
 - Gemini is a sentence only: when Gemini is on, Brimline checks that `~/.gemini` exists and is a folder (one `stat`, following no file inside it). It opens and lists nothing in that folder (no `oauth_creds.json`, no settings), reads no Keychain item, makes no request and launches no program. A test with a bait token in the folder, made unreadable, checks that nothing is opened. When Gemini is off, the folder is not even checked.
 
+### What it looks at for Cursor
+
+- When Cursor is on, Brimline checks (one `lstat`, following no link) that `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb` is a regular file of yours. It looks at no other file of Cursor (no `storage.json`, no extension data, not the CLI's folder), reads no Keychain item (never "Cursor Safe Storage", the key that opens everything Cursor encrypts) and launches no program. No request is made in this version.
+- It opens that database only while Cursor is running: both `state.vscdb-wal` and `state.vscdb-shm` must already exist, as regular files of yours, otherwise nothing is opened (SQLite could create them, which would be a write in Cursor's folder). The opening is `SQLITE_OPEN_READONLY` on a `mode=ro` URI, refuses a link as the file, and is never `immutable=1` (it would ignore a token still in the log) nor a copy on disk. SQLite touches the shared-memory index `-shm` as any reader does; a test checks that the database and its log do not change by a byte or a date, and that no file appears.
+- One prepared query: `SELECT value FROM ItemTable WHERE key = ?` with the key `cursorAuth/accessToken`. The value is only classified (an encrypted value, a plain token shaped like a JWT, nothing, or something else) and dropped: it is not kept, not sent, not written in the cache, the settings, the answers to agents or the logs, and nothing in it is decoded in this version. A value that Cursor encrypted is never decrypted. Tests plant a fake token, a fake refresh token and a fake address in the database and look for them in every output (none).
+
 ### How it reads Claude Code sign-ins
 
 - Claude Code keeps each sign-in in the macOS Keychain, one generic password per configuration folder. Brimline computes the item's exact service name from the folder (`Claude Code-credentials`, or `Claude Code-credentials-` followed by the first 8 hex digits of the SHA-256 of the folder's absolute path) and asks for that one item. It never lists or searches the Keychain.

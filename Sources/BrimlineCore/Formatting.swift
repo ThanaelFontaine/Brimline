@@ -133,6 +133,11 @@ public struct Strings: Sendable {
     public var chatgptExpiredMessage: String {
         t("Open Codex to refresh the sign-in.", "Ouvrez Codex pour rafraîchir la connexion.")
     }
+    /// Cursor keeps its sign-in protected (or none is there): Brimline does not read it.
+    public var cursorProtectedMessage: String {
+        t("Cursor protects its sign-in on this Mac: Brimline does not read it. Usage is on cursor.com, Dashboard, Usage.",
+          "Cursor protège sa connexion sur ce Mac : Brimline ne la lit pas. L'usage est sur cursor.com, Dashboard, Usage.")
+    }
     public var chatgptReconnectMessage: String {
         t("ChatGPT refused Codex's sign-in: open Codex and sign in again.",
           "ChatGPT a refusé la connexion de Codex : ouvrez Codex et reconnectez-vous.")
@@ -175,6 +180,7 @@ public struct Strings: Sendable {
         case (.chatgpt, .notReadable, .keychainOrSignedOut?): return chatgptSignedOutMessage
         case (.chatgpt, .expired, _): return chatgptExpiredMessage
         case (.chatgpt, .reconnect, _): return chatgptReconnectMessage
+        case (.cursor, .notReadable, .protectedSignIn?): return cursorProtectedMessage
         default: return statusMessage(usage.status)
         }
     }

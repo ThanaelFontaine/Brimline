@@ -51,7 +51,7 @@ Requirements, what macOS shows, updating and uninstalling: [docs/install.md](doc
 
 1. **Link your accounts.** Each Claude account is a Claude Code configuration folder (`~/.claude`, `~/.claude-work`, ...), chosen with `CLAUDE_CONFIG_DIR` and signed in once with `/login`. Brimline finds them by itself. Step by step: [docs/accounts.md](docs/accounts.md).
 2. **Click the glyph in the menu bar.** Its level follows the account closest to a limit. Each card shows the address, then one gauge per limit with its percentage and its reset time ("resets in 2 h 10 (14:30)").
-3. **Settings** (from the window, or by opening the app again): hide an account, give it a label, add a folder, change the refresh interval (2 to 15 minutes), show the percentage next to the glyph, open at login. There is also one switch per provider and a "Do not read" box per account: Claude is on; every other provider is **off until you turn it on** (Gemini today shows a sentence only, see [providers](docs/providers.md)), and a provider that is off is not touched at all (`brimline providers` does the same from the terminal).
+3. **Settings** (from the window, or by opening the app again): hide an account, give it a label, add a folder, change the refresh interval (2 to 15 minutes), show the percentage next to the glyph, open at login. There is also one switch per provider and a "Do not read" box per account: Claude is on; every other provider is **off until you turn it on** (Gemini today shows a sentence only and Cursor is only detected, see [providers](docs/providers.md)), and a provider that is off is not touched at all (`brimline providers` does the same from the terminal).
 
 Every state is said in words, never by color alone:
 
