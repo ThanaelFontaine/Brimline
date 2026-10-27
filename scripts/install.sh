@@ -65,9 +65,12 @@ if [ -L "$OLD_LINK" ]; then
 fi
 
 # The old app opened at login: turn that off (reversible, the file stays) and carry the wish over.
+# Only the first time: once the old agent is disabled, a later run must not switch the wish back on.
 if [ -f "$OLD_AGENT" ]; then
+  if ! launchctl print-disabled "gui/$(id -u)" 2>/dev/null | grep -q "\"$OLD_LABEL\" => \(disabled\|true\)"; then
+    LOGIN=1
+  fi
   launchctl disable "gui/$(id -u)/$OLD_LABEL" 2>/dev/null || true
-  LOGIN=1
 fi
 
 if [ "$LOGIN" = 1 ]; then
@@ -107,7 +110,7 @@ if [ -e "$OLD_APP" ] || [ -e "$OLD_AGENT" ] || [ -e "$OLD_SUPPORT" ]; then
   cat <<'NOTE'
 
 Sightglass is now Brimline. The old app, its LaunchAgent and its folder are still on disk
-(the settings and the cache were copied, nothing was deleted). Once Brimline shows your accounts,
+(the settings and the cache are copied at the first launch of Brimline, nothing is deleted). Once Brimline shows your accounts,
 this moves them to the Trash (nothing is lost until you empty it):
 
   launchctl bootout gui/$(id -u)/eu.thanaelfontaine.sightglass 2>/dev/null; mv ~/Library/LaunchAgents/eu.thanaelfontaine.sightglass.plist ~/.Trash/

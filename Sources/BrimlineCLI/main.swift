@@ -19,11 +19,11 @@ Brimline \(version): your AI subscription limits, account by account.
 
 Usage:
   brimline status [--json] [--live]   Usage of each account. Reads the cache written by the
-                                        Brimline app; --live reads the Keychain and asks the
-                                        provider now (macOS may ask to allow the Keychain read).
+                                      Brimline app; --live reads the Keychain and asks the
+                                      provider now (macOS may ask to allow the Keychain read).
   brimline accounts [--json]          Accounts found on this Mac.
   brimline mcp                        Local MCP server over stdio (list_accounts, get_usage,
-                                        best_account).
+                                      best_account).
   brimline --version                  Print the version.
 
 Documentation: \(Links.agentsDoc.absoluteString)

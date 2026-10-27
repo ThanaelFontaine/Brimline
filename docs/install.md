@@ -45,15 +45,15 @@ scripts/install.sh
 
 ## Coming from Sightglass
 
-Brimline is the new name of Sightglass (formerly Sightglass; the reason is in the [changelog](../CHANGELOG.md)). If the old app is installed, `scripts/install.sh` takes care of the move:
+Brimline is the new name of Sightglass (the reason is in the [changelog](../CHANGELOG.md)). If the old app is installed, `scripts/install.sh` takes care of the move:
 
-- it quits the old app and leaves it on disk (formerly Sightglass, in `~/Applications`);
-- it removes the old command link `~/.local/bin/sightglass`, only when it points into the old app (formerly Sightglass);
-- it turns off the old **Open at login** LaunchAgent without deleting its file, and writes the Brimline one in its place (`eu.thanaelfontaine.sightglass`, formerly Sightglass);
-- at its first launch, Brimline copies your settings and your last numbers from `~/Library/Application Support/Sightglass/` (formerly Sightglass), two files only, never over a file Brimline already has, and leaves the old folder as it was;
+- it quits the old app and leaves it on disk (in `~/Applications`);
+- it removes the old command link `~/.local/bin/sightglass`, only when it points into the old app;
+- it turns off the old **Open at login** LaunchAgent without deleting its file, and writes the Brimline one in its place (the old one is `eu.thanaelfontaine.sightglass`);
+- at its first launch, Brimline copies your settings and your last numbers from `~/Library/Application Support/Sightglass/`, two files only, never over a file Brimline already has, and leaves the old folder as it was;
 - it prints the commands that move the old app, LaunchAgent and folder to the Trash. It does not run them: do it once Brimline shows your accounts.
 
-Your agents need one change: the command and the MCP server are called `brimline` now. If you registered the server under the old name, replace it (`claude mcp remove sightglass`, then the command of [agents.md](agents.md)); the old name is formerly Sightglass.
+Your agents need one change: the command and the MCP server are called `brimline` now. If you registered the server under the old name, replace it (`claude mcp remove sightglass`, then the command of [agents.md](agents.md)).
 
 ## Uninstall
 
@@ -74,8 +74,8 @@ Brimline never wrote to your Keychain or to your Claude Code folders, so there i
 ```bash
 swift build                     # debug build
 swift test                      # tests (Swift Testing)
-swift run brimline status     # the command, from the sources
-swift run brimline-snapshots  # renders docs/images/ from fictitious data
+swift run brimline status       # the command, from the sources
+swift run brimline-snapshots    # renders docs/images/ from fictitious data
 python3 scripts/check_text.py   # text rules
 ```
 
