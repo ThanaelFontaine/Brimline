@@ -45,6 +45,27 @@ Dans **Réglages, Comptes**, chaque fournisseur a son bloc : un interrupteur, un
 
 ![Réglages des comptes](images/settings-accounts-fr-light.png)
 
+## La couleur d'un compte
+
+Chaque compte a une couleur : sa pastille dans la fenêtre de la barre des menus, et sa part de la jauge dans la barre des menus. Brimline en donne une la première fois qu'il voit un compte et la garde, si bien qu'elle ne change pas quand un autre compte apparaît : le premier compte d'un fournisseur prend la couleur de ce fournisseur (celle de Claude est le violet), les suivants la première couleur libre de la palette (sapin, or, marine, cacao, lilas). Les jauges de limites de la fenêtre gardent leurs couleurs (sarcelle, ambre, rouge) : là, la couleur dit à quel point une limite est pleine, pas à qui elle est.
+
+Dans **Réglages, Comptes**, la ligne **Couleur** sous chaque compte permet de la changer :
+
+- **les dix couleurs de la palette** : violet, bleu, magenta, olive, encre, sapin, or, marine, cacao et lilas. Chacune a une valeur pour l'apparence claire et une pour la sombre, de sorte qu'elle reste lisible sur les deux ;
+- **Autre couleur…** ouvre le sélecteur de couleur du système (sans opacité). La couleur choisie est gardée en six chiffres (`RRGGBB`, sRVB) et reste la même en clair et en sombre ;
+- **Revenir au défaut** redonne la couleur que Brimline donnerait à ce compte maintenant. Le bouton est grisé, avec « Couleur par défaut » à côté, quand le compte l'a déjà.
+
+Brimline prévient, et ne refuse jamais :
+
+- **proche de la couleur d'un autre compte** : les deux comptes sont désignés, et leurs parts se distinguent mal dans la jauge (une distance CIEDE2000 sous 10, en clair ou en sombre). Les comptes masqués et ceux d'un fournisseur coupé ne sont pas comparés ;
+- **peu visible** : une couleur libre trop pâle ou trop sombre pour la piste vide d'une jauge (contraste sous 3:1, la limite WCAG 2.2 pour les éléments graphiques), en mode clair ou sombre, avec son rapport écrit. Les dix couleurs de la palette atteignent toutes 3:1.
+
+La couleur n'est jamais le seul signal : chaque compte est nommé à côté de sa pastille. Au clavier, chaque couleur est un bouton atteint avec Tab (avec l'accès complet au clavier activé dans Réglages Système) et choisi avec la barre d'espace. VoiceOver lit un groupe par compte (« Couleur de Asso ») avec un choix nommé par couleur.
+
+![Les couleurs dans les réglages](images/settings-colors-fr-light.png)
+
+Le choix est enregistré dans `settings.json` (`accountColors`, par compte) et relu à chaque lancement. Une valeur qui n'est ni un emplacement de la palette ni six chiffres hexadécimaux est ignorée, et le compte reçoit sa couleur par défaut.
+
 ## Ce que Brimline lit, et ce qu'il ne fait jamais
 
 Pour chaque dossier, Brimline lit :

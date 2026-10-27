@@ -513,6 +513,43 @@ public struct Strings: Sendable {
         }
         return parts.joined(separator: " ")
     }
+    // MARK: Colors of the accounts (QUOTA-72)
+
+    public var colorsIntro: String {
+        t("The color of an account is used for its share of the gauge in the menu bar and for its dot in the panel.",
+          "La couleur d'un compte sert à sa part dans la jauge de la barre des menus et à sa pastille dans le panneau.")
+    }
+    public var colorRow: String { t("Color", "Couleur") }
+    public var otherColor: String { t("Other color…", "Autre couleur…") }
+    public var customColorName: String { t("Custom color", "Couleur libre") }
+    public var resetColor: String { t("Reset to default", "Revenir au défaut") }
+    public var defaultColor: String { t("Default color", "Couleur par défaut") }
+    /// The name of a color, for VoiceOver and the tooltip of its dot.
+    public func colorName(_ color: AccountColor) -> String {
+        switch color {
+        case .palette(let slot):
+            let entries = AccountPalette.entries
+            let entry = entries[min(max(slot, 0), entries.count - 1)]
+            return t(entry.nameEN, entry.nameFR)
+        case .custom: return customColorName
+        }
+    }
+    /// The name of the group of choices of one account ("Color of Claude Agency").
+    public func colorGroup(_ account: String) -> String { t("Color of \(account)", "Couleur de \(account)") }
+    /// The sentence under a color that is not a good choice. `account` names the other account of a close pair.
+    public func colorWarning(_ warning: ColorWarning, account: (String) -> String) -> String {
+        switch warning {
+        case .close(let id):
+            let name = account(id)
+            return t("Close to \(name)'s color: their two shares are hard to tell apart in the gauge.",
+                     "Proche de la couleur de \(name) : leurs deux parts se distinguent mal dans la jauge.")
+        case .lowContrast(let dark, let ratio):
+            let number = String(format: "%.1f", ratio)
+            let fr = number.replacingOccurrences(of: ".", with: ",")
+            return t("Hard to see in \(dark ? "dark" : "light") mode: \(number):1 contrast on the gauge, 3:1 recommended.",
+                     "Peu visible en mode \(dark ? "sombre" : "clair") : contraste de \(fr):1 sur la jauge, 3:1 conseillé.")
+        }
+    }
     public func reason(_ detail: String?) -> String? {
         guard let detail else { return nil }
         switch detail {
