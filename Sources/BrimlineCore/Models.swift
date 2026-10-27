@@ -124,6 +124,9 @@ public enum AccountStatus: String, Codable, Sendable, CaseIterable {
 public enum AccountNote: String, Codable, Sendable {
     /// The provider answered but has no percentage yet for this period (Grok, early in a period): never a 0 %.
     case noFigureYet = "no_figure_yet"
+    /// The provider answered with no credit limit at all for this account (Grok, a free account: no percentage, no
+    /// allowance). It is what was seen, said as such: no number is promised and none is invented.
+    case noCreditLimit = "no_credit_limit"
     /// The limit is a pool shared by several products of the provider (Grok's unified billing).
     case sharedPool = "shared_pool"
     /// Some limits have no reset time because the provider's text gives none (Gemini, through Antigravity).

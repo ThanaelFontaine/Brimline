@@ -70,7 +70,10 @@ public struct GrokReader: ProviderReader {
                 let shape = ResponseShape.fingerprint(of: data)
                 do {
                     let reading = try GrokUsageParser.parse(data)
-                    if reading.limits.isEmpty { return .annotated([], shape: shape, note: .noFigureYet) }
+                    if reading.limits.isEmpty {
+                        // A cap with no use yet has its number to come; no cap at all is said as it was seen.
+                        return .annotated([], shape: shape, note: reading.hasCap ? .noFigureYet : .noCreditLimit)
+                    }
                     if reading.sharedPool { return .annotated(reading.limits, shape: shape, note: .sharedPool) }
                     return .limits(reading.limits, shape: shape)
                 } catch {
