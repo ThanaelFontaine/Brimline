@@ -1,5 +1,6 @@
 // render.swift : produit les images de la DA de Brimline (icône, favicons, og, aperçu).
-// Compilation : swiftc -O -o render BrimlineGlyph.swift src/main.swift
+// Compilation : ce fichier sert de main.swift, avec BrimlineGlyph.swift et les sources de BrimlineCore
+// dans un seul module (sans la ligne `import BrimlineCore`) : swiftc -O -swift-version 6 -enable-bare-slash-regex
 // Usage : ./render <dossier da>
 
 import AppKit

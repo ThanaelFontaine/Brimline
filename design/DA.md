@@ -178,4 +178,4 @@ BrimlineGlyph.image(level: last, dimmed: true)   // expiré ou indisponible
 | `tokens.json`, `tokens.css` | jetons (couleurs avec contrastes, rayons, espacements, polices) |
 | `BrimlineGlyph.swift` | glyphe gabarit, `NSImage` pour un niveau donné |
 | `BrimlineTheme.swift` | couleurs dynamiques, seuils, mesures, vue `SGGauge` (vérifiés par `swiftc -typecheck`, macOS 14, Swift 6) |
-| `src/main.swift` | générateur des PNG : `swiftc -O -o src/render BrimlineGlyph.swift src/main.swift && src/render .` (binaire à ne pas versionner) |
+| `src/render-icons.swift` | générateur des PNG : à compiler comme `main.swift` avec `BrimlineGlyph.swift` et les sources de `BrimlineCore` dans un seul module (sans la ligne `import BrimlineCore`), puis `render <dossier da>` (binaire à ne pas versionner) |
