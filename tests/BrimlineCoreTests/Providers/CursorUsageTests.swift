@@ -198,6 +198,19 @@ struct CursorUsageTests {
         #expect(note == .noLimit)
     }
 
+    @Test("A plan whose cap is zero or negative gives no figure: never a division by zero, never a 100 % or a 0 % made up")
+    func zeroCap() async throws {
+        for plan in [#"{"used":0,"limit":0}"#, #"{"used":500,"limit":0}"#, #"{"used":500,"limit":-100}"#,
+                     #"{"used":500}"#, #"{"limit":2000}"#, #"{"used":null,"limit":null}"#] {
+            let body = #"{"billingCycleStart":"2026-10-14T09:15:10.000Z","billingCycleEnd":"2026-11-14T09:15:10.000Z","membershipType":"pro","isUnlimited":false,"individualUsage":{"plan":\#(plan)}}"#
+            guard case .annotated(let got, _, let note) = try await read(http: CursorFakeHTTP(body: Data(body.utf8))) else {
+                Issue.record("expected 'no number yet' for \(plan)")
+                continue
+            }
+            #expect(got.isEmpty && note == .noFigureYet, "\(plan)")
+        }
+    }
+
     @Test("A plan with no number yet is 'no number yet', never a 0 %")
     func fresh() async throws {
         guard case .annotated(let got, _, let note) = try await read(http: try .answering("fresh")) else {
