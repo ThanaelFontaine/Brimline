@@ -258,30 +258,9 @@ case "status":
             hintIfEmpty(providerFilter, settings: settings)
         }
         for u in visible {
-            let title = settings.label(for: u.account.id) ?? u.account.email ?? u.account.folderName
-            print(u.account.provider == .claude ? title : "\(u.account.provider.displayName) · \(title)")
-            if let message = strings.message(for: u), u.status != .ok || u.note != nil {
-                print("  \(message)")
-            }
-            var rows: [(String, String, String)] = []
-            for limit in u.limits {
-                let percent = strings.percentText(limit.effectivePercent(at: now))
-                let reset = limit.resetsAt.map { time.reset($0, now: now) } ?? ""
-                rows.append((strings.limitName(limit), percent, reset))
-            }
-            if u.hasNoGlobalWeeklyLimit { rows.insert((strings.noGlobalWeekly, "", ""), at: min(1, rows.count)) }
-            let width = rows.filter { !$0.1.isEmpty }.map(\.0.count).max() ?? 0
-            for (name, percent, reset) in rows {
-                if percent.isEmpty {
-                    print("  \(name)")
-                } else {
-                    let padded = name.padding(toLength: width, withPad: " ", startingAt: 0)
-                    let pct = String(repeating: " ", count: max(0, 5 - percent.count)) + percent
-                    print("  \(padded)  \(pct)   \(reset)")
-                }
-            }
-            if let age = u.age(at: now), u.status == .ok, age > TimeInterval(settings.refreshMinutes * 120 + 60) {
-                print("  " + strings.dataAge(time.age(age)))
+            for line in StatusText.lines(for: u, settings: settings, strings: strings, time: time, now: now,
+                                         refreshMinutes: settings.refreshMinutes) {
+                print(line)
             }
         }
         let age = max(0, now.timeIntervalSince(snapshot.generatedAt))
