@@ -2,27 +2,43 @@
 
 ## Which providers does Brimline support?
 
-Claude, through Claude Code sign-ins; ChatGPT, through the Codex sign-in (the 5 hour session and the week that Codex shows with `/status`); Grok, through the sign-in of the Grok CLI (the credits of the current period); and Gemini through Google's Antigravity CLI (Brimline launches its official command `agy --print /usage`, and says where the limits are when Antigravity is not installed; only its build verified on 27/10/2026, Antigravity CLI 1.4.8, is launched, see [providers](providers.md)); and Cursor, through the sign-in its app keeps (the cycle of your plan, when Cursor stores that sign-in in plain text; when it protects it, Brimline says where to see the usage). ChatGPT, Gemini, Grok and Cursor are off until you turn them on. Each provider is a small plugin; the ones that read limits use the sign-in their official tool already keeps.
+Five, each tried on a real account on 27 October 2026, **on the plan named in the [table of the README](../README.md#providers) and nowhere else**:
+
+- **Claude**, through the Claude Code sign-ins (the Keychain).
+- **ChatGPT**, through Codex: the sign-in Codex keeps in `~/.codex/auth.json` (the 5 hour session and the week that Codex shows with `/status`). Tried on ChatGPT Free.
+- **Gemini**, through Google's Antigravity CLI: Brimline launches its official command `agy --print /usage` and shows each group of models over 5 hours and over the week (it says where the limits are when Antigravity is not installed). Only the build verified on 27/10/2026, Antigravity CLI 1.4.8, is launched. Tried on a Google account (`agy` does not say the plan).
+- **Grok**, through the sign-in of the Grok CLI. Tried on a free account, for which xAI returns **no credit limit**: Brimline says so and shows no percentage. What a paid account gives was not tried.
+- **Cursor**, through the sign-in its app keeps (the cycle of your plan, when Cursor stores that sign-in in plain text; when it protects it, Brimline says where to see the usage). Tried on Cursor Free.
+
+ChatGPT, Gemini, Grok and Cursor are off until you turn them on. What is read for each, and what each try showed: [providers](providers.md).
+
+## Why does Grok show no percentage?
+
+Because xAI sent none. On the free account Brimline was tried with, the answer of the Grok CLI's own billing request has a weekly period and zero amounts, but no credit limit and no percentage: Brimline shows "xAI returns no credit limit for this account." rather than a 0 % that would be invented. There is no xAI page or command to compare with (`grok usage` only gives the tokens of one session). What a paid account (SuperGrok, X Premium Plus) answers was not tried, so nothing is claimed for it.
+
+## What does "read and checked" mean, and who checked?
+
+That the real answer of a real account was read on 27 October 2026, that its shape matches the test data, that ten reads in a row agreed, that nothing was written or renewed at the provider and that turning the provider off stopped every read. It is said per provider and per plan, never for a plan that was not tried. Two comparisons with the provider's own usage page are still pending (ChatGPT through Codex, and Cursor), and Gemini's percentage was seen at 100 % remaining only: [providers](providers.md) says so in each section.
 
 ## Where do the numbers come from?
 
-From the endpoint Claude Code itself uses to show your limits: `https://api.anthropic.com/api/oauth/usage`, asked with each account's own sign-in. As far as we know (October 2026), Anthropic does not document it. It can change without notice. When its answer stops making sense, Brimline shows the account as **Unavailable** ("answer not understood") instead of a wrong number.
+From the same place the official tool gets them. For Claude, the endpoint Claude Code itself uses to show your limits, `https://api.anthropic.com/api/oauth/usage`, asked with each account's own sign-in. For ChatGPT, Grok and Cursor, one request to the address their own tool or dashboard uses; for Gemini, the text of Google's command `agy --print /usage`. As far as we know (October 2026), none of these requests is documented by its provider (Google documents the `/usage` command, not the format of its text), so they can change without notice. When an answer stops making sense, Brimline shows the account as **Unavailable** ("answer not understood") or as a provider that "changed its answer", instead of a wrong number. The exact addresses are in [providers](providers.md) and [SECURITY.md](../SECURITY.md).
 
 ## Are the percentages what is used, or what is left?
 
-What is used, as Anthropic reports it, so you can compare with what Claude shows. The gauge fills up toward the limit; the empty part is what you have left. Each gauge also writes its percentage in text: color is never the only signal.
+What is used, as the provider reports it, so you can compare with what its own tool shows. (Antigravity prints what *remains*, "Remaining 82 %"; Brimline shows what is used, 18 %, so that every gauge fills the same way.) The gauge fills up toward the limit; the empty part is what you have left. Each gauge also writes its percentage in text: color is never the only signal.
 
 ## Why does an account say "Session expired"?
 
-Claude Code's access tokens last a limited time and Claude Code renews them when you use it. Brimline never renews a token (renewing can rotate the sign-in and log the official tool out), so an account you have not used for a while shows "Session expired" with its last numbers in grey. Open Claude Code with that account and it is back at the next refresh.
+Claude Code's access tokens last a limited time and Claude Code renews them when you use it. Brimline never renews a token (renewing can rotate the sign-in and log the official tool out), so an account you have not used for a while shows "Session expired" with its last numbers in grey. Open Claude Code with that account and it is back at the next refresh. The same goes for the others: "Open Codex to refresh the sign-in.", "Open the Grok CLI to refresh the sign-in.", "Open Cursor to refresh the sign-in.", "Open Antigravity to refresh the sign-in.".
 
 ## Does Brimline slow down or rate limit my accounts?
 
-It asks once per account every 5 minutes by default (2, 5, 10 or 15 in the settings), plus when you click Refresh. After a failure it waits longer each time (2, 4, 8, 16, 32 then 60 minutes), and it follows Anthropic's `Retry-After` when there is one.
+It asks once per account every 5 minutes by default (2, 5, 10 or 15 in the settings), plus when you click Refresh. Gemini is slower on purpose: launching Antigravity's command at most once every 15 minutes, whatever the interval. After a failure it waits longer each time (2, 4, 8, 16, 32 then 60 minutes), and it follows Anthropic's `Retry-After` when there is one.
 
 ## Does anything leave my Mac?
 
-Only the usage requests, sent to Anthropic with each account's own token and the header `User-Agent: Brimline/<version>`. There is no Brimline server, no telemetry, no analytics. The cache, the settings and the command's output stay on your Mac and never contain a token.
+Only the usage requests, sent to each provider you turned on with that account's own token and the header `User-Agent: Brimline/<version>`. For Cursor the request carries the session cookie of cursor.com, which is worth a full web session: it goes to that one address and nowhere else (see [SECURITY.md](../SECURITY.md)). For Gemini, Brimline sends nothing itself: it launches Google's program, which does what it does with Google. There is no Brimline server, no telemetry, no analytics. The cache, the settings and the command's output stay on your Mac and never contain a token.
 
 ## What exactly is stored on disk?
 
@@ -56,6 +72,10 @@ Distributing a Mac app outside the App Store without warnings needs an Apple Dev
 ## Is Brimline's code public?
 
 Its source code is public, under the [PolyForm Shield 1.0.0](../LICENSE) license: you can use it, modify it and share it, at work too; you cannot offer a product that competes with it. It is not open source in the OSI sense.
+
+## Is this allowed by OpenAI, Google, xAI and Cursor?
+
+We have not established it, and we do not claim it. Each provider has its own terms, and OpenAI's page on Codex, for one, does not allow the use of `codex app-server` for a commercial service (which is why Brimline does not use it). Brimline reads your own sign-in on your own Mac, read only, and says who it is, but read the terms of your plan and judge for yourself. The risk, if any, is on the account Brimline reads.
 
 ## Is this allowed by Anthropic?
 

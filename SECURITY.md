@@ -1,6 +1,6 @@
 # Security policy
 
-Brimline reads the sign-in tokens of your AI tools (for Claude Code, from the macOS Keychain). Security reports are taken seriously and handled privately.
+Brimline reads the sign-in tokens of your AI tools (for Claude Code, from the macOS Keychain; for Codex, Grok and Cursor, from a file each of them keeps) and, for Gemini, launches Google's own command instead of reading a token. Security reports are taken seriously and handled privately.
 
 ## Reporting a vulnerability
 
@@ -24,11 +24,25 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 
 ### What it promises
 
-- **Read only.** Tokens are read, never refreshed, rewritten, moved or copied to another store. Refreshing a token can rotate it, which may sign the official tool out: Brimline never does it.
+- **Read only.** Tokens are read, never refreshed, rewritten, moved or copied to another store. Refreshing a token can rotate it, which may sign the official tool out: Brimline never does it. **The one exception is Gemini, and it is said in so many words below:** Brimline launches Google's command `agy --print /usage`, and Google's program may then renew its own sign-in; Brimline itself reads and writes nothing of it.
 - **Tokens stay in memory**, only for the request that needs them. They are never written to a log, a cache file, the JSON output or the MCP answers.
-- **Only the providers' own hosts** are contacted, over HTTPS, and only with the account's own token. Each reader has a closed list of URLs, compared whole (host, path and query); anything else is refused before the request leaves, redirections are refused, and no cookie is kept. None is sent either, except the session cookie of cursor.com that the Cursor reader needs (see the Cursor section below).
+- **Only the providers' own hosts** are contacted, over HTTPS, and only with the account's own token (for Gemini, Brimline contacts no host: it launches Google's program, which does what it does). Each reader has a closed list of URLs, compared whole (host, path and query); anything else is refused before the request leaves, redirections are refused, and no cookie is kept. None is sent either, except the session cookie of cursor.com that the Cursor reader needs (see the Cursor section below).
 - **A provider is read only if you turned it on.** Claude is on, as it always was; every other provider starts off (see below).
 - **The local MCP server and command expose usage numbers only**, never a token or a cookie.
+
+### Every place Brimline looks at, in one table
+
+Detail and reasons are in the sections below; this table is what the code does, and a test or a check covers each row (`ConsentTests`, `SecretFileTests`, `HTTPAllowListTests`, the launcher tests and `LeakTests`).
+
+| Provider | What Brimline looks at | What it opens | What it launches | The one request |
+|---|---|---|---|---|
+| Claude | `~/.claude`, each `~/.claude-*` folder and the folders you add | `.claude.json` of the folder (identity), and one Keychain item per folder | Apple's `/usr/bin/security`, for that item only | `https://api.anthropic.com/api/oauth/usage` |
+| ChatGPT | `~/.codex` and the Codex folders you add by hand | `auth.json` in it, read only, no link followed | nothing | `https://chatgpt.com/backend-api/wham/usage` |
+| Gemini | `~/.gemini` (one `stat`) and `~/.local/bin/agy` | `agy` itself, to check its SHA-256; nothing inside `~/.gemini` | **`~/.local/bin/agy --print /usage --sandbox`**, a verified build only | none by Brimline |
+| Grok | `~/.grok` | `auth.json` in it, read only, no link followed | nothing | `https://cli-chat-proxy.grok.com/v1/billing?format=credits` |
+| Cursor | `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb` | that database, read only, creating nothing in Cursor's folder | nothing | `https://cursor.com/api/usage-summary` |
+
+Every provider but Claude is off until you turn it on, and an account marked "Do not read" is looked at by nobody. Nothing is ever written in a provider's folder.
 
 ### Providers are off until you turn them on
 

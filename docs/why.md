@@ -2,7 +2,7 @@
 
 ## The problem
 
-People who work with AI tools all day often hold several subscriptions: a personal Claude account and a team seat, a second team for another company, ChatGPT for one thing, Gemini or Grok for another. Each subscription has its own limits: a five hour session window, a weekly window, sometimes a weekly window per model. Hitting one in the middle of a task stops the work.
+People who work with AI tools all day often hold several subscriptions: a personal Claude account and a team seat, a second team for another company, ChatGPT for one thing, Gemini, Grok or Cursor for another. Each subscription has its own limits: a five hour session window, a weekly window, sometimes a weekly window per model. Hitting one in the middle of a task stops the work.
 
 The indicators built into the tools show one account at a time, without saying which one. Knowing where every account stands means opening each tool, or each settings page, one by one. And the agents that run on your behalf (Claude Code sessions, automations, coding agents) cannot see the limits at all: they find out when a request fails.
 
@@ -21,7 +21,7 @@ Good tools already read these limits, and Brimline owes them a lot:
 Three needs are not met together by any of the tools we found:
 
 1. **Several accounts of the same provider, side by side, each named by its email address**, taken from where the official tool already keeps them (for Claude Code, one configuration folder per account), without switching anything. ClaudeBar does part of this for Codex; we found no tool doing it for several Claude Code accounts read in place.
-2. **Strictly read only.** Some tools refresh tokens or swap credentials. Refreshing a token can rotate it (OAuth refresh tokens are often single use), which may sign the official tool out; swapping credentials can break a running session. Brimline never writes a credential.
+2. **Strictly read only.** Some tools refresh tokens or swap credentials. Refreshing a token can rotate it (OAuth refresh tokens are often single use), which may sign the official tool out; swapping credentials can break a running session. Brimline never writes a credential. One thing is said out loud: to read Gemini it launches Google's own command, and that program may renew its own sign-in (Brimline neither reads nor writes it).
 3. **Made for agents too.** Besides the menu bar, a local MCP server and a JSON command give agents the same numbers, so they can pick an account with room left instead of failing.
 
 ## What Brimline is not
@@ -29,3 +29,4 @@ Three needs are not met together by any of the tools we found:
 - Not a proxy: it never sees or routes your prompts.
 - Not a cost tracker: it shows the limits of your subscriptions, not the price of API calls.
 - Not a guarantee: the providers' usage endpoints are internal and undocumented. When one changes, Brimline says the provider is unavailable rather than showing a wrong number.
+- Not a claim about plans it was not tried on: each provider was tried on one plan on 27 October 2026 (the README says which, and that xAI returned no limit for a free Grok account), and nothing is said for a paid plan that was not tried.
