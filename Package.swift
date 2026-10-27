@@ -1,13 +1,13 @@
 // swift-tools-version:6.0
-// Sightglass: one Swift package, built with the Command Line Tools only (no Xcode project).
+// Brimline: one Swift package, built with the Command Line Tools only (no Xcode project).
 //
 // Targets:
-// - SightglassCore: account discovery, Keychain read through /usr/bin/security, usage API,
+// - BrimlineCore: account discovery, Keychain read through /usr/bin/security, usage API,
 //   normalization, cache, ranking, formatting, MCP server. No UI.
-// - SightglassCLI: the `sightglass` command (status, accounts, mcp).
-// - SightglassUI: the SwiftUI views and the app model, shared by the app and the snapshots.
-// - SightglassApp: the menu bar app itself (assembled into Sightglass.app by scripts/build_app.sh).
-// - SightglassSnapshots: renders the README and QA images into docs/images/.
+// - BrimlineCLI: the `brimline` command (status, accounts, mcp).
+// - BrimlineUI: the SwiftUI views and the app model, shared by the app and the snapshots.
+// - BrimlineApp: the menu bar app itself (assembled into Brimline.app by scripts/build_app.sh).
+// - BrimlineSnapshots: renders the README and QA images into docs/images/.
 import Foundation
 import PackageDescription
 
@@ -21,26 +21,26 @@ let testSettings: [SwiftSetting] = FileManager.default.fileExists(atPath: cltTes
     : []
 
 let package = Package(
-    name: "Sightglass",
+    name: "Brimline",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "sightglass", targets: ["SightglassCLI"]),
-        .executable(name: "SightglassApp", targets: ["SightglassApp"]),
-        .executable(name: "sightglass-snapshots", targets: ["SightglassSnapshots"]),
-        .library(name: "SightglassCore", targets: ["SightglassCore"]),
+        .executable(name: "brimline", targets: ["BrimlineCLI"]),
+        .executable(name: "BrimlineApp", targets: ["BrimlineApp"]),
+        .executable(name: "brimline-snapshots", targets: ["BrimlineSnapshots"]),
+        .library(name: "BrimlineCore", targets: ["BrimlineCore"]),
     ],
     targets: [
-        .target(name: "SightglassCore"),
-        .executableTarget(name: "SightglassCLI", dependencies: ["SightglassCore"]),
-        .target(name: "SightglassUI", dependencies: ["SightglassCore"]),
-        .executableTarget(name: "SightglassApp", dependencies: ["SightglassCore", "SightglassUI"]),
-        .executableTarget(name: "SightglassSnapshots", dependencies: ["SightglassCore", "SightglassUI"]),
+        .target(name: "BrimlineCore"),
+        .executableTarget(name: "BrimlineCLI", dependencies: ["BrimlineCore"]),
+        .target(name: "BrimlineUI", dependencies: ["BrimlineCore"]),
+        .executableTarget(name: "BrimlineApp", dependencies: ["BrimlineCore", "BrimlineUI"]),
+        .executableTarget(name: "BrimlineSnapshots", dependencies: ["BrimlineCore", "BrimlineUI"]),
         .testTarget(
-            name: "SightglassCoreTests",
-            dependencies: ["SightglassCore"],
+            name: "BrimlineCoreTests",
+            dependencies: ["BrimlineCore"],
             // The repository keeps every test under tests/ (the Python ones too): explicit path,
             // so the package also builds on a case-sensitive file system.
-            path: "tests/SightglassCoreTests",
+            path: "tests/BrimlineCoreTests",
             resources: [.copy("Fixtures")],
             swiftSettings: testSettings
         ),

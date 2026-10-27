@@ -2,13 +2,13 @@
 
 *[English version](accounts.md)*
 
-Sightglass montre une ligne par compte. Pour Claude, un compte est un **dossier de configuration de Claude Code** : Sightglass trouve les dossiers, lit l'adresse avec laquelle chacun est connecté, puis demande à Anthropic où en sont les limites de ce compte. Vous ne tapez jamais de mot de passe ni de jeton dans Sightglass.
+Brimline montre une ligne par compte. Pour Claude, un compte est un **dossier de configuration de Claude Code** : Brimline trouve les dossiers, lit l'adresse avec laquelle chacun est connecté, puis demande à Anthropic où en sont les limites de ce compte. Vous ne tapez jamais de mot de passe ni de jeton dans Brimline.
 
 ## En bref
 
 1. Donnez à chaque compte Claude son propre dossier de configuration de Claude Code, choisi avec la variable `CLAUDE_CONFIG_DIR`.
 2. Connectez-vous une fois dans chaque dossier avec Claude Code (`/login`).
-3. Ouvrez Sightglass : chaque dossier nommé `~/.claude` ou `~/.claude-quelquechose` apparaît tout seul. Tout autre dossier s'ajoute dans **Réglages, Comptes, Ajouter un dossier Claude Code…**.
+3. Ouvrez Brimline : chaque dossier nommé `~/.claude` ou `~/.claude-quelquechose` apparaît tout seul. Tout autre dossier s'ajoute dans **Réglages, Comptes, Ajouter un dossier Claude Code…**.
 
 ## 1. Un dossier par compte
 
@@ -22,7 +22,7 @@ alias claude-work='CLAUDE_CONFIG_DIR=~/.claude-work claude'
 
 Ouvrez un nouveau terminal, puis lancez `claude-work`. Prenez autant de dossiers que de comptes : `~/.claude-equipe`, `~/.claude-client`, etc.
 
-**Nommez-les `~/.claude-quelquechose`** pour que Sightglass les trouve seul. Un dossier ailleurs fonctionne aussi : ajoutez-le à la main (étape 3).
+**Nommez-les `~/.claude-quelquechose`** pour que Brimline les trouve seul. Un dossier ailleurs fonctionne aussi : ajoutez-le à la main (étape 3).
 
 ## 2. Se connecter dans chaque dossier
 
@@ -33,9 +33,9 @@ Lancez Claude Code avec l'alias du dossier (`claude-work`) et connectez-vous qua
 
 Vérifiez avec `/status` dans Claude Code que la bonne adresse est connectée.
 
-## 3. Sightglass
+## 3. Brimline
 
-Sightglass cherche les comptes à son lancement, et de nouveau quand vous cliquez sur **Rechercher à nouveau** dans les réglages :
+Brimline cherche les comptes à son lancement, et de nouveau quand vous cliquez sur **Rechercher à nouveau** dans les réglages :
 
 - `~/.claude` (adresse lue dans `~/.claude.json`) ;
 - chaque dossier `~/.claude-*` qui contient un `.claude.json` ;
@@ -45,23 +45,23 @@ Dans **Réglages, Comptes**, vous pouvez masquer un compte dans la fenêtre de l
 
 ![Réglages des comptes](images/settings-accounts-fr-light.png)
 
-## Ce que Sightglass lit, et ce qu'il ne fait jamais
+## Ce que Brimline lit, et ce qu'il ne fait jamais
 
-Pour chaque dossier, Sightglass lit :
+Pour chaque dossier, Brimline lit :
 
 - **l'identité du compte** dans `.claude.json` : `oauthAccount.emailAddress`, puis `organizationName` et `seatTier` comme étiquette secondaire. Rien d'autre de ce fichier ;
-- **la connexion** dans l'élément du Trousseau que Claude Code a créé pour ce dossier. Il s'appelle `Claude Code-credentials` pour `~/.claude`, et `Claude Code-credentials-` suivi de 8 caractères hexadécimaux pour tout autre dossier (le début du SHA-256 du chemin du dossier ; comportement observé de Claude Code, non documenté, donc susceptible de changer). Sightglass le lit avec l'outil du système `/usr/bin/security`, par son nom exact, sans jamais parcourir le Trousseau. [SECURITY.md](../SECURITY.md) explique pourquoi (en anglais).
+- **la connexion** dans l'élément du Trousseau que Claude Code a créé pour ce dossier. Il s'appelle `Claude Code-credentials` pour `~/.claude`, et `Claude Code-credentials-` suivi de 8 caractères hexadécimaux pour tout autre dossier (le début du SHA-256 du chemin du dossier ; comportement observé de Claude Code, non documenté, donc susceptible de changer). Brimline le lit avec l'outil du système `/usr/bin/security`, par son nom exact, sans jamais parcourir le Trousseau. [SECURITY.md](../SECURITY.md) explique pourquoi (en anglais).
 
-De la connexion, seul le jeton d'accès sert, en mémoire, le temps d'une requête vers `https://api.anthropic.com/api/oauth/usage`. Sightglass n'utilise jamais le jeton de renouvellement, ne renouvelle jamais une connexion, n'écrit jamais dans le Trousseau et n'écrit jamais un jeton dans un fichier, un journal ou ses réponses aux agents.
+De la connexion, seul le jeton d'accès sert, en mémoire, le temps d'une requête vers `https://api.anthropic.com/api/oauth/usage`. Brimline n'utilise jamais le jeton de renouvellement, ne renouvelle jamais une connexion, n'écrit jamais dans le Trousseau et n'écrit jamais un jeton dans un fichier, un journal ou ses réponses aux agents.
 
 ## Situations courantes
 
 | Ce que vous voyez | Ce que ça veut dire | Que faire |
 |---|---|---|
-| **Session expirée** | Le jeton d'accès du compte a expiré. Claude Code le renouvelle à sa prochaine utilisation ; Sightglass jamais. Ses derniers chiffres restent, en gris, avec leur âge. | Ouvrez Claude Code avec ce compte (n'importe quelle commande suffit). |
+| **Session expirée** | Le jeton d'accès du compte a expiré. Claude Code le renouvelle à sa prochaine utilisation ; Brimline jamais. Ses derniers chiffres restent, en gris, avec leur âge. | Ouvrez Claude Code avec ce compte (n'importe quelle commande suffit). |
 | **À reconnecter** | Anthropic a refusé le jeton (HTTP 401). | Lancez `/login` dans Claude Code avec ce dossier. |
 | **Pas connecté** | Aucun élément du Trousseau pour ce dossier. | Lancez Claude Code avec ce dossier et connectez-vous. |
-| **Indisponible** | Anthropic n'a pas répondu utilement (trop de requêtes, erreur du serveur, réseau, ou réponse que Sightglass ne comprend pas). Sightglass réessaie plus tard, en attendant un peu plus à chaque fois. | En général, rien. Si ça dure, le point d'accès a peut-être changé : voir la [FAQ](faq.md) (en anglais). |
+| **Indisponible** | Anthropic n'a pas répondu utilement (trop de requêtes, erreur du serveur, réseau, ou réponse que Brimline ne comprend pas). Brimline réessaie plus tard, en attendant un peu plus à chaque fois. | En général, rien. Si ça dure, le point d'accès a peut-être changé : voir la [FAQ](faq.md) (en anglais). |
 | **Pas de limite hebdomadaire globale** | Le compte (souvent un siège d'équipe) n'a pas de limite hebdomadaire tous modèles ; seules la session et les limites par modèle s'appliquent. | Rien. |
 | Un compte manque | Son dossier ne s'appelle pas `~/.claude-*`, ou n'a pas encore de `.claude.json`. | Connectez-vous une fois dans ce dossier, ou ajoutez-le à la main. |
 
