@@ -21,7 +21,7 @@ public struct MenuBarLabel: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(model.strings.menuBarAccessibility(level.percent))
+        .accessibilityLabel(model.strings.menuBarAccessibility(level.percent, provider: level.provider, account: level.account))
     }
 }
 
