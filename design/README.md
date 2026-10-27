@@ -8,10 +8,11 @@ Vue d'ensemble de la direction artistique : `DA.md`. Planche à ouvrir dans un n
 |---|---|
 | `tokens.json` | Source unique des valeurs : couleurs clair et sombre, seuils de jauge, typographie, rayons, espacements. |
 | `tokens.css` | Les mêmes valeurs en variables `--sg-*`, pour le site. |
-| `icons/app-icon.svg` | Icône de l'app, source vectorielle. |
+| `icons/app-icon.svg` | Icône de l'app (piste A · Ras), source vectorielle, pour 64 px et plus. |
+| `icons/app-icon-small.svg` | Dessin simplifié pour 16 et 32 px (pas de halo, de reflet ni de lueur). |
 | `icons/AppIcon.icns` | Icône de l'app pour macOS (`iconutil` depuis `AppIcon.iconset/`, pas de catalogue Xcode). |
 | `icons/menubar-template.svg` et `.pdf` | Glyphe gabarit de la barre des menus : noir et transparence, aucune couleur, niveau 60 %. `glyph-level.svg` en est la version à niveau variable. |
-| `planche.html` | Planche : icône d'app, glyphe à 0, 50, 80 et 100 %, couleurs, typographie, jauges. |
+| `planche.html` | Planche : icône d'app, glyphe à 0, 25, 72, 95 % et expiré, couleurs, typographie, jauges. |
 
 ## Consommer les jetons
 
@@ -20,8 +21,12 @@ Vue d'ensemble de la direction artistique : `DA.md`. Planche à ouvrir dans un n
 
 ## Contrôles
 
-`python3 -m unittest discover -s tests` lance `tests/test_design_tokens.py` : contraste calculé depuis `tokens.json` (au moins 4,5:1 pour chaque texte, accent et couleur de jauge sur le fond et la surface, en clair et en sombre), deux thèmes complets, planche et CSS sans couleur hors jetons, glyphe gabarit sans couleur, planche sans réseau.
+`python3 -m unittest discover -s tests` lance `tests/test_design_tokens.py` : contraste calculé depuis `tokens.json` (au moins 4,5:1 pour chaque texte, accent et couleur de jauge sur le fond et la surface, en clair et en sombre), deux thèmes complets, planche et CSS sans couleur hors jetons, glyphe gabarit sans couleur et de géométrie « Ras » (gabarit et `glyph-level.svg`), icône 16 et 32 px sans détail, planche sans réseau. `swift test` (`BrimlineGlyphTests`) lit les pixels du glyphe : trait, parois et fond à tous les niveaux, 1 % visible, 99 % sous le bord.
 
 ## Régénérer les images
 
-`design/src/render-icons.swift` produit les PNG de l'icône (`AppIcon.iconset/`) et l'aperçu `apercu.png` ; `iconutil -c icns AppIcon.iconset -o icons/AppIcon.icns` assemble l'icône.
+`design/src/render-icons.swift` produit les PNG de l'icône (`AppIcon.iconset/`), le gabarit `menubar-template.pdf` et l'aperçu `apercu.png` ; `iconutil -c icns AppIcon.iconset -o icons/AppIcon.icns` assemble l'icône. Les captures du README (`docs/images/`) viennent de `swift run brimline-snapshots`.
+
+Le glyphe SVG et le dessin de `BrimlineGlyph.swift` ont les mêmes coordonnées : une modification se fait dans les deux, puis les tests de ce dossier et `BrimlineGlyphTests` la vérifient.
+
+`design/brimline/` (sur la branche du Designer, THA-1274) garde la planche des trois pistes du premier tour et son générateur ; seule la piste A est reprise ici.

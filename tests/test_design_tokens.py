@@ -80,7 +80,7 @@ class TokensTest(unittest.TestCase):
         text = (DESIGN / "planche.html").read_text(encoding="utf-8")
         self.assertNotRegex(text, r"(?i)(src|href)=[\"']https?:")
         self.assertNotRegex(text, r"(?i)@import|url\(\s*[\"']?https?:")
-        for level in ("0 %", "50 %", "80 %", "100 %"):
+        for level in ("0 %", "25 %", "50 %", "72 %", "80 %", "95 %", "100 %", "expiré"):
             self.assertIn(level, text)
 
 
@@ -91,6 +91,23 @@ class IconsTest(unittest.TestCase):
         self.assertNotRegex(svg, r"(?i)\b(rgb|hsl)a?\(")
         self.assertNotRegex(svg, r"(?i)(fill|stroke|stop-color)=\"(?!currentColor|none)")
         self.assertIn('fill="currentColor"', svg)
+
+    def test_glyph_files_share_the_ras_geometry(self):
+        # Design "A · Ras": a limit line above the rim, an open tank, a liquid column.
+        limit = '<rect x="2" y="2" width="14" height="1.5" rx="0.75"/>'
+        tank = "M4 5H5.5V13.5A1 1 0 0 0 6.5 14.5H11.5A1 1 0 0 0 12.5 13.5V5H14V13.5A2.5 2.5 0 0 1 11.5 16H6.5A2.5 2.5 0 0 1 4 13.5Z"
+        for name in (Path("icons") / "menubar-template.svg", Path("glyph-level.svg")):
+            svg = (DESIGN / name).read_text(encoding="utf-8")
+            self.assertIn(limit, svg, name)
+            self.assertIn(tank, svg, name)
+            self.assertIn('x="7"', svg, name)
+        self.assertIn("var(--level", (DESIGN / "glyph-level.svg").read_text(encoding="utf-8"))
+
+    def test_small_icon_has_no_gradient_detail(self):
+        # 16 and 32 px: no halo, reflection or glow, thicker strokes (app-icon-small.svg).
+        small = (DESIGN / "icons" / "app-icon-small.svg").read_text(encoding="utf-8")
+        self.assertNotIn("-halo)", small)
+        self.assertNotIn("filter=\"url(#as-glow)\"", small)
 
     def test_menubar_template_pdf_exists(self):
         pdf = (DESIGN / "icons" / "menubar-template.pdf").read_bytes()
