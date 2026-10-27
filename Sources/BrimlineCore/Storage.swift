@@ -35,8 +35,10 @@ enum JSONCoding {
     /// Writes atomically, readable by the user only, with no wider window: the folder is put back
     /// to 0700 and the temporary file is opened with `open(2)` in mode 0600 (`O_EXCL`, so never an
     /// existing file or a link), fixed with `fchmod` against the umask, then filled, synced and renamed.
-    /// Any failure removes the temporary file and is thrown.
-    static func write(_ data: Data, to url: URL) throws {
+    /// Any failure removes the temporary file and is thrown. With `replacing: false` the final
+    /// step never replaces a file that is already there (`renamex_np` with `RENAME_EXCL`): the
+    /// call throws `EEXIST` instead and the existing file is untouched.
+    static func write(_ data: Data, to url: URL, replacing: Bool = true) throws {
         let fm = FileManager.default
         let directory = url.deletingLastPathComponent()
         try fm.createDirectory(at: directory, withIntermediateDirectories: true,
@@ -69,7 +71,9 @@ enum JSONCoding {
         if fsync(descriptor) != 0 { throw fail(errno) }
         closed = true
         if close(descriptor) != 0 { throw fail(errno) }
-        if rename(temporary.path, url.path) != 0 { throw fail(errno) }
+        let renamed = replacing ? rename(temporary.path, url.path)
+                                : renamex_np(temporary.path, url.path, UInt32(RENAME_EXCL))
+        if renamed != 0 { throw fail(errno) }
     }
 
     private static func posixError(_ code: Int32) -> POSIXError {

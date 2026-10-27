@@ -37,6 +37,7 @@ public final class AppModel {
     /// The live model of the app.
     public init(home: URL = FileManager.default.homeDirectoryForCurrentUser) {
         let paths = BrimlinePaths(home: home)
+        LegacyMigration.run(paths: paths)
         self.paths = paths
         self.home = home
         service = UsageService()
