@@ -1,4 +1,0 @@
-Model quotas
-
-Gemini 3.1 Pro: 58% remaining (resets in 3h 12m)
-Gemini 3.5 Flash: 93% left

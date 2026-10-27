@@ -7,10 +7,9 @@ import Foundation
 /// is never launched with `/usage`, and Brimline says "Antigravity was updated: update Brimline."
 /// (`format_changed`) instead of guessing.
 ///
-/// **The list is empty for now.** The text of `/usage` is not documented by Google, so the first
-/// entry is added only at the real try (R4 of QUOTA-35), together with the real first line of the
-/// report (`AntigravityUsageParser.expectedFirstLine`). Until then Gemini answers `format_changed`
-/// and no program is launched: honest by default.
+/// The text of `/usage` is not documented by Google: an entry is added only after the real try of that
+/// build (`AntigravityUsageParser` reads the text of 1.4.8). A list with no entry (or a build that is not
+/// on it) makes Gemini answer `format_changed` with no program launched: honest by default.
 public struct AntigravityTrust: Sendable, Equatable {
     public struct Entry: Sendable, Equatable {
         /// Lowercase hex SHA-256 of the `agy` binary.
@@ -30,8 +29,12 @@ public struct AntigravityTrust: Sendable, Equatable {
         self.entries = entries
     }
 
-    /// The builds verified on a real account. Empty until R4.
-    public static let verified = AntigravityTrust(entries: [])
+    /// The builds verified on a real account.
+    /// - 1.4.8: seen on 27/10/2026 on the Mac mini (installer of antigravity.google/cli/install.sh), the binary
+    ///   signed by the team `EQHXZ8M8AV`. Brimline does not check the signature: the SHA-256 is what is compared.
+    public static let verified = AntigravityTrust(entries: [
+        Entry(sha256: "09fcdd8554e03bed9b2ec936e454c7f115d5610610de09ed7d79fa2feae76940", versionOutput: "1.4.8"),
+    ])
 
     public var isEmpty: Bool { entries.isEmpty }
 
