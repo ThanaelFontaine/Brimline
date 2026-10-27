@@ -141,7 +141,7 @@ struct AgentProviderTests {
 
         var settings = BrimlineSettings()
         settings.enabledProviders = ["claude"]
-        // Gemini has a reader (a sentence only): off, it points at the switch.
+        // Gemini has a reader (Antigravity, provisional): off, it points at the switch.
         let off = try data(try call(server(settings: settings), "best_account", #"{"provider":"gemini"}"#))
         #expect((off["note"] as? String)?.contains("gemini is off in Brimline") == true)
         // A provider with no reader cannot be switched on: no switch to point at.
