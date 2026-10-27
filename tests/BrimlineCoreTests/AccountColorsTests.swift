@@ -270,6 +270,34 @@ struct AccountColorsSettingsTests {
         #expect(settings.label(for: "claude:/a") == "Work")
     }
 
+    @Test("A complete settings.json of 0.2.0 (every key it wrote) reads without losing a value, and stays the same once saved")
+    func completeFileOfVersion020() throws {
+        let json = """
+        {"schemaVersion":1,"extraFolders":["/tmp/qa/.claude-x"],"extraCodexFolders":["/tmp/qa/.codex-y"],
+         "hiddenAccounts":["claude:/tmp/qa/h"],"labels":{"claude:/tmp/qa/a":"Work","chatgpt:/tmp/qa/b":"Perso"},
+         "refreshMinutes":15,"showPercentInMenuBar":true,"enabledProviders":["claude","chatgpt","gemini"],
+         "unreadAccounts":["chatgpt:/tmp/qa/u"],"providerHintDismissed":true}
+        """
+        let settings = try decode(json)
+        #expect(settings.schemaVersion == 1)
+        #expect(settings.extraFolders == ["/tmp/qa/.claude-x"] && settings.extraCodexFolders == ["/tmp/qa/.codex-y"])
+        #expect(settings.hiddenAccounts == ["claude:/tmp/qa/h"] && settings.unreadAccounts == ["chatgpt:/tmp/qa/u"])
+        #expect(settings.labels == ["claude:/tmp/qa/a": "Work", "chatgpt:/tmp/qa/b": "Perso"])
+        #expect(settings.refreshMinutes == 15 && settings.showPercentInMenuBar && settings.providerHintDismissed)
+        #expect(settings.enabledProviders == ["claude", "chatgpt", "gemini"] && settings.accountColors.isEmpty)
+        // Saved and read again, nothing moves, and assigning colors changes only the colors.
+        let home = try TemporaryHome()
+        let store = SettingsStore(file: home.url.appendingPathComponent("settings.json"))
+        try store.save(settings)
+        #expect(store.load() == settings)
+        var colored = store.load()
+        colored.assignDefaultColors(to: [Account(provider: .claude, source: "/tmp/qa/a", email: nil, organization: nil,
+                                                 seatTier: nil, keychainService: nil)])
+        var expected = settings
+        expected.accountColors = colored.accountColors
+        #expect(colored == expected && colored.accountColors.count == 1)
+    }
+
     @Test("Colors are written and read back through SettingsStore, and the schema stays at 1")
     func roundTrip() throws {
         let home = try TemporaryHome()
