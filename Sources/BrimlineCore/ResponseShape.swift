@@ -6,9 +6,32 @@ import Foundation
 /// Four of the five providers are read through endpoints nobody documents. When one changes, the
 /// fingerprint changes (it is kept in the cache) and the skeleton tells the maintainer what the
 /// answer looks like now.
+///
+/// A key is a field name, not data, and it must stay so: a key outside `[A-Za-z_][A-Za-z0-9_]{0,63}`,
+/// or one that looks like an identifier (four digits or more, or a long run of hex digits: an
+/// address, an id, a UUID, an account number used as a key), is written `<key>`, in the skeleton and
+/// in the fingerprint alike. Several such keys in one object are one `<key>` entry.
 public enum ResponseShape {
     static let maxDepth = 8
     static let maxKeys = 2000
+    /// What a key that may not be shown is written as.
+    static let hiddenKey = "<key>"
+
+    /// Whether a key is a field name that may be shown and fingerprinted as it is.
+    static func isShownKey(_ key: String) -> Bool {
+        let bytes = Array(key.utf8)
+        guard (1...ProviderText.maxLabelLength).contains(bytes.count),
+              bytes.allSatisfy({ isLetter($0) || isDigit($0) || $0 == 0x5F }),
+              !isDigit(bytes[0]) else { return false }
+        if bytes.filter(isDigit).count >= 4 { return false }
+        let hex = bytes.allSatisfy { isDigit($0) || ($0 >= 0x61 && $0 <= 0x66) || ($0 >= 0x41 && $0 <= 0x46) }
+        return !(hex && bytes.count >= 16)
+    }
+
+    private static func isDigit(_ byte: UInt8) -> Bool { byte >= 0x30 && byte <= 0x39 }
+    private static func isLetter(_ byte: UInt8) -> Bool { (byte >= 0x41 && byte <= 0x5A) || (byte >= 0x61 && byte <= 0x7A) }
+
+    private static func shown(_ key: String) -> String { isShownKey(key) ? key : hiddenKey }
 
     /// SHA-256 (hex) of the sorted key paths of a JSON answer, such as `limits[].percent`. Empty when
     /// the answer is not JSON. No value goes into it.
@@ -24,7 +47,8 @@ public enum ResponseShape {
         guard depth < maxDepth, paths.count < maxKeys else { return }
         if let dictionary = value as? [String: Any] {
             for (key, child) in dictionary {
-                let path = prefix.isEmpty ? key : "\(prefix).\(key)"
+                let name = shown(key)
+                let path = prefix.isEmpty ? name : "\(prefix).\(name)"
                 paths.insert(path)
                 collect(child, prefix: path, depth: depth + 1, into: &paths)
             }
@@ -34,8 +58,8 @@ public enum ResponseShape {
     }
 
     /// The answer with every value replaced by its type (`"string"`, `"number"`, `"bool"`, `"null"`), as
-    /// indented JSON. An array shows its first element only. A key that does not pass
-    /// `ProviderText.label` is written `"?"`. Nil when the answer is not JSON.
+    /// indented JSON. An array shows its first element only. A key that may not be shown is written
+    /// `"<key>"` (see above). Nil when the answer is not JSON.
     public static func skeleton(of data: Data) -> String? {
         guard let object = try? JSONSerialization.jsonObject(with: data) else { return nil }
         return render(object, depth: 0, indent: "")
@@ -46,12 +70,14 @@ public enum ResponseShape {
         let inner = indent + "  "
         if let dictionary = value as? [String: Any] {
             if dictionary.isEmpty { return "{}" }
-            let keys = dictionary.keys.sorted().prefix(100)
-            var lines = keys.map { key -> String in
-                let name = ProviderText.label(key) ?? "?"
-                return "\(inner)\"\(name)\": \(render(dictionary[key]!, depth: depth + 1, indent: inner))"
+            // The keys that may be shown, then one entry for all the others, with the value of the first.
+            let keys = dictionary.keys.sorted()
+            var entries = keys.filter(isShownKey).map { (name: $0, value: dictionary[$0]!) }
+            if let hidden = keys.first(where: { !isShownKey($0) }) { entries.append((hiddenKey, dictionary[hidden]!)) }
+            var lines = entries.prefix(100).map { entry in
+                "\(inner)\"\(entry.name)\": \(render(entry.value, depth: depth + 1, indent: inner))"
             }
-            if dictionary.count > 100 { lines.append("\(inner)\"...\": \"more keys\"") }
+            if entries.count > 100 { lines.append("\(inner)\"...\": \"more keys\"") }
             return "{\n" + lines.joined(separator: ",\n") + "\n\(indent)}"
         }
         if let array = value as? [Any] {

@@ -1,0 +1,24 @@
+{
+  "_fixture_source": "Shape from steipete/CodexBar at commit 5f93dc3: Sources/CodexBarCore/Providers/Cursor/CursorStatusProbe.swift (CursorUsageSummary, CursorIndividualUsage, CursorPlanUsage, CursorOverallUsage, CursorTeamUsage) and CursorStatusProbe+UsageSummary.swift (GET https://cursor.com/api/usage-summary). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider cursor). Percentages under 1: they are points of percent, 0.36 is 0.36 %.",
+  "billingCycleStart": "2026-10-14T09:15:10.000Z",
+  "billingCycleEnd": "2026-11-14T09:15:10.000Z",
+  "membershipType": "pro",
+  "isUnlimited": false,
+  "individualUsage": {
+    "plan": {
+      "enabled": true,
+      "used": 7,
+      "limit": 2000,
+      "remaining": 1993,
+      "autoPercentUsed": 0.2,
+      "apiPercentUsed": 0.5,
+      "totalPercentUsed": 0.36
+    },
+    "onDemand": {
+      "enabled": true,
+      "used": 120,
+      "limit": 5000,
+      "remaining": 4880
+    }
+  }
+}

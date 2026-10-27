@@ -3,7 +3,7 @@ import SQLite3
 import Testing
 @testable import BrimlineCore
 
-/// Cursor, detection and a sentence. The databases are built by the tests, in a temporary home, with
+/// Cursor, detection and the sign-in database (the reading of the limits is in `CursorUsageTests`). The databases are built by the tests, in a temporary home, with
 /// the schema VS Code gives `state.vscdb` (microsoft/vscode, `src/vs/base/parts/storage/node/storage.ts`:
 /// `CREATE TABLE IF NOT EXISTS ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)`), the key
 /// and the encrypted prefix that CodexBar reads from Cursor (steipete/CodexBar at commit 5f93dc3,
@@ -11,7 +11,7 @@ import Testing
 /// `cursor-safe-storage:v1:`, and the place `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`).
 /// Every value is invented: no real database, token or account is involved, and the real Cursor
 /// folder is never opened.
-@Suite("Cursor: detection and a sentence")
+@Suite("Cursor: detection and the sign-in database")
 struct CursorTests {
     let now = date("2026-10-27T10:00:00Z")
     var on: BrimlineSettings {
@@ -20,9 +20,12 @@ struct CursorTests {
         return settings
     }
 
+    /// No test of this suite reaches the network: a reader gets a client that is offline, or one that answers.
+    static func offline() -> CursorFakeHTTP { .offline() }
+
     static let relative = "Library/Application Support/Cursor/User/globalStorage/state.vscdb"
-    /// An unsigned JWT with invented claims, the shape of Cursor's access token.
-    static let seedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdXRoMHx1c2VyXzAxU0VFRCIsImV4cCI6MTc5MzAwMDAwMH0.SEED-CURSOR-SIGNATURE-7c21"
+    /// An unsigned JWT with invented claims (`sub` auth0|user_01SEED, `exp` in 2030), the shape of Cursor's access token.
+    static let seedToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdXRoMHx1c2VyXzAxU0VFRCIsImV4cCI6MTg5MzQ1NjAwMH0.SEED-CURSOR-SIGNATURE-7c21"
     static let seedRefresh = "SEED-CURSOR-REFRESH-TOKEN-4e8b"
     static let encrypted = "cursor-safe-storage:v1:" + Data("v10-SEED-CIPHERTEXT-0123456789abcdef".utf8).base64EncodedString()
 
@@ -102,11 +105,20 @@ struct CursorTests {
                 keychainService: nil)
     }
 
-    func reading(_ rows: [(String, Data?)], table: Bool = true, wal: Bool = true) async throws -> ProviderReading {
+    func reading(_ rows: [(String, Data?)], table: Bool = true, wal: Bool = true,
+                 http: CursorFakeHTTP = .offline()) async throws -> ProviderReading {
         let home = try TemporaryHome()
         let database = try StateDatabase(in: home, rows: rows, table: table, wal: wal)
         defer { database.close() }
-        return await CursorReader().read(account: card(home), now: now)
+        return await CursorReader(http: http).read(account: card(home), now: now)
+    }
+
+    func expectLimits(_ reading: ProviderReading, sourceLocation: SourceLocation = #_sourceLocation) {
+        guard case .limits(let limits, _) = reading else {
+            Issue.record("expected the limits, got \(reading)", sourceLocation: sourceLocation)
+            return
+        }
+        #expect(!limits.isEmpty, sourceLocation: sourceLocation)
     }
 
     func expectNotReadable(_ reading: ProviderReading, sourceLocation: SourceLocation = #_sourceLocation) {
@@ -127,10 +139,10 @@ struct CursorTests {
 
     // MARK: Registry and discovery
 
-    @Test("Cursor is in the registry, last, and calls nothing")
+    @Test("Cursor is in the registry, last, and calls one URL")
     func registry() {
         #expect(Providers.all.map(\.provider) == [.claude, .chatgpt, .gemini, .grok, .cursor])
-        #expect(CursorReader().allowedURLs.isEmpty)
+        #expect(CursorReader(http: Self.offline()).allowedURLs == [URL(string: "https://cursor.com/api/usage-summary")!])
         #expect(Providers.isSupported(.cursor))
     }
 
@@ -147,17 +159,17 @@ struct CursorTests {
     @Test("One card when the state database is a regular file, none otherwise, and the card holds no identity")
     func discovery() throws {
         let home = try TemporaryHome()
-        #expect(CursorReader().discover(home: home.url, settings: on).isEmpty)
+        #expect(CursorReader(http: Self.offline()).discover(home: home.url, settings: on).isEmpty)
 
         // The app's folder without its database, and a folder where the database should be.
         try home.mkdir("Library/Application Support/Cursor/User/globalStorage")
-        #expect(CursorReader().discover(home: home.url, settings: on).isEmpty)
+        #expect(CursorReader(http: Self.offline()).discover(home: home.url, settings: on).isEmpty)
         try home.mkdir(Self.relative)
-        #expect(CursorReader().discover(home: home.url, settings: on).isEmpty)
+        #expect(CursorReader(http: Self.offline()).discover(home: home.url, settings: on).isEmpty)
         try FileManager.default.removeItem(at: home.url.appendingPathComponent(Self.relative))
 
         try home.write(Self.relative, "not even a database: only its presence counts here")
-        let accounts = CursorReader().discover(home: home.url, settings: on)
+        let accounts = CursorReader(http: Self.offline()).discover(home: home.url, settings: on)
         #expect(accounts.count == 1)
         let found = try #require(accounts.first)
         #expect(found.provider == .cursor)
@@ -178,7 +190,7 @@ struct CursorTests {
         var settings = on
         settings.extraFolders = [home.path("Library/Application Support/Cursor/User/globalStorage")]
         settings.extraCodexFolders = [home.path("Library/Application Support/Cursor")]
-        #expect(CursorReader().discover(home: home.url, settings: settings).isEmpty)
+        #expect(CursorReader(http: Self.offline()).discover(home: home.url, settings: settings).isEmpty)
     }
 
     @Test("A link where the database should be is not a card, and a card pointing elsewhere is refused")
@@ -190,15 +202,15 @@ struct CursorTests {
         try home.mkdir("Library/Application Support/Cursor/User/globalStorage")
         let link = home.url.appendingPathComponent(Self.relative)
         try FileManager.default.createSymbolicLink(at: link, withDestinationURL: real.url)
-        #expect(CursorReader().discover(home: home.url, settings: on).isEmpty)
+        #expect(CursorReader(http: Self.offline()).discover(home: home.url, settings: on).isEmpty)
 
         // Even handed the link as a card, nothing is opened through it.
         let direct = Account(provider: .cursor, source: link.path, email: nil, organization: nil, seatTier: nil, keychainService: nil)
-        expectFailure(await CursorReader().read(account: direct, now: now), .unavailable)
+        expectFailure(await CursorReader(http: Self.offline()).read(account: direct, now: now), .unavailable)
         // A card for any other file name is never read.
         let other = Account(provider: .cursor, source: real.url.deletingLastPathComponent().appendingPathComponent("storage.json").path,
                             email: nil, organization: nil, seatTier: nil, keychainService: nil)
-        expectFailure(await CursorReader().read(account: other, now: now), .unavailable)
+        expectFailure(await CursorReader(http: Self.offline()).read(account: other, now: now), .unavailable)
     }
 
     @Test("Discovery opens nothing: a database that cannot be read still gives its card")
@@ -208,37 +220,27 @@ struct CursorTests {
         let file = home.url.appendingPathComponent(Self.relative)
         try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: file.path)
         defer { try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path) }
-        #expect(CursorReader().discover(home: home.url, settings: on).count == 1)
+        #expect(CursorReader(http: Self.offline()).discover(home: home.url, settings: on).count == 1)
     }
 
     // MARK: What the token row holds
 
-    @Test("A plain token is acknowledged, as pending with 'reading to come': nothing is read from the network, nothing kept")
+    @Test("A plain token is used for the one request, and the answer gives the limits")
     func clearToken() async throws {
-        guard case .failure(let status, let detail, let wait) = try await reading([Self.token(Self.seedToken)]) else {
-            Issue.record("expected the pending outcome")
-            return
-        }
-        #expect(status == .pending)
-        #expect(detail == "reading to come")
-        #expect(wait == nil)
+        let http = try CursorFakeHTTP.answering()
+        expectLimits(try await reading([Self.token(Self.seedToken)], http: http))
+        #expect(http.requests.count == 1)
     }
 
     @Test("A token written as UTF-16 text in a BLOB, or as TEXT, is a plain token too")
     func encodings() async throws {
         let utf16 = Data(Self.seedToken.utf16.flatMap { [UInt8($0 & 0xFF), UInt8($0 >> 8)] })
-        guard case .failure(.pending, _, _) = try await reading([("cursorAuth/accessToken", utf16)]) else {
-            Issue.record("expected pending for a UTF-16 BLOB")
-            return
-        }
+        expectLimits(try await reading([("cursorAuth/accessToken", utf16)], http: try .answering()))
         let home = try TemporaryHome()
         let database = try StateDatabase(in: home)
         defer { database.close() }
         try database.put("cursorAuth/accessToken", Data(Self.seedToken.utf8), asText: true)
-        guard case .failure(.pending, _, _) = await CursorReader().read(account: card(home), now: now) else {
-            Issue.record("expected pending for a TEXT value")
-            return
-        }
+        expectLimits(await CursorReader(http: try CursorFakeHTTP.answering()).read(account: card(home), now: now))
     }
 
     @Test("A token that is still in the write-ahead log is seen: the database is read as the app sees it")
@@ -253,10 +255,7 @@ struct CursorTests {
         #expect(!String(decoding: main, as: UTF8.self).contains("SEED-CURSOR-SIGNATURE"))
         let wal = try Data(contentsOf: URL(fileURLWithPath: database.url.path + "-wal"))
         #expect(String(decoding: wal, as: UTF8.self).contains("SEED-CURSOR-SIGNATURE"))
-        guard case .failure(.pending, _, _) = await CursorReader().read(account: card(home), now: now) else {
-            Issue.record("the token in the log was not seen")
-            return
-        }
+        expectLimits(await CursorReader(http: try CursorFakeHTTP.answering()).read(account: card(home), now: now))
     }
 
     @Test("A value Cursor encrypted is never read nor decrypted: protected sign-in")
@@ -299,17 +298,14 @@ struct CursorTests {
         try home.write(Self.relative, String(repeating: "this is plain text, not an SQLite header. ", count: 40))
         try home.write(Self.relative + "-wal", "")
         try home.write(Self.relative + "-shm", "")
-        expectFailure(await CursorReader().read(account: card(home), now: now), .formatChanged)
+        expectFailure(await CursorReader(http: Self.offline()).read(account: card(home), now: now), .formatChanged)
     }
 
     // MARK: The classic journal (VS Code's mode), and the header that tells the two modes apart
 
     @Test("A database in the classic journal mode (no -wal, no -shm ever) is read: plain token, encrypted, absent")
     func classicJournal() async throws {
-        guard case .failure(.pending, "reading to come", _) = try await reading([Self.token(Self.seedToken)], wal: false) else {
-            Issue.record("a plain token in a classic database was not seen")
-            return
-        }
+        expectLimits(try await reading([Self.token(Self.seedToken)], wal: false, http: try .answering()))
         expectNotReadable(try await reading([Self.token(Self.encrypted)], wal: false))
         expectNotReadable(try await reading([], wal: false))
         expectFailure(try await reading([Self.token("not a token at all")], wal: false), .formatChanged)
@@ -324,7 +320,7 @@ struct CursorTests {
         let folder = database.url.deletingLastPathComponent()
         #expect(try Self.names(in: folder).map { ($0 as NSString).lastPathComponent } == ["state.vscdb"])
         let before = try Self.listing(of: home.url)
-        let service = UsageService(readers: [CursorReader()])
+        let service = UsageService(readers: [CursorReader(http: Self.offline())])
         let accounts = Providers.discover(readers: service.readers, home: home.url, settings: on)
         for _ in 0..<3 { _ = await service.refresh(accounts: accounts, settings: on, previous: nil, now: now, force: true) }
         #expect(try Self.listing(of: home.url) == before)
@@ -354,7 +350,7 @@ struct CursorTests {
         let before = try Self.listing(of: home.url)
         #expect(throws: CursorSession.Failure.busy) { try CursorSession.classify(database: database.url) }
         // The answer is a passing failure to try again, never a verdict on the sign-in.
-        guard case .failure(let status, let detail, _) = await CursorReader().read(account: card(home), now: now) else {
+        guard case .failure(let status, let detail, _) = await CursorReader(http: Self.offline()).read(account: card(home), now: now) else {
             Issue.record("expected a failure")
             return
         }
@@ -399,7 +395,7 @@ struct CursorTests {
             try FileManager.default.createDirectory(at: home.url.appendingPathComponent(Self.relative).deletingLastPathComponent(),
                                                     withIntermediateDirectories: true)
             try bytes.write(to: home.url.appendingPathComponent(Self.relative))
-            return await CursorReader().read(account: card(home), now: now)
+            return await CursorReader(http: Self.offline()).read(account: card(home), now: now)
         }
         expectFailure(try await reading(of: Data()), .formatChanged)
         expectFailure(try await reading(of: Data(valid.prefix(19))), .formatChanged)
@@ -414,7 +410,7 @@ struct CursorTests {
     @Test("A database that is gone since discovery is a passing failure, not a verdict on the sign-in")
     func gone() async throws {
         let home = try TemporaryHome()
-        guard case .failure(.unavailable, _, _) = await CursorReader().read(account: card(home), now: now) else {
+        guard case .failure(.unavailable, _, _) = await CursorReader(http: Self.offline()).read(account: card(home), now: now) else {
             Issue.record("expected unavailable")
             return
         }
@@ -431,13 +427,13 @@ struct CursorTests {
         #expect(!FileManager.default.fileExists(atPath: wal) && !FileManager.default.fileExists(atPath: shm))
         let before = try Self.listing(of: home.url)
 
-        expectNotReadable(await CursorReader().read(account: card(home), now: now))
+        expectNotReadable(await CursorReader(http: Self.offline()).read(account: card(home), now: now))
         // One of the two is not enough either.
         try home.write(Self.relative + "-wal", "")
-        expectNotReadable(await CursorReader().read(account: card(home), now: now))
+        expectNotReadable(await CursorReader(http: Self.offline()).read(account: card(home), now: now))
         try FileManager.default.removeItem(atPath: wal)
         try home.write(Self.relative + "-shm", "")
-        expectNotReadable(await CursorReader().read(account: card(home), now: now))
+        expectNotReadable(await CursorReader(http: Self.offline()).read(account: card(home), now: now))
         try FileManager.default.removeItem(atPath: shm)
         #expect(try Self.listing(of: home.url) == before)
     }
@@ -451,7 +447,7 @@ struct CursorTests {
         let moved = home.url.appendingPathComponent("moved-wal")
         try FileManager.default.moveItem(at: wal, to: moved)
         try FileManager.default.createSymbolicLink(at: wal, withDestinationURL: moved)
-        expectFailure(await CursorReader().read(account: card(home), now: now), .unavailable)
+        expectFailure(await CursorReader(http: Self.offline()).read(account: card(home), now: now), .unavailable)
     }
 
     @Test("A database of someone else is refused")
@@ -480,7 +476,7 @@ struct CursorTests {
             }
         }
         let before = try snapshot()
-        let service = UsageService(readers: [CursorReader()])
+        let service = UsageService(readers: [CursorReader(http: Self.offline())])
         let accounts = Providers.discover(readers: service.readers, home: home.url, settings: on)
         for _ in 0..<3 { _ = await service.refresh(accounts: accounts, settings: on, previous: nil, now: now, force: true) }
         #expect(try snapshot() == before)
@@ -518,7 +514,7 @@ struct CursorTests {
         let database = try StateDatabase(in: home, rows: [Self.token(Self.encrypted)])
         defer { database.close() }
         let card = card(home)
-        let service = UsageService(readers: [CursorReader()])
+        let service = UsageService(readers: [CursorReader(http: Self.offline())])
         let off = await service.refresh(account: card, settings: BrimlineSettings(), previous: nil, now: now, force: true)
         #expect(off.status == .pending && off.checkedAt == nil && off.reason == nil)
         var unread = on
@@ -530,18 +526,23 @@ struct CursorTests {
         #expect(read.status == .notReadable && read.reason == .protectedSignIn && read.checkedAt == now)
     }
 
-    @Test("The service keeps a plain token as pending with no limit, never a 0 %, and no retry delay")
+    @Test("The service keeps the limits of a plain token, and a network failure is a passing failure with a growing delay")
     func serviceStates() async throws {
         let home = try TemporaryHome()
         let database = try StateDatabase(in: home, rows: [Self.token(Self.seedToken)])
         defer { database.close() }
-        let service = UsageService(readers: [CursorReader()])
+        let service = UsageService(readers: [CursorReader(http: try CursorFakeHTTP.answering())])
         let usage = await service.refresh(account: card(home), settings: on, previous: nil, now: now)
-        #expect(usage.status == .pending)
-        #expect(usage.detail == "reading to come")
-        #expect(usage.limits.isEmpty && usage.fetchedAt == nil)
+        #expect(usage.status == .ok)
+        #expect(usage.limits.count == 3 && usage.fetchedAt == now && usage.checkedAt == now)
         #expect(usage.retryAfter == nil && usage.failureCount == 0)
-        #expect(usage.checkedAt == now)
+
+        let down = UsageService(readers: [CursorReader(http: Self.offline())])
+        let failed = await down.refresh(account: card(home), settings: on, previous: usage, now: now.addingTimeInterval(900), force: true)
+        #expect(failed.status == .unavailable && failed.detail == "network")
+        #expect(failed.failureCount == 1 && failed.retryAfter != nil)
+        // The last numbers stay, and say how old they are.
+        #expect(failed.limits == usage.limits && failed.fetchedAt == now)
     }
 
     @Test("The seeded token and refresh token are found nowhere in the cache, the settings, the JSON and the MCP answers")
@@ -553,10 +554,12 @@ struct CursorTests {
             ("cursorAuth/cachedEmail", Data("someone@example.com".utf8)),
         ])
         defer { database.close() }
-        let service = UsageService(readers: [CursorReader()])
+        // The answer sets a cookie of its own, which no output may hold either.
+        let http = try CursorFakeHTTP.answering(headers: ["Set-Cookie": "WorkosCursorSessionToken=SEED-SET-COOKIE-91ac; Path=/"])
+        let service = UsageService(readers: [CursorReader(http: http)])
         let accounts = Providers.discover(readers: service.readers, home: home.url, settings: on)
         let snapshot = await service.refresh(accounts: accounts, settings: on, previous: nil, now: now, force: true)
-        #expect(snapshot.accounts.first?.status == .pending)
+        #expect(snapshot.accounts.first?.status == .ok)
 
         let paths = BrimlinePaths(home: home.url)
         try UsageCache(file: paths.cacheFile).save(snapshot)
@@ -575,7 +578,7 @@ struct CursorTests {
             let arguments = tool == "list_accounts" ? "{}" : #"{"provider":"cursor"}"#
             outputs.append(try #require(server.handle(line: #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"\#(tool)","arguments":\#(arguments)}}"#)))
         }
-        let seeds = [Self.seedToken, "SEED-CURSOR-SIGNATURE", Self.seedRefresh, "someone@example.com", "user_01SEED"]
+        let seeds = [Self.seedToken, "SEED-CURSOR-SIGNATURE", Self.seedRefresh, "someone@example.com", "user_01SEED", "SEED-SET-COOKIE-91ac", "WorkosCursorSessionToken"]
         for text in outputs {
             for seed in seeds { #expect(!text.contains(seed), "\(seed) found in an output") }
         }

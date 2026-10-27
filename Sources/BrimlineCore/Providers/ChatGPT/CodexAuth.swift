@@ -43,15 +43,21 @@ struct CodexAuth: Decodable {
     }
 }
 
-/// The expiry of a JWT access token: its `exp` claim, read without checking the signature. It is only
-/// used so that an expired token is never sent; nothing else in the token is looked at.
+/// The claims of a JWT access token, read without checking the signature: Brimline only uses them so
+/// that an expired token is never sent (`exp`) and, for Cursor, to name the session (`sub`). Nothing
+/// else in the token is looked at.
 enum JWTExpiry {
     static func expiry(of token: String) -> Date? {
-        let parts = token.split(separator: ".", omittingEmptySubsequences: false)
-        guard parts.count == 3, let payload = decode(String(parts[1])),
-              let claims = (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any],
+        guard let claims = claims(of: token),
               let exp = UsageParser.number(claims["exp"]), exp.isFinite, exp > 0 else { return nil }
         return Date(timeIntervalSince1970: exp)
+    }
+
+    /// The payload of a three-part token, when it is a JSON object.
+    static func claims(of token: String) -> [String: Any]? {
+        let parts = token.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 3, let payload = decode(String(parts[1])) else { return nil }
+        return (try? JSONSerialization.jsonObject(with: payload)) as? [String: Any]
     }
 
     /// Base64url, with or without padding.

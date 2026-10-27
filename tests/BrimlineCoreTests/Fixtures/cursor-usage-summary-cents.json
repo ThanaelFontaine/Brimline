@@ -1,0 +1,21 @@
+{
+  "_fixture_source": "Shape from steipete/CodexBar at commit 5f93dc3: Sources/CodexBarCore/Providers/Cursor/CursorStatusProbe.swift (CursorUsageSummary, CursorIndividualUsage, CursorPlanUsage, CursorOverallUsage, CursorTeamUsage) and CursorStatusProbe+UsageSummary.swift (GET https://cursor.com/api/usage-summary). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider cursor). No percentage: the plan gives its cents only (500 of 2000).",
+  "billingCycleStart": "2026-10-14T09:15:10.000Z",
+  "billingCycleEnd": "2026-11-14T09:15:10.000Z",
+  "membershipType": "pro",
+  "isUnlimited": false,
+  "individualUsage": {
+    "plan": {
+      "enabled": true,
+      "used": 500,
+      "limit": 2000,
+      "remaining": 1500
+    },
+    "onDemand": {
+      "enabled": true,
+      "used": 120,
+      "limit": 5000,
+      "remaining": 4880
+    }
+  }
+}

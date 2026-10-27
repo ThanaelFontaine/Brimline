@@ -66,7 +66,7 @@ Brimline reads only `auth.json` in that folder, and of it the sign-in mode, the 
 
 ## Cursor
 
-Cursor has no account to link, and Brimline does not read its limits yet. Turn Cursor on in **Settings, Accounts** (or `brimline providers enable cursor`) and Brimline looks at the one file where Cursor keeps its state to see whether its sign-in is readable. If Cursor protects it (or keeps it in WAL mode and is closed), the card says so and points to cursor.com, Dashboard, Usage; if it is readable, the card says "Not read yet" until the next version reads the limits. Brimline never reads Cursor's Keychain item and opens that file read-only, creating nothing in Cursor's folder (if Cursor keeps that file in WAL mode, only while Cursor is running). Details in [providers](providers.md).
+Cursor has no account to link: Brimline uses the sign-in the Cursor app already keeps. Sign in to Cursor, then turn Cursor on in **Settings, Accounts** (or `brimline providers enable cursor`): it starts off. Brimline looks at the one file where Cursor keeps its state and, when the sign-in is stored there as a plain token, asks cursor.com for the usage of your plan: the cycle, with its percentage and its reset time (and the Auto and API pools when Cursor gives them). If Cursor protects its sign-in (or keeps it in WAL mode and is closed), the card says so and points to cursor.com, Dashboard, Usage. If the sign-in has expired, the card says "Open Cursor to refresh the sign-in." Brimline never renews it, never reads Cursor's Keychain item and opens that file read-only, creating nothing in Cursor's folder (if Cursor keeps that file in WAL mode, only while Cursor is running). Details in [providers](providers.md).
 
 ## Gemini, through Antigravity
 

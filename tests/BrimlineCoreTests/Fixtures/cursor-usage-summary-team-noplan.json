@@ -1,0 +1,21 @@
+{
+  "_fixture_source": "Shape from steipete/CodexBar at commit 5f93dc3: Sources/CodexBarCore/Providers/Cursor/CursorStatusProbe.swift (CursorUsageSummary, CursorIndividualUsage, CursorPlanUsage, CursorOverallUsage, CursorTeamUsage) and CursorStatusProbe+UsageSummary.swift (GET https://cursor.com/api/usage-summary). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider cursor). Team member with neither plan nor overall: the usage is in a place this reader does not read.",
+  "billingCycleStart": "2026-10-14T09:15:10.000Z",
+  "billingCycleEnd": "2026-11-14T09:15:10.000Z",
+  "membershipType": "enterprise",
+  "limitType": "team",
+  "isUnlimited": false,
+  "individualUsage": {
+    "onDemand": {
+      "enabled": false
+    }
+  },
+  "teamUsage": {
+    "pooled": {
+      "enabled": true,
+      "used": 91000,
+      "limit": 400000,
+      "remaining": 309000
+    }
+  }
+}

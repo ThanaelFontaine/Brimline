@@ -128,6 +128,8 @@ public enum AccountNote: String, Codable, Sendable {
     case sharedPool = "shared_pool"
     /// Some limits have no reset time because the provider's text gives none (Gemini, through Antigravity).
     case resetNotPublished = "reset_not_published"
+    /// The provider says the plan has no cap (Cursor's `isUnlimited`): there is no limit to show, and that is the answer.
+    case noLimit = "no_limit"
 }
 
 /// The usage of one account: the last known numbers and the state of the last attempt.

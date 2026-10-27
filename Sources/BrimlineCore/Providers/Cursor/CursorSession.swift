@@ -2,8 +2,9 @@ import Foundation
 import SQLite3
 
 /// What Cursor's own database says about the sign-in, and nothing more: the value of
-/// `cursorAuth/accessToken` is looked at only to be classified, then dropped. It is never kept, never
-/// sent and never returned.
+/// `cursorAuth/accessToken`, a plain token or not. A plain token is handed to the reader for the one
+/// request it makes and dropped with it (`Content.clear`); it is never kept, never written and never
+/// returned to a caller outside the reader. Any other value is classified and dropped here.
 ///
 /// The database is `state.vscdb`, the SQLite file of the Cursor app. It is opened read-only, without
 /// following a link, and nothing is ever created in Cursor's folder. The journal mode, written in the
@@ -28,7 +29,7 @@ enum CursorSession {
     /// A token is a JWT of about a kilobyte: a bigger value is not one, and is not even copied.
     static let maxValueBytes = 16 * 1024
 
-    /// What the token row holds.
+    /// What the token row holds, without the value.
     enum Kind: Equatable, Sendable {
         /// A plain JWT: the sign-in can be read.
         case clear
@@ -38,6 +39,24 @@ enum CursorSession {
         case absent
         /// Something else than a JWT or an encrypted value (the format changed).
         case unrecognized
+    }
+
+    /// What the token row holds, with the plain token when there is one. Not `Equatable` and without a
+    /// description on purpose: a value that holds a secret is never compared nor printed.
+    enum Content: Sendable {
+        case clear(token: String)
+        case encrypted
+        case absent
+        case unrecognized
+
+        var kind: Kind {
+            switch self {
+            case .clear: return .clear
+            case .encrypted: return .encrypted
+            case .absent: return .absent
+            case .unrecognized: return .unrecognized
+            }
+        }
     }
 
     enum Failure: Error, Equatable, Sendable {
@@ -58,9 +77,13 @@ enum CursorSession {
         case notADatabase
     }
 
-    /// Classifies the token row of `database`. Opens nothing before the checks have passed, and
-    /// never writes.
+    /// Classifies the token row of `database`: the same look as `content`, without the token.
     static func classify(database url: URL, owner: uid_t = getuid()) throws(Failure) -> Kind {
+        try content(database: url, owner: owner).kind
+    }
+
+    /// The token row of `database`. Opens nothing before the checks have passed, and never writes.
+    static func content(database url: URL, owner: uid_t = getuid()) throws(Failure) -> Content {
         // SQLite's `NOFOLLOW` refuses a link anywhere in the path, and a home folder can sit behind
         // one (`/var` is `/private/var`): the folders above the file are resolved, the file itself is
         // never followed (`check` refuses a link there).
@@ -105,7 +128,7 @@ enum CursorSession {
         case SQLITE_DONE:
             return .absent
         case SQLITE_ROW:
-            return classify(column: statement)
+            return content(column: statement)
         default:
             throw failure(sqlite3_extended_errcode(handle))
         }
@@ -149,8 +172,8 @@ enum CursorSession {
         return lstat(url.path, &info) == 0 || (errno != ENOENT && errno != ENOTDIR)
     }
 
-    /// Classifies a value from its first column, copying nothing when it is not a short text.
-    private static func classify(column statement: OpaquePointer) -> Kind {
+    /// The content of a value, from its first column, copying nothing when it is not a short text.
+    private static func content(column statement: OpaquePointer) -> Content {
         let type = sqlite3_column_type(statement, 0)
         guard type == SQLITE_TEXT || type == SQLITE_BLOB else {
             return type == SQLITE_NULL ? .absent : .unrecognized
@@ -158,16 +181,20 @@ enum CursorSession {
         let count = Int(sqlite3_column_bytes(statement, 0))
         if count == 0 { return .absent }
         guard count <= maxValueBytes, let bytes = sqlite3_column_blob(statement, 0) else { return .unrecognized }
-        return classify(value: Data(bytes: bytes, count: count))
+        return content(of: Data(bytes: bytes, count: count))
     }
 
     /// The kind of a value. The value is dropped when this returns.
-    static func classify(value: Data) -> Kind {
+    static func classify(value: Data) -> Kind { content(of: value).kind }
+
+    /// What a value is: nothing, an encrypted value (never decrypted), a plain token (given back, for
+    /// the reader to use once) or something else.
+    static func content(of value: Data) -> Content {
         guard let text = text(of: value) else { return .unrecognized }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return .absent }
         if trimmed.hasPrefix(encryptedPrefix) { return .encrypted }
-        return isJWT(trimmed) ? .clear : .unrecognized
+        return isJWT(trimmed) ? .clear(token: trimmed) : .unrecognized
     }
 
     /// The value as text: UTF-8, or the ASCII-only UTF-16 little-endian that VS Code based apps also
