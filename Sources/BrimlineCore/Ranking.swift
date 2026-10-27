@@ -66,8 +66,8 @@ public enum Ranking {
                             now: Date) -> [AccountChoice] {
         let wanted = model?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let choices: [AccountChoice] = accounts.compactMap { usage in
-            guard usage.fetchedAt != nil, usage.status != .reconnect, usage.status != .signedOut,
-                  usage.status != .notReadable else { return nil }
+            guard usage.fetchedAt != nil, !usage.limits.isEmpty, usage.status != .reconnect,
+                  usage.status != .signedOut, usage.status != .notReadable else { return nil }
             let considered = usage.limits.filter { limit in
                 switch limit.kind {
                 case .session: return window == .any || window == .session

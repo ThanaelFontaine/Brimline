@@ -718,6 +718,12 @@ struct GrokTests {
         #expect(report.accounts[0].source == "~/.grok/auth.json")
         #expect(report.accounts[1].message == "No number yet for this period.")
         #expect(report.accounts[1].reason == nil)
+        // An account with no number yet is never ranked: it would read as 100% room.
+        let measured = AccountUsage(account: account, status: .ok,
+                                    limits: [UsageLimit(kind: .period, percent: 40, resetsAt: now.addingTimeInterval(3600))],
+                                    fetchedAt: now)
+        #expect(Ranking.rank([fresh], window: .any, model: nil, now: now).isEmpty)
+        #expect(Ranking.rank([fresh, measured], window: .any, model: nil, now: now).map(\.headroom) == [60])
         let settings = on
         let server = MCPServer(version: "0.0.0", load: { (snapshot, settings) }, now: { now }, home: home)
         let line = try #require(server.handle(line: #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_usage","arguments":{"provider":"grok"}}}"#))
