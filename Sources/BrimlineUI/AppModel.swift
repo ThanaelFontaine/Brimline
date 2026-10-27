@@ -123,6 +123,8 @@ public final class AppModel {
     /// Looks for the accounts again (new ~/.claude-* folder, folder added by hand).
     public func rescan() {
         accounts = Providers.discover(home: home, settings: settings)
+        // Every account gets a color the first time it is seen, and keeps it (QUOTA-72); saved only when one was given.
+        update { $0.assignDefaultColors(to: accounts) }
         if var snap = snapshot {
             let ids = Set(accounts.map(\.id))
             snap.accounts.removeAll { !ids.contains($0.account.id) }
