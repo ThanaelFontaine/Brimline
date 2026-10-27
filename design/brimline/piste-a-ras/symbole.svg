@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="180" height="180" role="img" aria-label="Brimline">
+  <!-- Symbole, piste A · Ras : structure en couleur du texte, liquide en sarcelle ; suit le thème clair ou sombre. -->
+  <style>.s{fill:#15191D}.l{fill:#127A82}.so{fill:none;stroke:#15191D;stroke-width:1}@media (prefers-color-scheme: dark){.s{fill:#ECEFF2}.l{fill:#3BBDC2}.so{stroke:#ECEFF2}}</style>
+  <rect class="s" x="2" y="2" width="14" height="1.5" rx="0.75"/><path class="s" d="M4 5H5.5V13.5A1 1 0 0 0 6.5 14.5H11.5A1 1 0 0 0 12.5 13.5V5H14V13.5A2.5 2.5 0 0 1 11.5 16H6.5A2.5 2.5 0 0 1 4 13.5Z"/><rect class="l" x="7" y="8" width="4" height="5" rx="0.5"/>
+</svg>

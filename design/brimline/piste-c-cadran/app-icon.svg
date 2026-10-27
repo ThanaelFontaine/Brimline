@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Brimline</title>
+  <defs>
+    <linearGradient id="ci-bg" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2C333A"/><stop offset="1" stop-color="#111417"/></linearGradient>
+    <radialGradient id="ci-halo" cx="512" cy="560" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3BBDC2" stop-opacity="0.18"/><stop offset="1" stop-color="#3BBDC2" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ci-liquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FD0D6"/><stop offset="1" stop-color="#0E7C86"/></linearGradient>
+    <linearGradient id="ci-ivory" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9D1D8"/></linearGradient>
+    <linearGradient id="ci-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6EAED"/><stop offset="1" stop-color="#8C959D"/></linearGradient>
+    <filter id="ci-shadow" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.32"/></filter>
+    <filter id="ci-glow" x="-30%" y="-200%" width="160%" height="500%"><feGaussianBlur stdDeviation="16"/></filter>
+    <clipPath id="ci-sq"><rect x="100" y="100" width="824" height="824" rx="185.4"/></clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="#14181B" filter="url(#ci-shadow)"/>
+  <g clip-path="url(#ci-sq)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#ci-bg)"/>
+    <rect x="100" y="100" width="824" height="824" fill="url(#ci-halo)"/>
+    <defs><linearGradient id="ci-arc" x1="182" y1="0" x2="640" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0E7C86"/><stop offset="1" stop-color="#4FD0D6"/></linearGradient></defs>
+    <g transform="translate(0 60)">
+      <!-- piste de verre -->
+      <path d="M182 640A330 330 0 0 1 842 640L727 640A215 215 0 0 0 297 640Z" fill="#FFFFFF" fill-opacity="0.07" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="4"/>
+      <!-- remplissage à 62 %, front clair -->
+      <path d="M182 640A330 330 0 0 1 633.48 333.17L591.15 440.1A215 215 0 0 0 297 640Z" fill="url(#ci-arc)"/>
+      <path d="M592.62 436.38L632.01 336.89" stroke="#A6ECEE" stroke-opacity="0.85" stroke-width="10"/>
+      <!-- graduations 25, 50, 75 % -->
+      <g stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="8" stroke-linecap="round"><line x1="263.1" y1="391.1" x2="247.54" y2="375.54"/><line x1="512" y1="288" x2="512" y2="252"/><line x1="760.9" y1="391.1" x2="776.46" y2="375.54"/></g>
+      <!-- la butée : le trait au bout de la course -->
+      <rect x="700" y="662" width="170" height="40" rx="20" fill="#3BBDC2" fill-opacity="0.45" filter="url(#ci-glow)"/>
+      <rect x="700" y="662" width="170" height="40" rx="20" fill="url(#ci-ivory)"/>
+    </g>
+    <rect x="102" y="102" width="820" height="820" rx="183.4" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="4"/>
+  </g>
+</svg>

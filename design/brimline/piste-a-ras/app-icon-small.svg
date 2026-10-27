@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Brimline</title>
+  <defs>
+    <linearGradient id="as-bg" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2C333A"/><stop offset="1" stop-color="#111417"/></linearGradient>
+    <radialGradient id="as-halo" cx="512" cy="560" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3BBDC2" stop-opacity="0.18"/><stop offset="1" stop-color="#3BBDC2" stop-opacity="0"/></radialGradient>
+    <linearGradient id="as-liquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FD0D6"/><stop offset="1" stop-color="#0E7C86"/></linearGradient>
+    <linearGradient id="as-ivory" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9D1D8"/></linearGradient>
+    <linearGradient id="as-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6EAED"/><stop offset="1" stop-color="#8C959D"/></linearGradient>
+    <filter id="as-shadow" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.32"/></filter>
+    <filter id="as-glow" x="-30%" y="-200%" width="160%" height="500%"><feGaussianBlur stdDeviation="16"/></filter>
+    <clipPath id="as-sq"><rect x="100" y="100" width="824" height="824" rx="185.4"/></clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="#14181B" filter="url(#as-shadow)"/>
+  <g clip-path="url(#as-sq)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#as-bg)"/>
+    
+    <g transform="translate(0 -18)">
+      <clipPath id="as-in"><path d="M388 400H636V670A54 54 0 0 1 582 724H442A54 54 0 0 1 388 670Z"/></clipPath>
+      <rect x="388" y="523.12" width="248" height="200.88" fill="#3BBDC2" clip-path="url(#as-in)"/>
+      <path d="M332 400H388V670A54 54 0 0 0 442 724H582A54 54 0 0 0 636 670V400H692V670A110 110 0 0 1 582 780H442A110 110 0 0 1 332 670Z" fill="#E6EAED"/>
+      <rect x="272" y="280" width="480" height="72" rx="36" fill="#FFFFFF"/>
+    </g>
+    <rect x="102" y="102" width="820" height="820" rx="183.4" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="4"/>
+  </g>
+</svg>

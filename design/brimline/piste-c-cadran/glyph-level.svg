@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" width="18" height="18" fill="currentColor" role="img" aria-label="Brimline">
+  <!-- Glyphe paramétrable, piste C · Cadran : à insérer en ligne, niveau par la variable CSS --level (0 à 1).
+       En <img>, la variable ne passe pas : le niveau par défaut (0,6) s'affiche. -->
+  <!-- Le remplissage suit --level par un tracé en pointillés sur l'arc médian (rayon 6, longueur 6 pi). -->
+  <path d="M1.5 12A7.5 7.5 0 0 1 16.5 12L13.5 12A4.5 4.5 0 0 0 4.5 12Z" fill="none" stroke="currentColor" stroke-width="1"/>
+  <path d="M3 12A6 6 0 0 1 15 12" fill="none" stroke="currentColor" stroke-width="3" pathLength="100" style="stroke-dasharray: calc(var(--level, 0.6) * 100) 100"/>
+  <rect x="12.5" y="13" width="5" height="1.5" rx="0.75"/>
+</svg>

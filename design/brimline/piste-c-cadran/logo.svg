@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 24" width="528" height="96" role="img" aria-label="Brimline">
+  <!-- Logo horizontal, piste C · Cadran. Logotype en police système, semi-gras : à figer en tracés avec la police retenue au lot d'intégration. -->
+  <style>.s{fill:#15191D}.l{fill:#127A82}.so{fill:none;stroke:#15191D;stroke-width:1}@media (prefers-color-scheme: dark){.s{fill:#ECEFF2}.l{fill:#3BBDC2}.so{stroke:#ECEFF2}}text{font:600 19px -apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;letter-spacing:-0.2px}</style>
+  <g transform="translate(0 2) scale(1.1111)"><path class="so" d="M1.5 12A7.5 7.5 0 0 1 16.5 12L13.5 12A4.5 4.5 0 0 0 4.5 12Z"/><path class="l" d="M1.5 12A7.5 7.5 0 0 1 11.76 5.03L10.66 7.82A4.5 4.5 0 0 0 4.5 12Z"/><rect class="s" x="12.5" y="13" width="5" height="1.5" rx="0.75"/></g>
+  <text class="s" x="27" y="18.5">Brimline</text>
+</svg>

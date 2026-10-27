@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Brimline</title>
+  <defs>
+    <linearGradient id="ai-bg" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2C333A"/><stop offset="1" stop-color="#111417"/></linearGradient>
+    <radialGradient id="ai-halo" cx="512" cy="560" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3BBDC2" stop-opacity="0.18"/><stop offset="1" stop-color="#3BBDC2" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ai-liquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FD0D6"/><stop offset="1" stop-color="#0E7C86"/></linearGradient>
+    <linearGradient id="ai-ivory" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9D1D8"/></linearGradient>
+    <linearGradient id="ai-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6EAED"/><stop offset="1" stop-color="#8C959D"/></linearGradient>
+    <filter id="ai-shadow" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.32"/></filter>
+    <filter id="ai-glow" x="-30%" y="-200%" width="160%" height="500%"><feGaussianBlur stdDeviation="16"/></filter>
+    <clipPath id="ai-sq"><rect x="100" y="100" width="824" height="824" rx="185.4"/></clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="#14181B" filter="url(#ai-shadow)"/>
+  <g clip-path="url(#ai-sq)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#ai-bg)"/>
+    <rect x="100" y="100" width="824" height="824" fill="url(#ai-halo)"/>
+    <g transform="translate(0 -20)">
+      <clipPath id="ai-in"><path d="M380 388H644V668A68 68 0 0 1 576 736H448A68 68 0 0 1 380 668Z"/></clipPath>
+      <!-- verre de la cuve -->
+      <path d="M380 388H644V668A68 68 0 0 1 576 736H448A68 68 0 0 1 380 668Z" fill="#FFFFFF" fill-opacity="0.06"/>
+      <!-- liquide à 62 %, ménisque -->
+      <g clip-path="url(#ai-in)">
+        <rect x="380" y="520.24" width="264" height="215.76" fill="url(#ai-liquid)"/>
+        <rect x="380" y="520.24" width="264" height="10" fill="#A6ECEE" fill-opacity="0.85"/>
+      </g>
+      <!-- reflet -->
+      <rect x="404" y="410" width="20" height="270" rx="10" fill="#FFFFFF" fill-opacity="0.18"/>
+      <!-- cuve ouverte : parois de verre -->
+      <path d="M352 388A14 14 0 0 1 380 388V668A68 68 0 0 0 448 736H576A68 68 0 0 0 644 668V388A14 14 0 0 1 672 388V668A96 96 0 0 1 576 764H448A96 96 0 0 1 352 668Z" fill="#FFFFFF" fill-opacity="0.34"/>
+      <!-- le trait : la limite, au-dessus du bord -->
+      <rect x="282" y="300" width="460" height="44" rx="22" fill="#3BBDC2" fill-opacity="0.45" filter="url(#ai-glow)"/>
+      <rect x="282" y="300" width="460" height="44" rx="22" fill="url(#ai-ivory)"/>
+    </g>
+    <rect x="102" y="102" width="820" height="820" rx="183.4" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="4"/>
+  </g>
+</svg>

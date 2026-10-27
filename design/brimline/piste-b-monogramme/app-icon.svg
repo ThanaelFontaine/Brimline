@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Brimline</title>
+  <defs>
+    <linearGradient id="bi-bg" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2C333A"/><stop offset="1" stop-color="#111417"/></linearGradient>
+    <radialGradient id="bi-halo" cx="512" cy="560" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3BBDC2" stop-opacity="0.18"/><stop offset="1" stop-color="#3BBDC2" stop-opacity="0"/></radialGradient>
+    <linearGradient id="bi-liquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4FD0D6"/><stop offset="1" stop-color="#0E7C86"/></linearGradient>
+    <linearGradient id="bi-ivory" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9D1D8"/></linearGradient>
+    <linearGradient id="bi-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E6EAED"/><stop offset="1" stop-color="#8C959D"/></linearGradient>
+    <filter id="bi-shadow" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity="0.32"/></filter>
+    <filter id="bi-glow" x="-30%" y="-200%" width="160%" height="500%"><feGaussianBlur stdDeviation="16"/></filter>
+    <clipPath id="bi-sq"><rect x="100" y="100" width="824" height="824" rx="185.4"/></clipPath>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="#14181B" filter="url(#bi-shadow)"/>
+  <g clip-path="url(#bi-sq)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#bi-bg)"/>
+    <rect x="100" y="100" width="824" height="824" fill="url(#bi-halo)"/>
+    <clipPath id="bi-in"><path d="M378 476H552A94 94 0 0 1 646 570V654A94 94 0 0 1 552 748H378Z"/></clipPath>
+    <path d="M378 476H552A94 94 0 0 1 646 570V654A94 94 0 0 1 552 748H378Z" fill="#FFFFFF" fill-opacity="0.06"/>
+    <g clip-path="url(#bi-in)">
+      <rect x="378" y="579.36" width="268" height="168.64" fill="url(#bi-liquid)"/>
+      <rect x="378" y="579.36" width="268" height="10" fill="#A6ECEE" fill-opacity="0.85"/>
+      <rect x="400" y="496" width="18" height="230" rx="9" fill="#FFFFFF" fill-opacity="0.16"/>
+    </g>
+    <!-- le b : hampe (la règle) et panse (la cuve) -->
+    <path fill-rule="evenodd" fill="url(#bi-ivory)" d="M322 248A28 28 0 0 1 378 248V420H552A150 150 0 0 1 702 570V654A150 150 0 0 1 552 804H322ZM378 476H552A94 94 0 0 1 646 570V654A94 94 0 0 1 552 748H378Z"/>
+    <!-- graduations sur la hampe -->
+    <g fill="#111417" fill-opacity="0.35"><rect x="350" y="300" width="28" height="6"/><rect x="350" y="360" width="28" height="6"/></g>
+    <rect x="102" y="102" width="820" height="820" rx="183.4" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="4"/>
+  </g>
+</svg>
