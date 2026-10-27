@@ -43,7 +43,7 @@ func rejectUnknown(_ allowed: Set<String>) {
 }
 
 let paths = BrimlinePaths()
-// Before anything is read, including by `brimline mcp`: the files of the old Sightglass folder come over.
+// Before anything is read, including by `brimline mcp`: the files of the old folder (named after the former name) come over.
 LegacyMigration.run(paths: paths)
 let settings = SettingsStore(file: paths.settingsFile).load()
 let strings = Strings()

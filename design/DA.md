@@ -1,16 +1,16 @@
-# Sightglass : direction artistique
+# Brimline : direction artistique
 
 Version 1, 25/10/2026. Vue d'ensemble : `apercu.png`.
 
 ## Intention
 
-Un *sight glass* est le tube de verre qui montre le niveau d'une cuve. Sightglass doit se lire comme lui : d'un regard, sans interprétation, sans mentir. C'est un instrument de précision calme, pas un tableau de bord. Peu de couleur, beaucoup de gris honnêtes, un seul liquide (un bleu sarcelle) qui ne vire à l'ambre puis au rouge que quand il le faut.
+Le *brim* est le bord jusqu'où monte une cuve ; la *line* est la limite tracée au-dessus. Brimline doit se lire comme un niveau qu'on regarde monter vers ce bord : d'un regard, sans interprétation, sans mentir. C'est un instrument de précision calme, pas un tableau de bord. Peu de couleur, beaucoup de gris honnêtes, un seul liquide (un bleu sarcelle) qui ne vire à l'ambre puis au rouge que quand il le faut.
 
 Trois règles fondent tout le reste :
 
 1. **Le chiffre d'abord.** Chaque jauge a son pourcentage écrit en texte. La couleur confirme, elle ne porte jamais seule l'information.
 2. **Le liquide, c'est ce qui est consommé.** La jauge et le glyphe montent vers la limite (la bride du haut, le bout de la piste). Le vide au-dessus, c'est ce qui reste. Le pourcentage affiché est celui de l'API (part utilisée), pour qu'on puisse le comparer aux chiffres de Claude.
-3. **Natif avant tout.** L'app emprunte tout au système (SF Pro, matériaux, couleurs `.primary` et `.secondary`, boutons sans cadre). Sightglass n'ajoute que l'accent et les couleurs de jauge.
+3. **Natif avant tout.** L'app emprunte tout au système (SF Pro, matériaux, couleurs `.primary` et `.secondary`, boutons sans cadre). Brimline n'ajoute que l'accent et les couleurs de jauge.
 
 ## Couleurs
 
@@ -48,7 +48,7 @@ Valeurs sRGB. Contrastes WCAG 2.2 calculés (formule de luminance relative), AA 
 | `gaugeCrit` | `#FF6F64` | critique | 6,8 / 6,2 (piste 4,9) |
 | `gaugeMuted` | `#9BA5AF` à 55 % | expiré | |
 
-Dans l'app, `SightglassTheme.swift` fournit ces couleurs en `Color` dynamiques (clair et sombre suivent l'apparence du Mac). Le texte et les fonds y restent ceux du système. Sur le site, `tokens.css` les expose en variables `--sg-*`, le sombre par `prefers-color-scheme`.
+Dans l'app, `BrimlineTheme.swift` fournit ces couleurs en `Color` dynamiques (clair et sombre suivent l'apparence du Mac). Le texte et les fonds y restent ceux du système. Sur le site, `tokens.css` les expose en variables `--sg-*`, le sombre par `prefers-color-scheme`.
 
 ## Typographie
 
@@ -56,7 +56,7 @@ Dans l'app, `SightglassTheme.swift` fournit ces couleurs en `Color` dynamiques (
 
 | Usage | Style |
 |---|---|
-| En-tête « Sightglass » | 13 pt, semi-gras |
+| En-tête « Brimline » | 13 pt, semi-gras |
 | Adresse du compte | 13 pt, semi-gras, coupure au milieu (`.truncationMode(.middle)`) si trop longue, adresse complète en infobulle |
 | Organisation, offre | 11 pt, secondaire |
 | Libellé de limite (« Session 5 h », « Semaine · Fable ») | 12 pt |
@@ -104,7 +104,7 @@ Dans l'app, `SightglassTheme.swift` fournit ces couleurs en `Color` dynamiques (
 | À reconnecter (401) | comme expiré | « À reconnecter » et le même message |
 | Pas de limite hebdomadaire globale | pas de jauge | la phrase en secondaire, à la place de la ligne « Semaine » |
 
-**Accessibilité.** Chaque jauge est un seul élément VoiceOver : libellé = nom de la limite, valeur = « 72 % » (plus « expiré » ou « indisponible »). Composant prêt à l'emploi : `SGGauge` dans `SightglassTheme.swift` (chaînes à passer par les ressources localisées de l'app). Sur le site : `role="meter"` avec `aria-valuenow`, classe `.sg-gauge` de `tokens.css`.
+**Accessibilité.** Chaque jauge est un seul élément VoiceOver : libellé = nom de la limite, valeur = « 72 % » (plus « expiré » ou « indisponible »). Composant prêt à l'emploi : `SGGauge` dans `BrimlineTheme.swift` (chaînes à passer par les ressources localisées de l'app). Sur le site : `role="meter"` avec `aria-valuenow`, classe `.sg-gauge` de `tokens.css`.
 
 ## Espacements et mesures
 
@@ -131,7 +131,7 @@ Grille de 4 : 2, 4, 8, 12, 16, 24, 32, 48, 64.
 
 ## Le glyphe de la barre des menus
 
-Fichiers : `SightglassGlyph.swift` (app), `icons/menubar-template.svg` et `glyph-level.svg` (site).
+Fichiers : `BrimlineGlyph.swift` (app), `icons/menubar-template.svg` et `glyph-level.svg` (site).
 
 - Image **gabarit** 18 x 18 pt, noir et transparence, `isTemplate = true` : macOS la teinte (clair, sombre, barre teintée, survol). Jamais de couleur dans la barre des menus.
 - Dessin : deux brides horizontales (12 pt de large) et deux parois verticales autour d'une cavité de 6 pt. Le liquide (4 pt de large) monte de la bride du bas vers celle du haut, qui figure la limite.
@@ -140,13 +140,13 @@ Fichiers : `SightglassGlyph.swift` (app), `icons/menubar-template.svg` et `glyph
 - Pourcentage à côté (réglage) : texte système de la barre des menus, chiffres à chasse fixe, même valeur que le glyphe. Le glyphe n'a pas de couleur : à 90 % et plus, seuls le niveau et le chiffre parlent, c'est voulu.
 - Données expirées ou indisponibles : glyphe atténué (opacité 0,45, `dimmed: true`), avec la dernière valeur connue ou tube vide si aucune.
 - Aucun compte : tube vide, opacité pleine.
-- Libellé VoiceOver : « Sightglass, 72 % ».
+- Libellé VoiceOver : « Brimline, 72 % ».
 
 Usage :
 
 ```swift
-statusLabel = Image(nsImage: SightglassGlyph.image(level: 0.72))
-SightglassGlyph.image(level: last, dimmed: true)   // expiré ou indisponible
+statusLabel = Image(nsImage: BrimlineGlyph.image(level: 0.72))
+BrimlineGlyph.image(level: last, dimmed: true)   // expiré ou indisponible
 ```
 
 ## L'icône de l'app
@@ -176,6 +176,6 @@ SightglassGlyph.image(level: last, dimmed: true)   // expiré ou indisponible
 | Fichier | Contenu |
 |---|---|
 | `tokens.json`, `tokens.css` | jetons (couleurs avec contrastes, rayons, espacements, polices) |
-| `SightglassGlyph.swift` | glyphe gabarit, `NSImage` pour un niveau donné |
-| `SightglassTheme.swift` | couleurs dynamiques, seuils, mesures, vue `SGGauge` (vérifiés par `swiftc -typecheck`, macOS 14, Swift 6) |
-| `src/main.swift` | générateur des PNG : `swiftc -O -o src/render SightglassGlyph.swift src/main.swift && src/render .` (binaire à ne pas versionner) |
+| `BrimlineGlyph.swift` | glyphe gabarit, `NSImage` pour un niveau donné |
+| `BrimlineTheme.swift` | couleurs dynamiques, seuils, mesures, vue `SGGauge` (vérifiés par `swiftc -typecheck`, macOS 14, Swift 6) |
+| `src/render-icons.swift` | générateur des PNG : à compiler comme `main.swift` avec `BrimlineGlyph.swift` et les sources de `BrimlineCore` dans un seul module (sans la ligne `import BrimlineCore`), puis `render <dossier da>` (binaire à ne pas versionner) |

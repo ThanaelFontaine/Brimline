@@ -15,7 +15,7 @@ Vue d'ensemble de la direction artistique : `DA.md`. Planche à ouvrir dans un n
 
 ## Consommer les jetons
 
-- **App (lot 4b)** : `Sources/SightglassUI/SightglassTheme.swift` recopie les couleurs de `tokens.json` (`SGTheme.dynamic(clair, sombre)`). Le texte et les fonds restent ceux du système. Une valeur change : on la change d'abord dans `tokens.json`, puis dans `SightglassTheme.swift`. L'icône est lue dans `icons/AppIcon.icns` par `scripts/build_app.sh`.
+- **App (lot 4b)** : `Sources/BrimlineUI/BrimlineTheme.swift` recopie les couleurs de `tokens.json` (`SGTheme.dynamic(clair, sombre)`). Le texte et les fonds restent ceux du système. Une valeur change : on la change d'abord dans `tokens.json`, puis dans `BrimlineTheme.swift`. L'icône est lue dans `icons/AppIcon.icns` par `scripts/build_app.sh`.
 - **Site (lot 5)** : copier `tokens.css`, `icons/app-icon.svg` et le glyphe tels quels (même octets : la QA compare les fichiers). Ne jamais retoucher une valeur côté site.
 
 ## Contrôles

@@ -1,4 +1,8 @@
-"""Repository text checks: no em or en dash, no personal data in tracked text files.
+"""Repository text checks: no em or en dash, no personal data, no old product name in tracked text files.
+
+The old name of the app (see OLD_NAME) may only appear where it is history or migration: the
+files of OLD_NAME_FILES, and the lines that say "Formerly <old name>" (or the French
+"Anciennement <old name>"). Anywhere else, in a text or in a file name, it is a problem.
 
 The maintainer's own patterns (one regex per line, "#" comments) live outside the tracked
 files: in .check-text.local at the repository root, and in ~/.config/check-text/patterns for
@@ -25,6 +29,24 @@ GENERIC_PATTERNS = [
 # Files allowed to quote the generic patterns (the checker and its test).
 ALLOWED = {"scripts/check_text.py", "tests/test_check_text.py"}
 
+# The app was called Sightglass until 26 October 2026 (QUOTA-34). Case does not matter.
+OLD_NAME = re.compile("sightglass", re.IGNORECASE)
+# A line that says where the name comes from is allowed anywhere.
+OLD_NAME_LINE = re.compile("(formerly|anciennement) sightglass", re.IGNORECASE)
+# Files where the old name is history (changelog, dated documents) or migration (the code that
+# moves the old data, its tests, the installer that turns the old install off), and the checker.
+OLD_NAME_FILES = {
+    "CHANGELOG.md",
+    "docs/releases/v0.1.0.md",
+    "docs/releases/v0.2.0.md",
+    "docs/audits/2026-10-26-securite.md",
+    "Sources/BrimlineCore/LegacyMigration.swift",
+    "tests/BrimlineCoreTests/LegacyMigrationTests.swift",
+    "scripts/install.sh",
+    "scripts/check_text.py",
+    "tests/test_check_text.py",
+}
+
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".icns", ".heic",
     ".woff", ".woff2", ".ttf", ".otf", ".eot", ".pdf", ".zip", ".dmg",
@@ -48,6 +70,14 @@ def find_personal_data(path, text, patterns):
     return hits
 
 
+def find_old_name(path, text):
+    """Line numbers (1 based) naming the old product, unless the file or the line is allowed to."""
+    if path in OLD_NAME_FILES:
+        return []
+    return [i + 1 for i, line in enumerate(text.split("\n"))
+            if OLD_NAME.search(line) and not OLD_NAME_LINE.search(line)]
+
+
 def local_patterns(paths):
     """Patterns read from the files that exist among paths."""
     patterns = []
@@ -68,6 +98,8 @@ def main():
     problems = []
     for name in files:
         path = root / name
+        if OLD_NAME.search(name) and name not in OLD_NAME_FILES:
+            problems.append(f"{name}: old product name in the file name")
         if path.suffix.lower() in BINARY_EXTENSIONS or not path.is_file():
             continue
         try:
@@ -75,6 +107,7 @@ def main():
         except UnicodeDecodeError:
             continue
         problems += [f"{name}: line {n}: em or en dash" for n in find_dashes(text)]
+        problems += [f"{name}: line {n}: old product name" for n in find_old_name(name, text)]
         problems += [f"{name}: {hit}" for hit in find_personal_data(name, text, patterns)]
     for p in problems:
         print(p)

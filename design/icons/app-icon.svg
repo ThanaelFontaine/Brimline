@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <title>Sightglass</title>
+  <title>Brimline</title>
   <!-- Grille d'icônes macOS : carré arrondi de 824 à 100 du bord, ombre portée. Même dessin que src/main.swift (drawIcon). -->
   <defs>
     <linearGradient id="bg" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse">

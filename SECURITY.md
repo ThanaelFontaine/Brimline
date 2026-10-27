@@ -43,7 +43,7 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 - `~/Library/Application Support/Brimline/usage.json` (the last numbers, statuses, addresses and folders of the accounts) and `settings.json` (preferences), in a folder readable by your user only (`0700`, files `0600`). The cache type has no field for a token, and a test writes a cache from fake tokens and checks none of them is in the file.
 - `~/Library/LaunchAgents/eu.thanaelfontaine.brimline.plist`, only when you turn on "Open at login"; it opens the app and nothing else.
 - Nothing in the Keychain, nothing in the Claude Code folders.
-- Once, at its first launch, it reads `settings.json` and `usage.json` from `~/Library/Application Support/Sightglass/` and copies them to the Brimline folder: a real folder owned by you, files opened without following a link, regular, owned by you, 1 MiB at most, decoded into the same types as above and written again (so no token can come over), never over an existing file. The old folder is not changed.
+- Once, at its first launch, it reads `settings.json` and `usage.json` from the old folder in `~/Library/Application Support` (the one named after the old app) and copies them to the Brimline folder: a real folder owned by you, files opened without following a link, regular, owned by you, 1 MiB at most, decoded into the same types as above and written again (so no token can come over), never over an existing file. The old folder is not changed.
 
 ### Anthropic's terms
 

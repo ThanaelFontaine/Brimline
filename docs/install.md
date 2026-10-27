@@ -43,17 +43,17 @@ scripts/install.sh
 
 `install.sh` stops the running copy before replacing it.
 
-## Coming from Sightglass
+## Formerly Sightglass
 
-Brimline is the new name of Sightglass (the reason is in the [changelog](../CHANGELOG.md)). If the old app is installed, `scripts/install.sh` takes care of the move:
+Brimline is the new name of the old app (the reason is in the [changelog](../CHANGELOG.md)). If the old app is installed, `scripts/install.sh` takes care of the move:
 
 - it quits the old app and leaves it on disk (in `~/Applications`);
-- it removes the old command link `~/.local/bin/sightglass`, only when it points into the old app;
-- it turns off the old **Open at login** LaunchAgent without deleting its file, and writes the Brimline one in its place (the old one is `eu.thanaelfontaine.sightglass`);
-- at its first launch, Brimline copies your settings and your last numbers from `~/Library/Application Support/Sightglass/`, two files only, never over a file Brimline already has, and leaves the old folder as it was;
+- it removes the old command link in `~/.local/bin`, only when it points into the old app;
+- it turns off the old **Open at login** LaunchAgent without deleting its file, and writes the Brimline one in its place (the old one carries the old name in its label);
+- at its first launch, Brimline copies your settings and your last numbers from the old folder in `~/Library/Application Support` (the one named after the old app), two files only, never over a file Brimline already has, and leaves the old folder as it was;
 - it prints the commands that move the old app, LaunchAgent and folder to the Trash. It does not run them: do it once Brimline shows your accounts.
 
-Your agents need one change: the command and the MCP server are called `brimline` now. If you registered the server under the old name, replace it (`claude mcp remove sightglass`, then the command of [agents.md](agents.md)).
+Your agents need one change: the command and the MCP server are called `brimline` now. If you registered the server under the old name, replace it (`claude mcp list` shows it, `claude mcp remove` takes it out, then add the new one with the command of [agents.md](agents.md)).
 
 ## Uninstall
 

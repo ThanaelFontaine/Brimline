@@ -1,8 +1,8 @@
 # Code of conduct
 
-Sightglass adopts the **[Contributor Covenant, version 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/)** as its code of conduct. By taking part in this project (issues, pull requests, discussions), you agree to follow it.
+Brimline adopts the **[Contributor Covenant, version 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/)** as its code of conduct. By taking part in this project (issues, pull requests, discussions), you agree to follow it.
 
-In short: be respectful and welcoming, assume good faith, accept constructive criticism, and focus on what is best for the people using and building Sightglass. Harassment, insults, personal attacks and publishing other people's private information are not tolerated.
+In short: be respectful and welcoming, assume good faith, accept constructive criticism, and focus on what is best for the people using and building Brimline. Harassment, insults, personal attacks and publishing other people's private information are not tolerated.
 
 ## Reporting
 

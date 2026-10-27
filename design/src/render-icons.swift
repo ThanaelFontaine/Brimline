@@ -1,5 +1,6 @@
-// render.swift : produit les images de la DA de Sightglass (icône, favicons, og, aperçu).
-// Compilation : swiftc -O -o render SightglassGlyph.swift src/main.swift
+// render.swift : produit les images de la DA de Brimline (icône, favicons, og, aperçu).
+// Compilation : ce fichier sert de main.swift, avec BrimlineGlyph.swift et les sources de BrimlineCore
+// dans un seul module (sans la ligne `import BrimlineCore`) : swiftc -O -swift-version 6 -enable-bare-slash-regex
 // Usage : ./render <dossier da>
 
 import AppKit
@@ -198,7 +199,7 @@ func gauge(_ ctx: CGContext, _ r: CGRect, _ state: GaugeState, _ p: Palette) {
 func glyph(_ ctx: CGContext, _ x: CGFloat, _ y: CGFloat, k: CGFloat, level: Double?, color: CGColor) {
     unflipped(ctx, CGRect(x: x, y: y, width: 18 * k, height: 18 * k)) {
         ctx.scaleBy(x: k, y: k)
-        SightglassGlyph.draw(level: level, in: ctx, scale: max(2, k), color: color)
+        BrimlineGlyph.draw(level: level, in: ctx, scale: max(2, k), color: color)
     }
 }
 
@@ -234,7 +235,7 @@ func card(_ ctx: CGContext, x: CGFloat, y: CGFloat, k: CGFloat, _ p: Palette) {
     roundRect(ctx, CGRect(x: 0.5, y: 0.5, width: W - 1, height: H - 1), 12, stroke: rgb(p.border), line: 1)
     var cy: CGFloat = 14
     glyph(ctx, pad - 2, cy - 1, k: 1, level: 0.93, color: rgb(p.text))
-    text("Sightglass", pad + 20, cy, size: 13, weight: .semibold, color: p.text)
+    text("Brimline", pad + 20, cy, size: 13, weight: .semibold, color: p.text)
     cy += 32
 
     for (email, org, rows, note) in accounts {
@@ -297,7 +298,7 @@ png(1200, 630, "og.png", opaque: true) { ctx in
         drawIcon(ctx, square: CGRect(x: 360 * 100 / 1024, y: 360 * 100 / 1024, width: 360 * 824 / 1024, height: 360 * 824 / 1024))
     }
     let x: CGFloat = 470
-    text("Sightglass", x, 150, size: 76, weight: .semibold, color: p.text)
+    text("Brimline", x, 150, size: 76, weight: .semibold, color: p.text)
     text("See how much of every AI subscription you have left.", x, 252, size: 38, color: p.text2, width: 660)
     // Trois jauges d'exemple.
     let rows: [(String, CGFloat)] = [("5-hour session", 0.34), ("Week, all models", 0.72), ("Week · Fable", 0.93)]
@@ -315,7 +316,7 @@ png(1200, 630, "og.png", opaque: true) { ctx in
 png(1600, 1320, "apercu.png", opaque: true) { ctx in
     let L = Palette.light, D = Palette.dark
     ctx.setFillColor(rgb(0xE9ECEF)); ctx.fill(CGRect(x: 0, y: 0, width: 1600, height: 1320))
-    text("Sightglass · direction artistique", 64, 40, size: 28, weight: .semibold, color: L.text)
+    text("Brimline · direction artistique", 64, 40, size: 28, weight: .semibold, color: L.text)
     text("Icône, glyphe de la barre des menus, carte de compte en clair et en sombre", 64, 80, size: 16, color: L.text2)
 
     // Icône.
@@ -357,8 +358,8 @@ png(1600, 1320, "apercu.png", opaque: true) { ctx in
             text(label, bx + 40, y0 + 53, size: 26, weight: .medium, color: pal.text, mono: true)
             bx += 122
         }
-        glyph(ctx, bx + 6, y0 + 47, k: 2, level: 0.58, color: rgb(pal.text, SightglassGlyph.dimmedAlpha))
-        text("expiré", bx + 48, y0 + 53, size: 26, color: pal.text, alpha: SightglassGlyph.dimmedAlpha)
+        glyph(ctx, bx + 6, y0 + 47, k: 2, level: 0.58, color: rgb(pal.text, BrimlineGlyph.dimmedAlpha))
+        text("expiré", bx + 48, y0 + 53, size: 26, color: pal.text, alpha: BrimlineGlyph.dimmedAlpha)
     }
     text("Barre des menus, taille réelle en 2x, pourcentage affiché", 980, 418, size: 13, color: L.text2)
 
