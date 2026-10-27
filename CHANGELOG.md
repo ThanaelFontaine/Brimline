@@ -14,7 +14,7 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 - **`scripts/install.sh` handles the old install.** It quits the old app (by its full path), removes the old `~/.local/bin/sightglass` link when it points into the old app, turns off the old LaunchAgent (`launchctl disable`, undone by `enable`, the file stays) and writes the Brimline one, then prints the commands that move the old files to the Trash, without running them.
 - **Texts, docs and screenshots follow the name.** Both READMEs (with their "Formerly Sightglass" line and the reason), the docs, the design notes and the screenshots in `docs/images/` (rendered again with `swift run brimline-snapshots`) say Brimline. The new icon and logo come in a later change.
 - **The text check keeps the old name out.** `scripts/check_text.py` now refuses the old name, in a text or in a file name, outside this changelog, the dated documents, the migration code and the installer, and the lines that say "Formerly" or "Anciennement".
-- **For your agents:** register the server again under the new name, `claude mcp add brimline -- ~/.local/bin/brimline mcp` (see [docs/agents.md](docs/agents.md)).
+- **For your agents:** register the server again under the new name, `claude mcp add --scope user brimline -- ~/.local/bin/brimline mcp` (see [docs/agents.md](docs/agents.md)).
 
 ## [0.1.0] - 2026-10-25
 

@@ -63,8 +63,8 @@ L'app suit la langue du Mac (anglais ou français). Chaque état est dit en mots
 ## Pour les agents
 
 ```bash
-brimline status --json                                 # chaque compte, chaque limite, avec l'âge des données
-claude mcp add brimline -- ~/.local/bin/brimline mcp   # outils MCP : list_accounts, get_usage, best_account
+brimline status --json                                              # chaque compte, chaque limite, avec l'âge des données
+claude mcp add --scope user brimline -- ~/.local/bin/brimline mcp   # outils MCP : list_accounts, get_usage, best_account
 ```
 
 Les deux lisent le cache écrit par l'app et ne voient jamais de jeton (seule `brimline status --live` lit le Trousseau, comme l'app). Détails et format JSON : [docs/agents.md](docs/agents.md) (en anglais).

@@ -44,6 +44,12 @@ let package = Package(
             resources: [.copy("Fixtures")],
             swiftSettings: testSettings
         ),
+        .testTarget(
+            name: "BrimlineUITests",
+            dependencies: ["BrimlineCore", "BrimlineUI"],
+            path: "tests/BrimlineUITests",
+            swiftSettings: testSettings
+        ),
     ],
     swiftLanguageModes: [.v6]
 )

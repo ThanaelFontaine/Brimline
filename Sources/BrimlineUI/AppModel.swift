@@ -248,7 +248,9 @@ public final class AppModel {
         return Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/brimline").path
     }
 
-    public var mcpAddCommand: String { "claude mcp add brimline -- \(shellQuoted(commandPath)) mcp" }
+    /// `--scope user` makes the server available in every project; without it Claude Code adds it to
+    /// the current project only (https://code.claude.com/docs/en/mcp).
+    public var mcpAddCommand: String { "claude mcp add --scope user brimline -- \(shellQuoted(commandPath)) mcp" }
 
     public var mcpJSON: String {
         let escaped = commandPath.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
