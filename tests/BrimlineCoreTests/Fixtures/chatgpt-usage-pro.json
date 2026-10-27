@@ -1,0 +1,31 @@
+{
+  "_fixture_source": "Shape from openai/codex at commit aeb6b22c8bda5f4d4b6ab80ebd3ccdb3f47fb3ab: codex-rs/codex-backend-openapi-models/src/models (rate_limit_status_payload.rs and its window, details, additional and credit models) and codex-rs/backend-client/src/client/rate_limit_resets.rs (GET /wham/usage). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider chatgpt). Pro plan: no 5 hour window (OpenAI documents that Pro has none), only the week.",
+  "plan_type": "pro",
+  "rate_limit": {
+    "allowed": true,
+    "limit_reached": false,
+    "primary_window": {
+      "used_percent": 41,
+      "limit_window_seconds": 604800,
+      "reset_after_seconds": 400000,
+      "reset_at": 1793495200
+    },
+    "secondary_window": null
+  },
+  "additional_rate_limits": null,
+  "credits": {
+    "has_credits": false,
+    "unlimited": false,
+    "balance": "0",
+    "approx_local_messages": [
+      0,
+      0
+    ],
+    "approx_cloud_messages": [
+      0,
+      0
+    ]
+  },
+  "spend_control": null,
+  "rate_limit_reached_type": null
+}

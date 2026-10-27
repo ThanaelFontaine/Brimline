@@ -43,6 +43,13 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
   - An answer that is not the expected one (other JSON, a page) is shown as "The provider changed its answer" and never as a number. The cache keeps a fingerprint of the keys of the last answer (SHA-256), with no value in it. `brimline status --live --shape` prints the keys and the types of an answer, never a value.
   - Nothing is ever written, renewed or moved at a provider.
 
+### What it looks at for ChatGPT (Codex)
+
+- When ChatGPT is on, Brimline looks for the folder `~/.codex` (and the Codex folders you added by hand in `settings.json`, `extraCodexFolders`; the `CODEX_HOME` variable is never read) and opens one file in it: `auth.json`, without following a link, checked on the open file. It reads no other file of Codex (no `config.toml`), no Keychain item (Codex keeps its Keychain item for its own program only), launches no program (not `codex`, not `codex app-server`, which would renew and rewrite Codex's sign-in) and writes nothing. A test checks that the home folder is byte for byte the same after a reading.
+- Of `auth.json`, three fields are decoded: `auth_mode`, `tokens.access_token` and `tokens.account_id`. The refresh token, the id token and an API key in the file are never decoded (a test gives them values no decoder could read). The `exp` of the access token is read, without checking the signature, only so that an expired token is never sent (with a 60 second margin); it is never renewed.
+- The token and the account id go only to `https://chatgpt.com/backend-api/wham/usage`, over HTTPS, and only if they are printable text with no space or line break (the account id: letters, digits and `-`, 64 characters at most). The request is a read of the usage that consumes no quota. Brimline says who it is (`User-Agent: Brimline/<version>`), never Codex.
+- The address and the plan in Codex's files and in the answer are not kept. Tests plant fake tokens, a fake account id and a fake answer secret, and look for them in the cache, the settings, the JSON of the command and the MCP answers (none).
+
 ### What it looks at for Gemini
 
 - Gemini is a sentence only: when Gemini is on, Brimline checks that `~/.gemini` exists and is a folder (one `stat`, following no file inside it). It opens and lists nothing in that folder (no `oauth_creds.json`, no settings), reads no Keychain item, makes no request and launches no program. A test with a bait token in the folder, made unreadable, checks that nothing is opened. When Gemini is off, the folder is not even checked.

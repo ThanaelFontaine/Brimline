@@ -30,6 +30,16 @@ public struct AllowListHTTPClient: HTTPClient {
     }
 }
 
+extension HTTPURLResponse {
+    /// The wait a provider asks for with `Retry-After`, in seconds, capped at one hour. Nil when the
+    /// header is absent or is not a positive number of seconds.
+    public var retryAfterSeconds: TimeInterval? {
+        guard let header = value(forHTTPHeaderField: "Retry-After"),
+              let seconds = TimeInterval(header.trimmingCharacters(in: .whitespaces)), seconds > 0 else { return nil }
+        return min(seconds, 3600)
+    }
+}
+
 extension HTTPClient {
     /// This client, limited to the given URLs.
     public func restricted(to urls: [URL]) -> AllowListHTTPClient { AllowListHTTPClient(self, allowed: urls) }

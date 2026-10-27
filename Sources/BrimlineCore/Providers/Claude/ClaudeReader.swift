@@ -59,12 +59,7 @@ public struct ClaudeReader: ProviderReader {
             case 401:
                 return .failure(status: .reconnect, detail: "HTTP 401", retryAfter: nil)
             case 429:
-                var wait: TimeInterval?
-                if let header = response.value(forHTTPHeaderField: "Retry-After"),
-                   let seconds = TimeInterval(header.trimmingCharacters(in: .whitespaces)), seconds > 0 {
-                    wait = min(seconds, 3600)
-                }
-                return .failure(status: .unavailable, detail: "HTTP 429", retryAfter: wait)
+                return .failure(status: .unavailable, detail: "HTTP 429", retryAfter: response.retryAfterSeconds)
             default:
                 return .failure(status: .unavailable, detail: "HTTP \(response.statusCode)", retryAfter: nil)
             }
