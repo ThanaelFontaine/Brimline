@@ -330,6 +330,7 @@ public struct Strings: Sendable {
     public var settingsTitle: String { t("Brimline Settings", "Réglages de Brimline") }
     public var tabAccounts: String { t("Accounts", "Comptes") }
     public var tabGeneral: String { t("General", "Général") }
+    public var tabMenuBar: String { t("Menu Bar", "Barre des menus") }
     public var tabAgents: String { t("Agents", "Agents") }
     public var tabAbout: String { t("About", "À propos") }
     public var howToLink: String { t("How do I link an account?", "Comment associer un compte ?") }
@@ -445,6 +446,70 @@ public struct Strings: Sendable {
     public var copy: String { t("Copy", "Copier") }
     public var copied: String { t("Copied", "Copié") }
     public var agentsDoc: String { t("Agents documentation", "Documentation pour les agents") }
+
+    // Settings, Menu Bar tab (QUOTA-73): where each app keeps the switch of its icon. The labels are the ones the
+    // apps show (read on the installed apps, 27/10/2026): they change with the apps' versions, so they live here only.
+    public var menuBarTitle: String { t("Tidy up the menu bar", "Ranger la barre des menus") }
+    public var menuBarIntro: String {
+        t("Brimline already shows where Claude, ChatGPT and Cursor stand, so their menu bar icons can go. Brimline can't remove them for you: macOS leaves that choice to each app, and to you. Here is where to do it.",
+          "Brimline montre déjà où en sont Claude, ChatGPT et Cursor : leurs icônes dans la barre des menus peuvent partir. Brimline ne peut pas les retirer à leur place, macOS laisse ce choix à chaque app et à vous. Voici où le faire.")
+    }
+    public var menuBarInApps: String { t("In each app", "Dans chaque app") }
+    public var menuBarInstalledOnly: String { t("Only the apps installed on this Mac are listed.", "Seules les apps installées sur ce Mac sont listées.") }
+    public var menuBarForAll: String { t("For every app", "Pour toutes les apps") }
+    public var menuBarSystemText: String {
+        t("macOS also has a switch for each app: System Settings › Menu Bar › Allow in the Menu Bar.",
+          "macOS a aussi un interrupteur par app : Réglages Système › Barre des menus › Autoriser dans la barre des menus.")
+    }
+    public var menuBarOpenSystem: String { t("Open System Settings, Menu Bar", "Ouvrir Réglages Système, Barre des menus") }
+    public var menuBarByHand: String { t("By hand", "D'un geste") }
+    public var menuBarStep1Before: String { t("Hold down the", "Maintenez la touche") }
+    public var menuBarStep1After: String { t("(Command) key.", "(Commande).") }
+    public var menuBarStep2: String { t("Drag the icon out of the menu bar.", "Glissez l'icône hors de la barre des menus.") }
+    public var menuBarStep3: String { t("Let go: the icon is gone.", "Relâchez : l'icône disparaît.") }
+    public var menuBarStepsNote: String {
+        t("If the icon jumps back, its app doesn't allow this: use its setting instead.",
+          "Si l'icône revient à sa place, son app ne permet pas ce geste : passez par son réglage.")
+    }
+    public var menuBarNoApps: String {
+        t("Claude, ChatGPT and Cursor aren't installed on this Mac. For another app, use System Settings or the gesture below.",
+          "Ni Claude, ni ChatGPT, ni Cursor n'est installé sur ce Mac. Pour une autre app, passez par Réglages Système ou par le geste plus bas.")
+    }
+    /// "Turn off “Menu bar”" : the switch of the app's own setting.
+    public func menuBarTurnOff(_ app: MenuBarApp) -> String {
+        let label: String
+        switch app {
+        case .claude: label = t("Menu bar", "Barre de menus")
+        case .chatgpt: label = t("Show in menu bar", "Afficher dans la barre des menus")
+        case .cursor: label = "Menu Bar Icon"   // Cursor is in English in both languages
+        }
+        return t("Turn off “\(label)”", "Coupez « \(label) »")
+    }
+    /// "In Settings › Desktop app": where that switch is.
+    public func menuBarSettingPath(_ app: MenuBarApp) -> String {
+        switch app {
+        case .claude: t("In Settings › Desktop app", "Dans Paramètres › Application de bureau")
+        case .chatgpt: t("In Settings › General", "Dans Paramètres › Général")
+        case .cursor: t("In Cursor Settings › General", "Dans Cursor Settings › General")
+        }
+    }
+    public func menuBarOpenApp(_ app: MenuBarApp) -> String { t("Open \(app.displayName)", "Ouvrir \(app.displayName)") }
+    /// What VoiceOver reads for the text of a row (the button is read apart).
+    public func menuBarRowSpoken(_ app: MenuBarApp) -> String {
+        "\(app.displayName). \(menuBarTurnOff(app)), \(menuBarSettingPath(app))."
+    }
+    public func menuBarAppError(_ app: MenuBarApp) -> String {
+        t("\(app.displayName) didn't open: the app may have been moved or deleted.",
+          "\(app.displayName) ne s'est pas ouvert : l'app a peut-être été déplacée ou supprimée.")
+    }
+    public var menuBarSystemHomePage: String {
+        t("System Settings opened on its home page: choose Menu Bar in the list on the left.",
+          "Réglages Système s'est ouvert sur sa page d'accueil : choisissez Barre des menus dans la liste à gauche.")
+    }
+    public var menuBarSystemFailed: String {
+        t("System Settings didn't open. Open it from the Apple menu, then choose Menu Bar.",
+          "Réglages Système ne s'est pas ouvert. Ouvrez-le depuis le menu Pomme, puis choisissez Barre des menus.")
+    }
     public var version: String { t("Version", "Version") }
     public var development: String { t("development version", "version de développement") }
     public var licenseLine: String {

@@ -183,7 +183,37 @@ func model(_ accounts: [AccountUsage], language: Language, settings: BrimlineSet
     let m = AppModel(preview: UsageSnapshot(generatedAt: minutes(-2), accounts: accounts), settings: settings,
                      now: now, language: language, timeZone: paris, home: home, launchAtLogin: true)
     m.appIcon = icon
+    m.menuBar = fakeMenuBar()
+    m.refreshMenuBarApps()
     return m
+}
+
+/// The Menu Bar tab of the images: the three apps "installed", each with a neutral tile and its first letters,
+/// never the icon of the real app (no third-party logo in the repository), and nothing is opened.
+@MainActor
+func fakeMenuBar() -> MenuBarEnvironment {
+    MenuBarEnvironment(
+    locate: { URL(fileURLWithPath: "/Applications/\($0).app", isDirectory: true) },
+    icon: { url in
+        let id = url.deletingPathExtension().lastPathComponent
+        guard let app = MenuBarApp.allCases.first(where: { $0.bundleIdentifier == id }) else { return nil }
+        let letters = String(app.displayName.prefix(2))
+        return NSImage(size: NSSize(width: 32, height: 32), flipped: false) { rect in
+            let tile = NSBezierPath(roundedRect: rect.insetBy(dx: 1, dy: 1), xRadius: 7, yRadius: 7)
+            NSColor.white.setFill()
+            tile.fill()
+            NSColor.black.withAlphaComponent(0.15).setStroke()
+            tile.lineWidth = 0.5
+            tile.stroke()
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: NSColor.black,
+            ]
+            let size = letters.size(withAttributes: attributes)
+            letters.draw(at: NSPoint(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2), withAttributes: attributes)
+            return true
+        }
+    },
+    openApp: { _ in true }, openURL: { _ in true }, openBundle: { _ in true })
 }
 
 @MainActor
@@ -351,11 +381,11 @@ func run() throws {
             try render(WindowFrame(title: m.strings.settingsTitle, content: SettingsView(model: m)),
                        size: size, dark: dark, name: "settings-\(tab.rawValue)-\(suffix)")
         }
-        // The Accounts and Agents tabs scroll in the window: these images show them whole, for the QA.
-        for tab in [SettingsTab.accounts, .agents] {
+        // The Accounts, Menu Bar and Agents tabs scroll in the window: these images show them whole, for the QA.
+        for tab in [SettingsTab.accounts, .menuBar, .agents] {
             let m = model(accountsTabUsages + [stateAccounts[2]], language: .en, settings: accountsTabSettings)
             m.settingsTab = tab
-            let height: CGFloat = 1180
+            let height: CGFloat = tab == .menuBar ? 880 : 1180
             try render(WindowFrame(title: m.strings.settingsTitle, content: SettingsView(model: m, height: height)),
                        size: CGSize(width: SettingsView.size.width + 24, height: height + 31 + 24),
                        dark: dark, name: "qa-settings-\(tab.rawValue)-full-\(suffix)")
@@ -365,6 +395,11 @@ func run() throws {
         try render(WindowFrame(title: fr.strings.settingsTitle, content: SettingsView(model: fr)),
                    size: CGSize(width: SettingsView.size.width + 24, height: SettingsView.size.height + 31 + 24),
                    dark: dark, name: "settings-accounts-fr-\(suffix)")
+        let frMenuBar = model(accountsTabUsages, language: .fr, settings: accountsTabSettings)
+        frMenuBar.settingsTab = .menuBar
+        try render(WindowFrame(title: frMenuBar.strings.settingsTitle, content: SettingsView(model: frMenuBar, height: 880)),
+                   size: CGSize(width: SettingsView.size.width + 24, height: 880 + 31 + 24),
+                   dark: dark, name: "settings-menuBar-fr-\(suffix)")
     }
 }
 

@@ -20,12 +20,21 @@ public final class AppModel {
     public private(set) var lastCopied: String?
     /// The accounts whose "Learn more" is open in the panel (the rest of a "not readable" sentence).
     public private(set) var expandedNotes: Set<String> = []
+    /// The apps of the Menu Bar tab that are installed (read again each time the tab opens).
+    public private(set) var menuBarApps: [InstalledMenuBarApp] = []
+    /// The app that did not open at the last try, for the note under its row.
+    public private(set) var menuBarAppFailed: MenuBarApp?
+    /// How the last "Open System Settings" ended, for the note under its button.
+    public private(set) var menuBarSystemOutcome: MenuBarTidy.SettingsOutcome?
 
     public let strings: Strings
     public let time: TimeFormatter
     @ObservationIgnored public var openSettingsAction: (() -> Void)?
     /// The icon shown in the About tab (the app's own icon, or the one given to the images).
     @ObservationIgnored public var appIcon: NSImage?
+    /// How the Menu Bar tab finds and opens apps (macOS in the app; fixed in the images and the tests).
+    @ObservationIgnored public var menuBar = MenuBarEnvironment.live
+    @ObservationIgnored public private(set) var menuBarIcons: [String: NSImage] = [:]
 
     @ObservationIgnored private let service: UsageService?
     @ObservationIgnored private let cache: UsageCache?
@@ -241,6 +250,35 @@ public final class AppModel {
         update { s in
             s.labels[accountID] = label.isEmpty ? nil : label
         }
+    }
+
+    // MARK: Menu Bar tab
+
+    /// Looks again for the apps of the Menu Bar tab (they can be installed or removed while Brimline runs).
+    public func refreshMenuBarApps() {
+        let found = MenuBarTidy.installed(locate: { menuBar.locate($0) })
+        menuBarIcons = Dictionary(uniqueKeysWithValues: found.compactMap { entry in
+            menuBar.icon(entry.url).map { (entry.id, $0) }
+        })
+        menuBarApps = found
+        menuBarAppFailed = nil
+        menuBarSystemOutcome = nil
+    }
+
+    /// Opens the app, so the person can reach its setting (no link goes straight to it). A failure is a note under its row.
+    public func openMenuBarApp(_ app: MenuBarApp) {
+        guard let entry = menuBarApps.first(where: { $0.app == app }) else { return }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let opened = await menuBar.openApp(entry.url)
+            menuBarAppFailed = opened ? nil : app
+        }
+    }
+
+    /// Opens System Settings on the Menu Bar page, or on its home page when macOS refuses the address.
+    public func openSystemMenuBarSettings() {
+        menuBarSystemOutcome = MenuBarTidy.openSystemSettings(
+            openURL: { menuBar.openURL($0) }, openApp: { menuBar.openBundle($0) })
     }
 
     public func copy(_ text: String) {
