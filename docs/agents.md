@@ -30,7 +30,7 @@ brimline --version
   "accounts" : [
     {
       "age_seconds" : 74,
-      "email" : "you@example.com",
+      "email" : "your@claude.ai",
       "fetched_at" : "2026-10-26T11:18:46Z",
       "folder" : "<home>/.claude-work",
       "hidden" : false,
@@ -126,7 +126,7 @@ Results come both as text (JSON) and as `structuredContent`. When the app has no
 
 ```text
 → {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"best_account","arguments":{"model":"Fable"}}}
-← {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"{ ... }"}],"structuredContent":{"best":{"email":"you@example.com","headroom_percent":66, ...},"ranking":[...],"window":"any","model":"Fable","age_seconds":74},"isError":false}}
+← {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"{ ... }"}],"structuredContent":{"best":{"email":"your@claude.ai","headroom_percent":66, ...},"ranking":[...],"window":"any","model":"Fable","age_seconds":74},"isError":false}}
 ```
 
 ## Good habits for agents

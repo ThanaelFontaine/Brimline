@@ -38,12 +38,12 @@ func account(_ email: String, _ folder: String, org: String?, seat: String?, byH
                    addedByHand: byHand)
 }
 
-let you = account("you@example.com", ".claude", org: "Example", seat: "max")
-let team = account("team@example.org", ".claude-team", org: "Example Team", seat: "team")
-let long = account("firstname.lastname.with-a-very-long-address@research.example.org", ".claude-research",
+let you = account("your@claude.ai", ".claude", org: "Example", seat: "max")
+let team = account("team@claude.ai", ".claude-team", org: "Example Team", seat: "team")
+let long = account("firstname.lastname.with-a-very-long-address@claude.ai", ".claude-research",
                    org: "Example University Research Laboratory", seat: "team")
-let expired = account("weekend@example.net", ".claude-weekend", org: nil, seat: "pro")
-let unavailable = account("ops@example.org", ".claude-ops", org: "Example Ops", seat: "max", byHand: true)
+let expired = account("weekend@claude.ai", ".claude-weekend", org: nil, seat: "pro")
+let unavailable = account("ops@claude.ai", ".claude-ops", org: "Example Ops", seat: "max", byHand: true)
 
 let mainAccounts: [AccountUsage] = [
     AccountUsage(account: you, status: .ok, limits: [
