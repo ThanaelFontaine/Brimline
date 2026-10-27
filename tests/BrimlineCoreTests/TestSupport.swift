@@ -36,8 +36,8 @@ func claudeJSON(email: String, organization: String? = nil, seat: String? = nil)
     return String(decoding: data, as: UTF8.self)
 }
 
-func fixture(_ name: String) throws -> Data {
-    guard let url = Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Fixtures") else {
+func fixture(_ name: String, extension fileExtension: String = "json") throws -> Data {
+    guard let url = Bundle.module.url(forResource: name, withExtension: fileExtension, subdirectory: "Fixtures") else {
         throw CocoaError(.fileNoSuchFile)
     }
     return try Data(contentsOf: url)

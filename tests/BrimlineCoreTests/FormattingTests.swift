@@ -190,7 +190,7 @@ struct PanelTextsTests {
         }
         #expect(en.providerCaption(.chatgpt, on: true) == "Reads ~/.codex/auth.json and asks chatgpt.com for usage.")
         #expect(en.providerCaption(.grok, on: true).contains("cli-chat-proxy.grok.com"))
-        #expect(en.providerCaption(.gemini, on: true).hasPrefix("Reads nothing"))
+        #expect(en.providerCaption(.gemini, on: true).hasPrefix("Launches Antigravity"))
         #expect(en.qualifier(for: .chatgpt) == "via Codex" && fr.qualifier(for: .chatgpt) == "par Codex")
         #expect(en.qualifier(for: .claude) == nil && en.qualifier(for: .grok) == nil)
         #expect(en.readProvider("Grok") == "Read Grok" && fr.readProvider("Grok") == "Lire Grok")
