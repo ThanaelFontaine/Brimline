@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brimline : jauge par compte, panneau multi-comptes, couleurs des comptes (planche, lot 0.3.0)</title>
+<!-- Planche autonome : aucun réseau, aucune police web, aucune image, aucun logo de tiers.
+     Couleurs : uniquement les jetons de tokens.json (tests/test_design_tokens.py le vérifie), plus les surfaces
+     simulées de macOS (gris de la barre, fonds d'écran teintés) et deux couleurs libres d'exemple, listées dans le test.
+     Langue et thème des maquettes : #fr-light, #fr-dark, #en-light, #en-dark. 1 px CSS = 1 pt de l'app.
+     Les éléments de barre sont dessinés au pixel près dans des <canvas> à l'échelle 1x ou 2x, comme le fera
+     MenuBarGaugeImage.swift : la capture « 1x » montre les vrais pixels d'un écran 1x, agrandis sans lissage. -->
+<style>
+  :root, .light {
+    --bg:#F5F6F7; --surface:#FFFFFF; --text:#15191D; --text2:#56606A; --border:#D3D8DD; --track:#E7EAED;
+    --accent:#0B6E7A; --ok:#127A82; --warn:#9A5800; --crit:#C0302B; --muted:rgb(86 96 106 / .55);
+    --page:var(--surface); --panel:var(--bg); --card:rgb(21 25 29 / .05); --field:var(--surface);
+    --shadow:0 10px 30px rgb(21 25 29 / .14), 0 0 0 .5px rgb(21 25 29 / .18);
+  }
+  .dark {
+    --bg:#111315; --surface:#1B1E21; --text:#ECEFF2; --text2:#9BA5AF; --border:#30353A; --track:#2B3035;
+    --accent:#5CC8D0; --ok:#3BBDC2; --warn:#EFA63A; --crit:#FF6F64; --muted:rgb(155 165 175 / .55);
+    --page:var(--bg); --panel:var(--surface); --card:rgb(236 239 242 / .06); --field:var(--bg);
+    --shadow:0 10px 30px rgb(0 0 0 / .5), 0 0 0 .5px rgb(236 239 242 / .16);
+  }
+  /* Palette des comptes (tokens.json, accountPalette), résolue selon l'apparence de la surface qui la porte. */
+  .light, .bar-light {
+    --a0:#7445D6; --a1:#1C68C9; --a2:#B03A86; --a3:#5E7A12; --a4:#15191D; --a5:#1B6B4C; --a6:#8C7400; --a7:#1D3270; --a8:#703821; --a9:#7A6A96;
+  }
+  .dark, .bar-dark {
+    --a0:#B48CFF; --a1:#62AEF5; --a2:#F08BCB; --a3:#B3CC5C; --a4:#ECEFF2; --a5:#5CCB98; --a6:#F4D63A; --a7:#B9CAFE; --a8:#CA9678; --a9:#E9C6F6;
+  }
+  /* Surfaces simulées de macOS (pas des jetons : c'est le système qui les dessine). */
+  .bar-light { --barbg:#DADDE0; --label:#15191D; --alert:#C0302B; }
+  .bar-dark  { --barbg:#2F3338; --label:#ECEFF2; --alert:#FF6F64; }
+  .bar-light.wall { --barbg:linear-gradient(90deg, #E8D3BE, #C9DCE6); }
+  .bar-dark.wall  { --barbg:linear-gradient(90deg, #26324A, #3B2A45); }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--page); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 1408px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin: 0 0 8px; }
+  h2 { font-size: 22px; line-height: 1.2; margin: 56px 0 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+  h3 { font-size: 15px; margin: 0 0 8px; }
+  p { max-width: 780px; margin: 0 0 12px; }
+  .lead { font-size: 17px; }
+  .muted, .cap { color: var(--text2); }
+  .cap { font-size: 13px; margin: 6px 0 0; max-width: 420px; }
+  code, .mono { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; }
+  ul.tight { margin: 0 0 12px; padding-left: 20px; max-width: 900px; } ul.tight li { margin: 3px 0; }
+  .switch { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; }
+  .switch a { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); color: var(--text); text-decoration: none; font-size: 13px; }
+  .switch a[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--page); }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); vertical-align: 2px; }
+  .row-wrap { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; margin-top: 16px; }
+  .fig { flex: 0 0 auto; max-width: 100%; }
+  table.spec { border-collapse: collapse; font-size: 13px; width: 100%; max-width: 1100px; margin: 8px 0 16px; }
+  table.spec th, table.spec td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  table.spec th { color: var(--text2); font-weight: 600; }
+  table.spec td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .scroll-x { overflow-x: auto; max-width: 100%; }
+
+  /* Barres des menus simulées, 24 pt de haut */
+  .bars { border-collapse: separate; border-spacing: 0 10px; font-size: 13px; }
+  .bars th { text-align: left; font-weight: 600; color: var(--text2); padding: 0 16px 0 0; vertical-align: middle; white-space: nowrap; }
+  .bars td { padding: 0 16px 0 0; vertical-align: middle; }
+  .bars thead th { padding-bottom: 0; }
+  .mb { display: inline-flex; align-items: center; gap: 0; height: 24px; padding: 0 10px; border-radius: 6px; background: var(--barbg); color: var(--label);
+    font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .mb .it { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 5px; border-radius: 5px; }
+  .mb .it.sel { background: rgb(0 0 0 / .14); }
+  .bar-dark .it.sel { background: rgb(255 255 255 / .2); }
+  .mb .clock { margin-left: 10px; opacity: .92; }
+  .mb canvas { display: block; }
+  .mb canvas.px { image-rendering: pixelated; }
+  .scale { font-size: 11px; color: var(--text2); margin: 0 6px 0 0; }
+  .pair { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .pair + .pair { margin-top: 4px; }
+  .grid-cases { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 24px 32px; margin-top: 16px; }
+  .zoom { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; margin-top: 12px; }
+  .zoom canvas { image-rendering: pixelated; border-radius: 6px; }
+  .zoom figure { margin: 0; }
+  .vo { font-size: 13px; background: var(--card); border-radius: 8px; padding: 8px 10px; max-width: 760px; margin-top: 8px; }
+  .vo b { font-weight: 600; }
+
+  /* Fenêtre de la barre des menus (340 pt) */
+  .mac-panel { width: 340px; max-width: 100%; background: var(--panel); color: var(--text); border-radius: 12px; box-shadow: var(--shadow);
+    font-size: 13px; line-height: 1.3; overflow: hidden; }
+  .ph { display: flex; align-items: center; gap: 8px; padding: 12px 16px 8px; font-weight: 600; }
+  .ph svg { width: 18px; height: 18px; fill: currentColor; }
+  .cards { padding: 0 8px 8px; display: flex; flex-direction: column; gap: 8px; }
+  .pf { display: flex; align-items: center; gap: 14px; padding: 10px 16px; border-top: .5px solid var(--border); font-size: 12px; }
+  .pf .upd { font-size: 11px; color: var(--text2); margin-right: auto; white-space: nowrap; }
+  .pf .acc { color: var(--accent); }
+  .grp { display: flex; align-items: baseline; gap: 6px; padding: 8px 4px 0; font-size: 12px; font-weight: 600; }
+  .grp:first-child { padding-top: 0; }
+  .grp .via { font-weight: 400; font-size: 11px; color: var(--text2); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: 0 0 8px; }
+  .card { background: var(--card); border-radius: 10px; padding: 12px; }
+  .ttl { display: flex; align-items: center; gap: 6px; }
+  .t { font-weight: 600; font-size: 13px; overflow-wrap: anywhere; }
+  .s { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .ttl + .s { padding-left: 14px; }
+  .lims { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .lim .l { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+  .lim .l .n { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lim .l .n.m { color: var(--text2); }
+  .lim .d { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .g { position: relative; height: 6px; border-radius: 3px; background: var(--track); box-shadow: 0 0 0 .5px var(--border); margin-top: 8px; overflow: hidden; }
+  .g i { position: absolute; top: 0; bottom: 0; }
+  .g i.tk { width: 1px; background: var(--border); }
+  .g i.f { left: 0; border-radius: 3px; min-width: 6px; background: var(--ok); }
+  .g i.f.warn { background: var(--warn); } .g i.f.crit { background: var(--crit); } .g i.f.mu { background: var(--muted); }
+  .note { display: flex; gap: 6px; align-items: flex-start; font-size: 11px; color: var(--text2); margin-top: 10px; }
+  .note svg { flex: 0 0 12px; margin-top: 1px; }
+  .more { color: var(--accent); font-size: 11px; }
+
+  /* Fenêtre des Réglages */
+  .mac-win { width: 640px; max-width: 100%; background: var(--panel); color: var(--text); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; font-size: 13px; line-height: 1.35; }
+  .tb { position: relative; text-align: center; font-weight: 600; padding: 10px 0 6px; }
+  .tb .lights { position: absolute; left: 14px; top: 13px; display: flex; gap: 8px; }
+  .tb .lights i { width: 12px; height: 12px; border-radius: 50%; background: rgb(128 128 128 / .35); }
+  .tabs { display: flex; justify-content: center; gap: 4px; padding: 4px 8px 8px; border-bottom: .5px solid var(--border); font-size: 11px; color: var(--text2); }
+  .tabs span { padding: 4px 14px; border-radius: 6px; }
+  .tabs span.on { background: var(--card); color: var(--accent); }
+  .form { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .sec-h { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+  .sec-h .name { font-weight: 600; font-size: 13px; }
+  .sec-h .tg { margin-left: auto; }
+  .sec-cap { font-size: 11px; color: var(--text2); padding: 2px 4px 0 4px; }
+  .sec-body { margin-top: 8px; background: var(--card); border-radius: 8px; padding: 0 12px; }
+  .acct { padding: 10px 0; border-bottom: .5px solid var(--border); display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: start; }
+  .acct:last-child { border-bottom: 0; }
+  .acct .s { font-size: 11px; }
+  .acct .path { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; color: var(--text2); }
+  .acct .show { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); white-space: nowrap; }
+  .acct .full { grid-column: 1 / -1; }
+  .input { margin-top: 6px; border: .5px solid var(--border); background: var(--field); border-radius: 6px; padding: 3px 8px; font-size: 12px; color: var(--text); max-width: 260px; }
+  .tg { width: 26px; height: 15px; border-radius: 8px; background: var(--track); box-shadow: inset 0 0 0 .5px var(--border); position: relative; flex: 0 0 26px; display: inline-block; }
+  .tg::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgb(0 0 0 / .3); }
+  .tg.on { background: var(--accent); box-shadow: none; } .tg.on::after { left: 13px; }
+  .tg.big { width: 32px; height: 18px; flex-basis: 32px; border-radius: 9px; } .tg.big::after { width: 14px; height: 14px; } .tg.big.on::after { left: 16px; }
+  .colrow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 8px; font-size: 12px; }
+  .colrow .lbl { width: 52px; color: var(--text2); }
+  .swatches { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .sw { width: 18px; height: 18px; border-radius: 50%; background: var(--c); position: relative; flex: 0 0 18px; }
+  .sw.on::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; box-shadow: 0 0 0 1.5px var(--text); }
+  .sw.focus::before { content: ""; position: absolute; inset: -5px; border-radius: 50%; box-shadow: 0 0 0 2px var(--accent); }
+  .sw.other { background: none; border: 1px dashed var(--text2); display: grid; place-items: center; color: var(--text2); font-size: 13px; line-height: 1; }
+  .sw.other.filled { border: 0; background: var(--c); }
+  .linkbtn { color: var(--accent); white-space: nowrap; }
+  .linkbtn.off { color: var(--text2); opacity: .6; }
+  .defnote { color: var(--text2); font-size: 11px; white-space: nowrap; }
+  .warnline { display: flex; gap: 6px; align-items: flex-start; font-size: 11px; color: var(--text2); margin: 6px 0 0 62px; max-width: 480px; }
+  .warnline svg { flex: 0 0 12px; margin-top: 1px; color: var(--warn); }
+  .chk { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; font-size: 12px; }
+  .chk .box2 { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--text2); flex: 0 0 14px; margin-top: 1px; }
+
+  /* Palette */
+  .palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; max-width: 1180px; }
+  .palette > div { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--panel); font-size: 12px; }
+  .palette b { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .palette .chips { display: flex; gap: 6px; margin: 8px 0 6px; }
+  .palette .chip { flex: 1; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; }
+  @media (max-width: 480px) { .row-wrap { gap: 24px; } h2 { margin-top: 40px; } .warnline { margin-left: 0; } .colrow .lbl { width: auto; } }
+</style>
+</head>
+<body class="light">
+<main>
+<h1>Brimline : une jauge par compte dans la barre des menus</h1>
+<p class="lead">Planche du lot D du chantier QUOTA-70 (THA-1548), avec QUOTA-71 et QUOTA-72. La barre des menus montre le logo couché et une jauge horizontale où chaque compte a sa part, à sa couleur. Le panneau porte une pastille par compte ; les Réglages laissent choisir cette couleur.</p>
+<p><b>Ce qui change.</b> Le glyphe « Ras » se couche : sa cuve devient la jauge, le trait de la limite la ferme à droite. Le liquide est fait des parts des comptes, tassées à gauche dans l'ordre du panneau. Le remplissage total est la moyenne des comptes, et un compte à 90 % ou plus fait apparaître un repère « ! » à la place du trait. La barre devient une image en couleurs, ce qui amende la DA (<code>DA.md</code>, section « La barre des menus »). Dix couleurs de compte, dont les cinq des fournisseurs, avec leurs valeurs claire et sombre.</p>
+<p><b>Pourquoi.</b> Thanaël veut voir d'un coup d'œil, sans cliquer, qui consomme, à l'horizontale et plus large qu'aujourd'hui. Coucher le logo plutôt que poser une jauge à côté : le logo et la jauge ne font qu'un, l'élément reste étroit (50 à 74 pt), et la marque reste lisible (une cuve ouverte et un trait libre qui ne la touche jamais). La variante « glyphe à côté » du cadrage est montrée en section 4, avec la variante verticale.</p>
+<nav class="switch" aria-label="Langue et thème des maquettes">
+  <a href="#fr-light" data-k="fr-light">FR · clair</a><a href="#fr-dark" data-k="fr-dark">FR · sombre</a>
+  <a href="#en-light" data-k="en-light">EN · clair</a><a href="#en-dark" data-k="en-dark">EN · sombre</a>
+</nav>
+
+<h2 id="barre">1. La barre des menus, à taille réelle <span class="tag">recommandé : A · Ras couché, parts tassées</span></h2>
+<p>Barre de 24 pt, élément de 18 pt de haut. Chaque cellule montre le même élément dessiné pour un écran 2x puis pour un écran 1x (vrais pixels, agrandis sans lissage). Couleurs résolues selon l'apparence de la barre, pas celle de l'app : une barre sombre sur un Mac en mode clair prend les valeurs sombres. Le contour (cuve et trait) prend la couleur du texte de la barre.</p>
+<div class="scroll-x"><table class="bars" data-render="mainBars"></table></div>
+<p class="muted" style="font-size:13px">Fonds d'écran teintés : macOS teinte la barre et choisit lui-même un texte clair ou sombre ; Brimline suit l'apparence du bouton (<code>effectiveAppearance</code>) et redessine quand elle change. Surbrillance au clic : le système pose sa capsule derrière l'élément, l'image ne change pas.</p>
+
+<h2 id="cas">2. Les cas</h2>
+<p>Règle de la jauge (cadrage) : pour chaque compte compté, sa limite la plus serrée maintenant (p) ; sa part vaut p divisé par le nombre de comptes comptés (N). Le total est la moyenne, jamais plus de 100 %. Les parts suivent l'ordre du panneau, jamais triées par taille.</p>
+<div class="grid-cases" data-render="cases"></div>
+
+<h2 id="mesures">3. Les mesures, agrandies</h2>
+<p>Géométrie au demi-point pour l'écran 2x (trait de 1,5 pt), au point pour l'écran 1x (trait de 1 pt), comme le glyphe actuel. Tout est aligné sur la grille de pixels.</p>
+<div class="zoom" data-render="zoom"></div>
+<div class="scroll-x"><table class="spec" data-render="dims"></table></div>
+
+<h2 id="variantes">4. Les variantes, côte à côte</h2>
+<p>Mêmes comptes, mêmes chiffres, à taille réelle en 2x et 1x, barre claire et barre sombre. <b>Recommandation : A, parts tassées.</b> C'est l'image décrite par Thanaël (une jauge remplie, avec ses parts de couleur), le total se lit d'un regard, et le logo garde sa forme. « Une case par compte » montre mieux chaque compte, mais le total ne se lit plus et, à dix comptes, chaque case tombe à 5 pt. « Glyphe à côté » (le cadrage) fait deux objets là où un suffit, et pousse l'élément vers 80 pt. La verticale n'a que 8 pt de course : à dix comptes, une part fait moins d'un point.</p>
+<div class="scroll-x"><table class="bars" data-render="variants"></table></div>
+
+<h2 id="panneau">5. Le panneau : une pastille par compte</h2>
+<p>Les quatre comptes Claude, un compte ChatGPT, Gemini (phrase seule). La pastille de 8 pt passe de l'en-tête du fournisseur au titre de chaque compte, à la couleur du compte ; l'en-tête garde le nom du fournisseur écrit, sans pastille, pour qu'une couleur ne veuille dire qu'une chose. Les jauges des limites gardent leurs couleurs de seuil (sarcelle, ambre, rouge) : la couleur y confirme un niveau, pas un compte. Adresses d'exemple : aucune vraie adresse dans le dépôt public.</p>
+<div class="row-wrap">
+  <div class="fig" id="fig-panel"><div data-render="panel"></div></div>
+  <div class="fig" style="flex:1 1 360px; max-width:560px">
+    <h3>La barre qui va avec</h3>
+    <div data-render="panelBar"></div>
+    <div class="vo" data-render="panelVo"></div>
+    <p class="cap" style="max-width:none">Secours a une dernière valeur (expiré) : comptée, sa part est atténuée. Gemini n'a pas de chiffre : hors de la jauge, cité en dernier. Le pourcentage écrit à côté (réglage « Afficher le pourcentage ») reste celui du compte le plus chargé : 94 %.</p>
+  </div>
+</div>
+
+<h2 id="reglages">6. Les Réglages : la couleur de chaque compte</h2>
+<p>Onglet Comptes, sous chaque compte : la palette de dix pastilles, « Autre couleur… » (le sélecteur de couleur du système, sans opacité), et « Revenir au défaut ». Une seule ligne de plus par compte. Exemple : Asso a pris une couleur libre trop proche du violet de Principal, Secours une couleur libre trop pâle pour le mode clair. Les avertissements n'empêchent rien : ils disent pourquoi, et ce qu'on y gagne.</p>
+<div class="row-wrap"><div class="fig" id="fig-settings" data-render="settings"></div></div>
+
+<h2 id="palette">7. La palette des comptes</h2>
+<p>Dix couleurs propres à Brimline : les cinq des fournisseurs, puis sapin, or, marine, cacao et lilas. Aucune ne reprend l'accent, les couleurs de seuil ni le gris expiré. Valeurs et écarts calculés ici depuis les jetons (formule WCAG 2.2 pour le contraste, CIEDE2000 pour l'écart), et vérifiés par <code>tests/test_design_tokens.py</code>.</p>
+<div class="palette" data-render="palette"></div>
+<div data-render="paletteSummary"></div>
+<p style="margin-top:12px"><b>Couleur par défaut.</b> Le premier compte d'un fournisseur prend la couleur de son fournisseur. Les suivants prennent la première couleur libre dans l'ordre sapin, or, marine, cacao, lilas, puis parmi les couleurs des fournisseurs qui n'ont aucun compte. Une fois donnée, la couleur est gardée dans <code>settings.json</code> : elle ne change plus quand un autre compte apparaît. Quatre comptes Claude : violet, sapin, or, marine.</p>
+
+<h2 id="dev">8. Pour le développeur (L2, L4, L5)</h2>
+<ul class="tight">
+  <li><b>Élément (L4)</b> : variante A. Mesures de la section 3 et de <code>tokens.json</code> (<code>menubarGauge</code>). La largeur ne bouge pas quand l'alerte apparaît (la place du « ! » est toujours réservée) : la barre ne se redispose pas.</li>
+  <li><b>Couleurs</b> : cuve et trait en <code>NSColor.labelColor</code> résolu pour l'apparence du bouton ; parts aux couleurs des comptes (valeur claire ou sombre selon cette apparence) ; part atténuée à l'opacité 0,45 ; repère d'alerte en <code>gaugeCrit</code>. Aucun compte compté : le glyphe vertical actuel, image modèle, cuve vide.</li>
+  <li><b>Parts</b> : en pixels de l'écran, la plus grande part de reste à l'arrondi ; une part non nulle fait au moins 1 pixel, pris sur le vide, jamais sur une autre part ; la somme ne dépasse jamais la course.</li>
+  <li><b>Infobulle de l'élément</b> : « Moyenne 45 % sur 5 comptes · Agence à 94 % ». VoiceOver : la phrase de la section 5 (L2, <code>menuBarAccessibility</code>).</li>
+  <li><b>Panneau (L5)</b> : <code>SGAccountDot</code> de 8 pt avant le titre de la carte, 6 pt d'écart ; adresse et offre alignées sur le titre (retrait de 14 pt) ; en-tête de groupe sans pastille ; une carte à phrase seule prend le nom du fournisseur pour titre.</li>
+  <li><b>Réglages (L5)</b> : pastilles de 18 pt, 6 pt d'écart, choisie entourée d'un anneau de 1,5 pt à la couleur du texte ; focus clavier à l'anneau d'accent du système. « Autre couleur… » ouvre <code>ColorPicker</code> (sans opacité), converti en hex sRGB ; la pastille prend alors la couleur choisie. « Revenir au défaut » est grisé quand la couleur est déjà celle par défaut, et « Couleur par défaut » s'écrit à côté.</li>
+  <li><b>Avertissements</b> : proximité quand deux comptes visibles ont un écart CIEDE2000 sous 10 dans l'une des deux apparences (affiché sur les deux comptes) ; contraste quand une couleur libre passe sous 3:1 sur la piste dans l'une des deux apparences (le ratio est écrit). Icône triangle en <code>gaugeWarn</code>, texte secondaire de 11 pt.</li>
+  <li><b>VoiceOver des pastilles</b> : un groupe à choix unique, libellé « Couleur de Asso », chaque option son nom (« Violet », « Couleur libre ») ; l'avertissement est lu après.</li>
+</ul>
+<h3 style="margin-top:24px">Textes nouveaux, FR et EN</h3>
+<div class="scroll-x"><table class="spec" data-render="strings"></table></div>
+</main>
+
+<script>
+// ---------- Textes ----------
+const T = {
+  fr: {
+    refresh: 'Actualiser', settings: 'Réglages…', quit: 'Quitter', updated: 'Actualisé à 18:20', via: 'par Codex',
+    session: 'Session 5 h', week: 'Semaine', pct: p => p + ' %', clock: 'mar. 27 oct. 18:20',
+    r: { a: 'repart dans 2 h 10 (20:30)', b: 'repart dans 2 j (jeu. 13:00)', c: 'repart dans 38 min (18:58)', d: 'repart dans 4 j (sam. 9:00)' },
+    valueFrom: a => "valeur d'" + a, ago3h: 'il y a 3 h', expired: 'Session expirée : ouvrez Claude Code avec ce compte pour la reconnecter.',
+    keychain: 'jeton du Trousseau', gemini: 'Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire.', more: 'En savoir plus',
+    voAlert: (n, p) => `Alerte : ${n} à ${p} %.`, voMain: (avg, k) => `Brimline, utilisé ${avg} % en moyenne sur ${k} comptes :`,
+    voOne: (n, p, st) => `${n} ${p} %${st ? ', valeur ancienne' : ''}`, voNoFig: n => `${n} : pas de chiffre.`,
+    tip: (avg, k, al) => `Moyenne ${avg} % sur ${k} comptes` + (al ? ` · ${al.n} à ${al.p} %` : ''),
+    winTitle: 'Réglages de Brimline', tabs: ['Comptes', 'Général', 'Agents', 'À propos'],
+    capClaude: 'Lit la connexion de Claude Code dans le Trousseau et demande l\'usage à api.anthropic.com.',
+    colorCap: 'La couleur d\'un compte sert à sa part dans la jauge de la barre des menus et à sa pastille dans le panneau.',
+    show: 'Afficher', color: 'Couleur', other: 'Autre couleur…', reset: 'Revenir au défaut', isDefault: 'Couleur par défaut',
+    close: n => `Proche de la couleur de ${n} : leurs deux parts se distinguent mal dans la jauge.`,
+    contrast: (mode, r) => `Peu visible en mode ${mode} : contraste de ${r}:1 sur la jauge, 3:1 conseillé.`, light: 'clair', dark: 'sombre',
+    dontRead: 'Ne pas lire ce compte', upToDate: 'À jour', expiredSt: 'Session expirée', customName: 'Couleur libre',
+    voGroup: n => `Couleur de ${n}`,
+    cases: {
+      one: 'Un compte', three: 'Trois comptes', ten: 'Dix comptes',
+      thanael: 'Exemple de Thanaël', thanaelCap: 'Claude à 88 %, ChatGPT à 21 %, Gemini à 40 % (Gemini lu par Code Assist) : parts de 29, 7 et 13 %, total 50 %. Avec la moyenne, une jauge remplie à 80 % veut dire des comptes presque tous pleins.',
+      nofig: 'Un compte sans chiffre', nofigCap: 'Gemini en phrase seule : hors de N et hors de la jauge, pour ne pas diluer les autres. Deux comptes comptés, total 50 %. VoiceOver et le panneau le citent.',
+      stale: 'Une dernière valeur', staleCap: 'Secours (marine) est expiré : sa dernière valeur reste comptée, sa part est atténuée (opacité 0,45).',
+      alert: 'Alerte : un compte à 94 %', alertCap: 'Agence à 94 %, quatre comptes presque vides : moyenne 20 %. Le trait devient « ! » en rouge (forme et couleur), le chiffre écrit dit 94 %, VoiceOver commence par l\'alerte.',
+      full: 'Un compte à 100 %, neuf à 0', fullCap: 'Total 10 % : la moyenne cache le compte bloqué, l\'alerte le montre. Sa part fait 6,4 pt.',
+      empty: 'Aucun compte compté', emptyCap: 'Le glyphe vertical actuel, image modèle, cuve vide : rien d\'inventé. Même cas quand seuls des comptes sans chiffre existent.',
+    },
+    bars: { light: 'Barre claire', dark: 'Barre sombre', wallL: 'Fond d\'écran teinté, clair', wallD: 'Fond d\'écran teinté, sombre', selL: 'Sélectionné, clair', selD: 'Sélectionné, sombre' },
+    var: { A: 'A · Ras couché, parts tassées', cells: 'A · une case par compte', B: 'B · glyphe à côté (cadrage)', C: 'C · verticale' },
+    rec: 'recommandé',
+  },
+  en: {
+    refresh: 'Refresh', settings: 'Settings…', quit: 'Quit', updated: 'Updated at 18:20', via: 'via Codex',
+    session: '5 h session', week: 'Week', pct: p => p + '%', clock: 'Tue Oct 27 6:20 PM',
+    r: { a: 'resets in 2 h 10 (20:30)', b: 'resets in 2 d (Thu 13:00)', c: 'resets in 38 min (18:58)', d: 'resets in 4 d (Sat 9:00)' },
+    valueFrom: a => 'value from ' + a, ago3h: '3 h ago', expired: 'Session expired: open Claude Code with this account to reconnect it.',
+    keychain: 'Keychain token', gemini: 'Google does not publish Gemini limits in a form Brimline can read.', more: 'Learn more',
+    voAlert: (n, p) => `Alert: ${n} at ${p}%.`, voMain: (avg, k) => `Brimline, ${avg}% used on average across ${k} accounts:`,
+    voOne: (n, p, st) => `${n} ${p}%${st ? ', old value' : ''}`, voNoFig: n => `${n}: no number.`,
+    tip: (avg, k, al) => `Average ${avg}% across ${k} accounts` + (al ? ` · ${al.n} at ${al.p}%` : ''),
+    winTitle: 'Brimline Settings', tabs: ['Accounts', 'General', 'Agents', 'About'],
+    capClaude: 'Reads the Claude Code sign-in from the Keychain and asks api.anthropic.com for usage.',
+    colorCap: 'An account\'s color is used for its share of the menu bar gauge and for its dot in the panel.',
+    show: 'Show', color: 'Color', other: 'Other color…', reset: 'Reset to default', isDefault: 'Default color',
+    close: n => `Close to ${n}'s color: their two shares are hard to tell apart in the gauge.`,
+    contrast: (mode, r) => `Hard to see in ${mode} mode: ${r}:1 contrast on the gauge, 3:1 recommended.`, light: 'Light', dark: 'Dark',
+    dontRead: "Don't read this account", upToDate: 'Up to date', expiredSt: 'Session expired', customName: 'Custom color',
+    voGroup: n => `Color of ${n}`,
+    cases: {
+      one: 'One account', three: 'Three accounts', ten: 'Ten accounts',
+      thanael: 'Thanaël\'s example', thanaelCap: 'Claude at 88%, ChatGPT at 21%, Gemini at 40% (Gemini read through Code Assist): shares of 29, 7 and 13%, 50% in total. With the average, a gauge filled to 80% means nearly every account is full.',
+      nofig: 'An account without a number', nofigCap: 'Gemini as a sentence only: left out of N and out of the gauge, so it does not dilute the others. Two counted accounts, 50% in total. VoiceOver and the panel mention it.',
+      stale: 'A last known value', staleCap: 'Secours (navy) is expired: its last value still counts, its share is dimmed (opacity 0.45).',
+      alert: 'Alert: one account at 94%', alertCap: 'Agence at 94%, four nearly empty accounts: 20% on average. The line turns into a red "!" (shape and color), the written number says 94%, VoiceOver starts with the alert.',
+      full: 'One account at 100%, nine at 0', fullCap: '10% in total: the average hides the blocked account, the alert shows it. Its share is 6.4 pt wide.',
+      empty: 'No counted account', emptyCap: 'Today\'s upright glyph, template image, empty tank: nothing made up. Same when only accounts without a number exist.',
+    },
+    bars: { light: 'Light bar', dark: 'Dark bar', wallL: 'Tinted wallpaper, light', wallD: 'Tinted wallpaper, dark', selL: 'Selected, light', selD: 'Selected, dark' },
+    var: { A: 'A · Lying Ras, packed shares', cells: 'A · one cell per account', B: 'B · glyph beside (brief)', C: 'C · upright' },
+    rec: 'recommended',
+  },
+};
+// Espace insécable entre un nombre et son unité, et devant « : » en français.
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  .replace(/(\d) (?=(h|j|d|min|%|pt)(\b|$|[ ).,]))/g, '$1&nbsp;').replace(/ :/g, '&nbsp;:');
+
+// ---------- Palette (noms des emplacements, tokens.json accountPalette) ----------
+const SLOTS = [
+  ['providerClaude', 'Violet', 'Violet', '#7445D6', '#B48CFF'], ['providerChatgpt', 'Bleu', 'Blue', '#1C68C9', '#62AEF5'],
+  ['providerGemini', 'Magenta', 'Magenta', '#B03A86', '#F08BCB'], ['providerGrok', 'Olive', 'Olive', '#5E7A12', '#B3CC5C'],
+  ['providerCursor', 'Encre', 'Ink', '#15191D', '#ECEFF2'], ['accountPine', 'Sapin', 'Pine', '#1B6B4C', '#5CCB98'],
+  ['accountGold', 'Or', 'Gold', '#8C7400', '#F4D63A'], ['accountNavy', 'Marine', 'Navy', '#1D3270', '#B9CAFE'],
+  ['accountCocoa', 'Cacao', 'Cocoa', '#703821', '#CA9678'], ['accountLilac', 'Lilas', 'Lilac', '#7A6A96', '#E9C6F6'],
+];
+// Deux couleurs libres d'exemple pour les Réglages (listées dans le test) : un violet trop proche, un gris trop pâle.
+const CUSTOM_CLOSE = '#6A4FD3', CUSTOM_PALE = '#D5DCE2';
+
+// ---------- Comptes d'exemple (slot = emplacement de palette, ou couleur libre) ----------
+const ACC = {
+  principal: { n: 'Principal', slot: 0 }, asso: { n: 'Asso', slot: 5 }, agence: { n: 'Agence', slot: 6 }, secours: { n: 'Secours', slot: 7 },
+  plus: { n: 'ChatGPT Plus', slot: 1 }, work: { n: 'Codex travail', slot: 8 }, grok: { n: 'SuperGrok', slot: 3 }, cursor: { n: 'Cursor Pro', slot: 4 },
+  gemini: { n: 'Gemini', slot: 2 }, lab: { n: 'Research lab', slot: 9 },
+};
+const seg = (k, p, stale) => ({ k, p, stale: !!stale });
+const SETS = {
+  one: [seg('principal', 58)],
+  three: [seg('principal', 58), seg('asso', 22), seg('plus', 41)],
+  ten: [seg('principal', 58), seg('asso', 22), seg('agence', 72), seg('secours', 9), seg('lab', 35), seg('plus', 41), seg('work', 15), seg('grok', 46), seg('cursor', 63), seg('gemini', 30)],
+  thanael: [seg('principal', 88), seg('plus', 21), seg('gemini', 40)],
+  nofig: [seg('principal', 58), seg('plus', 41)],
+  stale: [seg('principal', 58), seg('secours', 9, true), seg('plus', 41)],
+  alert: [seg('principal', 2), seg('asso', 3), seg('agence', 94), seg('secours', 1), seg('plus', 0)],
+  full: [seg('principal', 100), seg('asso', 0), seg('agence', 0), seg('secours', 0), seg('lab', 0), seg('plus', 0), seg('work', 0), seg('grok', 0), seg('cursor', 0), seg('gemini', 0)],
+  panel: [seg('principal', 58), seg('asso', 22), seg('agence', 94), seg('secours', 9, true), seg('plus', 41)],
+  empty: [],
+};
+const ALERT = 90;
+const model = segs => {
+  const N = segs.length;
+  const shares = segs.map(s => Math.min(Math.max(s.p, 0), 100) / 100 / N);
+  const total = shares.reduce((a, b) => a + b, 0);
+  const most = segs.reduce((m, s) => (!m || s.p > m.p ? s : m), null);
+  return { segs, N, shares, total, most, alert: segs.some(s => s.p >= ALERT) };
+};
+
+// ---------- Dessin de l'élément de barre (canvas, au pixel près) ----------
+// Mesures en points (tokens.json, menubarGauge). s = pixels par point (1 ou 2).
+const RUN = (N, v) => v === 'B' ? Math.min(52, 32 + 4 * Math.max(0, N - 4)) : Math.min(64, 40 + 4 * Math.max(0, N - 4));
+function itemWidth(v, N) {
+  if (v === 'empty') return 18;
+  if (v === 'C') return 22;
+  if (v === 'B') return 22 + RUN(N, 'B') + 5;
+  return RUN(N, 'A') + 10;
+}
+function cssColors(el) {
+  const cs = getComputedStyle(el);
+  const g = n => cs.getPropertyValue(n).trim();
+  return { label: g('--label'), alert: g('--alert'), slot: i => g('--a' + i) };
+}
+const colorOf = (C, k) => ACC[k].custom || C.slot(ACC[k].slot);
+// Répartit les parts en pixels : arrondi à la plus grande part de reste, 1 pixel au moins pour une part non nulle, pris sur le vide.
+function partPixels(m, runPx) {
+  const exact = m.shares.map(x => x * runPx);
+  const px = exact.map(x => Math.floor(x));
+  const target = Math.min(runPx, Math.round(m.total * runPx));
+  let rest = target - px.reduce((a, b) => a + b, 0);
+  exact.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (rest > 0 && m.shares[i] > 0) { px[i]++; rest--; } });
+  px.forEach((v, i) => { if (m.shares[i] > 0 && v === 0) px[i] = 1; });
+  let over = px.reduce((a, b) => a + b, 0) - runPx;
+  while (over > 0) { const i = px.indexOf(Math.max(...px)); px[i]--; over--; }
+  return px;
+}
+function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill(); }
+function drawTankLying(ctx, x0, end, t) {
+  // Cuve couchée, fermée à gauche, ouverte à droite : y de 3 à 15, rayon extérieur 2,5.
+  const top = 3, bot = 15, r = 2.5, ri = r - t;
+  ctx.beginPath();
+  ctx.moveTo(end, top); ctx.lineTo(x0 + r, top); ctx.arcTo(x0, top, x0, top + r, r); ctx.lineTo(x0, bot - r); ctx.arcTo(x0, bot, x0 + r, bot, r);
+  ctx.lineTo(end, bot); ctx.lineTo(end, bot - t); ctx.lineTo(x0 + t + ri, bot - t); ctx.arcTo(x0 + t, bot - t, x0 + t, bot - t - ri, ri);
+  ctx.lineTo(x0 + t, top + t + ri); ctx.arcTo(x0 + t, top + t, x0 + t + ri, top + t, ri); ctx.lineTo(end, top + t); ctx.closePath(); ctx.fill();
+}
+function drawLimit(ctx, x, alert, s, C) {
+  if (!alert) { ctx.fillStyle = C.label; roundRect(ctx, x, 1, s >= 2 ? 1.5 : 1, 16, s >= 2 ? 0.75 : 0); return; }
+  ctx.fillStyle = C.alert;
+  if (s >= 2) { roundRect(ctx, x, 1, 2.5, 10.5, 1.25); ctx.beginPath(); ctx.arc(x + 1.25, 15.75, 1.25, 0, Math.PI * 2); ctx.fill(); }
+  else { ctx.fillRect(x, 1, 2, 10); ctx.fillRect(x, 15, 2, 2); }
+}
+function drawVerticalGlyph(ctx, s, C, m) {
+  // Glyphe actuel (BrimlineGlyph.swift) : trait, cuve en U, liquide de 4 pt sur 8 pt de course.
+  const t = s >= 2 ? 1.5 : 1, ri = 2.5 - t;
+  ctx.fillStyle = C.label;
+  roundRect(ctx, 2, 2, 14, t, t / 2);
+  ctx.beginPath();
+  ctx.moveTo(4, 5); ctx.lineTo(4 + t, 5); ctx.lineTo(4 + t, 16 - t - ri); ctx.arcTo(4 + t, 16 - t, 4 + t + ri, 16 - t, ri);
+  ctx.lineTo(14 - t - ri, 16 - t); ctx.arcTo(14 - t, 16 - t, 14 - t, 16 - t - ri, ri); ctx.lineTo(14 - t, 5); ctx.lineTo(14, 5);
+  ctx.lineTo(14, 16 - 2.5); ctx.arcTo(14, 16, 14 - 2.5, 16, 2.5); ctx.lineTo(4 + 2.5, 16); ctx.arcTo(4, 16, 4, 16 - 2.5, 2.5); ctx.closePath(); ctx.fill();
+  if (!m) return;
+  const runPx = 8 * s, px = partPixels(m, runPx);
+  let y = 13 * s;
+  m.segs.forEach((sg, i) => { if (!px[i]) return; ctx.globalAlpha = sg.stale ? 0.45 : 1; ctx.fillStyle = colorOf(C, sg.k); y -= px[i]; ctx.fillRect(7, y / s, 4, px[i] / s); });
+  ctx.globalAlpha = 1;
+  if (m.alert) drawLimit(ctx, 19, true, s, C);
+}
+function drawItem(canvas, v, segs, s, C) {
+  const m = segs.length ? model(segs) : null;
+  if (!m) v = 'empty';
+  const W = itemWidth(v, m ? m.N : 0);
+  canvas.width = W * s; canvas.height = 18 * s;
+  canvas.style.width = W + 'px'; canvas.style.height = '18px';
+  if (s === 1) canvas.classList.add('px');
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(s, 0, 0, s, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  if (v === 'empty') { drawVerticalGlyph(ctx, s, C, null); return m; }
+  if (v === 'C') { drawVerticalGlyph(ctx, s, C, m); return m; }
+  const t = s >= 2 ? 1.5 : 1;
+  if (v === 'B') {
+    // Glyphe couché séparé (rotation du Ras d'un quart de tour), puis une capsule de 6 pt.
+    ctx.save(); ctx.translate(18, 0); ctx.rotate(Math.PI / 2);
+    const fake = { label: C.label, alert: C.alert, slot: C.slot };
+    drawVerticalGlyph(ctx, s, fake, null); ctx.restore();
+    const run = RUN(m.N, 'B'), x0 = 22, runPx = run * s;
+    ctx.fillStyle = C.label; ctx.globalAlpha = 0.16; roundRect(ctx, x0, 6, run, 6, 3); ctx.globalAlpha = 1;
+    ctx.save(); ctx.beginPath(); ctx.roundRect(x0, 6, run, 6, 3); ctx.clip();
+    const px = partPixels(m, runPx); let x = x0 * s;
+    m.segs.forEach((sg, i) => { if (!px[i]) return; ctx.globalAlpha = sg.stale ? 0.45 : 1; ctx.fillStyle = colorOf(C, sg.k); ctx.fillRect(x / s, 6, px[i] / s, 6); x += px[i]; });
+    ctx.restore(); ctx.globalAlpha = 1;
+    if (m.alert) drawLimit(ctx, x0 + run + 2, true, s, C);
+    return m;
+  }
+  // Variante A : cuve couchée, liquide de 6 pt, trait de la limite à droite.
+  const run = RUN(m.N, 'A'), inset = s >= 2 ? 1.5 : 2, lx = t + inset, end = lx + run + inset, line = end + 2;
+  ctx.fillStyle = C.label; drawTankLying(ctx, 0, end, t);
+  const runPx = run * s;
+  if (v === 'cells') {
+    const gap = 1, cw = (run - gap * (m.N - 1)) / m.N;
+    m.segs.forEach((sg, i) => {
+      const cx = Math.round((lx + i * (cw + gap)) * s) / s, cwPx = Math.round((lx + i * (cw + gap) + cw) * s) - Math.round((lx + i * (cw + gap)) * s);
+      ctx.fillStyle = C.label; ctx.globalAlpha = 0.16; ctx.fillRect(cx, 6, cwPx / s, 6);
+      const f = sg.p > 0 ? Math.max(1, Math.round(cwPx * Math.min(sg.p, 100) / 100)) : 0;
+      ctx.globalAlpha = sg.stale ? 0.45 : 1; ctx.fillStyle = colorOf(C, sg.k); if (f) ctx.fillRect(cx, 6, f / s, 6);
+    });
+    ctx.globalAlpha = 1;
+  } else {
+    const px = partPixels(m, runPx); let x = lx * s;
+    m.segs.forEach((sg, i) => { if (!px[i]) return; ctx.globalAlpha = sg.stale ? 0.45 : 1; ctx.fillStyle = colorOf(C, sg.k); ctx.fillRect(x / s, 6, px[i] / s, 6); x += px[i]; });
+    ctx.globalAlpha = 1;
+  }
+  drawLimit(ctx, line, m.alert, s, C);
+  return m;
+}
+
+// ---------- Barres simulées ----------
+const BARKINDS = { light: 'bar-light', dark: 'bar-dark', wallL: 'bar-light wall', wallD: 'bar-dark wall', selL: 'bar-light', selD: 'bar-dark' };
+function barHTML(kind, id, opts = {}) {
+  const sel = kind === 'selL' || kind === 'selD';
+  return `<span class="mb ${BARKINDS[kind]}"><span class="it${sel ? ' sel' : ''}"><canvas data-item="${id}"></canvas>${opts.pct != null ? `<span data-pct>${opts.pct}</span>` : ''}</span>${opts.clock ? `<span class="clock">${esc(opts.clock)}</span>` : ''}</span>`;
+}
+const JOBS = [];
+let jobId = 0;
+function item(kind, v, set, s, opts = {}) {
+  const id = 'c' + (jobId++);
+  JOBS.push({ id, v, set, s });
+  return barHTML(kind, id, opts);
+}
+const pair = (t, kind, v, set, opts = {}) => {
+  const m = SETS[set].length ? model(SETS[set]) : null;
+  const pct = opts.pct && m ? esc(t.pct(Math.round(m.most.p))) : null;
+  return `<div class="pair"><span class="scale">2x</span>${item(kind, v, set, 2, { pct, clock: opts.clock })}</div><div class="pair"><span class="scale">1x</span>${item(kind, v, set, 1, { pct, clock: opts.clock })}</div>`;
+};
+
+function voText(t, set) {
+  const m = model(SETS[set]);
+  const avg = Math.round(m.total * 100);
+  const al = m.segs.filter(s => s.p >= ALERT).sort((a, b) => b.p - a.p);
+  return { al, avg, text: (al.length ? al.map(s => t.voAlert(ACC[s.k].n, s.p)).join(' ') + ' ' : '') + t.voMain(avg, m.N) + ' ' + m.segs.map(s => t.voOne(ACC[s.k].n, s.p, s.stale)).join(', ') + '.' };
+}
+
+// ---------- Panneau ----------
+const glyphSvg = lv => {
+  const h = lv > 0 ? Math.max(1, Math.min(7.5, Math.round(lv * 8 * 2) / 2)) : 0;
+  return `<svg viewBox="0 0 18 18" aria-hidden="true"><rect x="2" y="2" width="14" height="1.5" rx="0.75"/><path d="M4 5H5.5V13.5A1 1 0 0 0 6.5 14.5H11.5A1 1 0 0 0 12.5 13.5V5H14V13.5A2.5 2.5 0 0 1 11.5 16H6.5A2.5 2.5 0 0 1 4 13.5Z"/>${h ? `<rect x="7" y="${13 - h}" width="4" height="${h}" rx="0.5"/>` : ''}</svg>`;
+};
+const icon = k => ({
+  person: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="5" cy="4" r="2.2" fill="none" stroke="currentColor"/><path d="M1 11c.5-2.5 2-3.6 4-3.6" fill="none" stroke="currentColor"/><path d="M9.5 6.5v2.6M9.5 10.6v.4" stroke="currentColor"/></svg>',
+  info: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="none" stroke="currentColor"/><path d="M6 5.2v3.6M6 3.4v.4" stroke="currentColor"/></svg>',
+  warn: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.2 11 10.5H1z" fill="none" stroke="currentColor" stroke-linejoin="round"/><path d="M6 4.6v3M6 8.8v.4" stroke="currentColor"/></svg>',
+}[k]);
+const adot = k => `<i class="dot" style="--c:${ACC[k].custom || 'var(--a' + ACC[k].slot + ')'}" aria-hidden="true"></i>`;
+function gauge(p, muted) {
+  const cls = muted ? 'mu' : p >= 90 ? 'crit' : p >= 70 ? 'warn' : '';
+  return `<div class="g" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}"><i class="tk" style="left:70%"></i><i class="tk" style="left:90%"></i>${p > 0 ? `<i class="f ${cls}" style="width:${Math.min(100, p)}%"></i>` : ''}</div>`;
+}
+function lim(t, label, p, r, muted, age) {
+  const d = [muted && age ? t.valueFrom(age) : '', r].filter(Boolean).join(' · ');
+  return `<div class="lim"><div class="l"><span>${esc(label)}</span><span class="n${muted ? ' m' : ''}">${esc(t.pct(p))}</span></div>${gauge(p, muted)}${d ? `<div class="d">${esc(d)}</div>` : ''}</div>`;
+}
+function acard(t, k, sub, rows, extra = '') {
+  return `<div class="card" aria-label="${esc(ACC[k].n)}"><div class="ttl">${adot(k)}<span class="t">${esc(ACC[k].n)}</span></div>${sub ? `<div class="s">${esc(sub)}</div>` : ''}${rows ? `<div class="lims">${rows}</div>` : ''}${extra}</div>`;
+}
+const grp = (name, via) => `<div class="grp" role="heading" aria-level="3"><span>${esc(name)}</span>${via ? `<span class="via">${esc(via)}</span>` : ''}</div>`;
+
+// ---------- Rendus ----------
+const R = {
+  mainBars(t) {
+    const kinds = ['light', 'dark', 'wallL', 'wallD', 'selL', 'selD'];
+    let h = `<thead><tr><th></th><th>${esc(t.cases.one)}</th><th>${esc(t.cases.three)}</th><th>${esc(t.cases.ten)}</th></tr></thead><tbody>`;
+    kinds.forEach(k => {
+      h += `<tr><th>${esc(t.bars[k])}</th>` + ['one', 'three', 'ten'].map(set => `<td>${pair(t, k, 'A', set, { pct: set === 'one', clock: set === 'ten' ? t.clock : null })}</td>`).join('') + '</tr>';
+    });
+    return h + '</tbody>';
+  },
+  cases(t) {
+    const C = t.cases;
+    const box = (title, cap, set, opts = {}) => `<div class="fig"><h3>${esc(title)}</h3>${pair(t, 'light', 'A', set, opts)}<div style="height:6px"></div>${pair(t, 'dark', 'A', set, opts)}<p class="cap">${esc(cap)}</p></div>`;
+    return box(C.thanael, C.thanaelCap, 'thanael') + box(C.nofig, C.nofigCap, 'nofig') + box(C.stale, C.staleCap, 'stale')
+      + box(C.alert, C.alertCap, 'alert', { pct: true }) + box(C.full, C.fullCap, 'full', { pct: true }) + box(C.empty, C.emptyCap, 'empty');
+  },
+  zoom(t) {
+    const z = (set, s, kind, cap) => { const id = 'c' + (jobId++); JOBS.push({ id, v: 'A', set, s, zoom: 8 }); return `<figure><span class="mb ${BARKINDS[kind]}" style="height:auto;padding:12px"><canvas data-item="${id}"></canvas></span><figcaption class="cap">${esc(cap)}</figcaption></figure>`; };
+    const fr = t === T.fr;
+    return z('three', 2, 'light', fr ? 'Trois comptes, 2x, agrandi 8 fois : 1 pixel = 0,5 pt.' : 'Three accounts, 2x, enlarged 8 times: 1 pixel = 0.5 pt.')
+      + z('alert', 1, 'dark', fr ? 'Alerte, 1x, agrandi 8 fois : 1 pixel = 1 pt.' : 'Alert, 1x, enlarged 8 times: 1 pixel = 1 pt.');
+  },
+  dims(t) {
+    const fr = t === T.fr;
+    const rows = fr ? [
+      ['Image', '18 pt de haut, largeur = course + 10 pt (50 à 74 pt) ; centrée dans la barre de 24 pt', 'menubarGauge.imageHeight'],
+      ['Cuve couchée', '12 pt de haut (y 3 à 15), fermée à gauche (rayon extérieur 2,5), ouverte à droite ; trait de 1,5 pt (2x) ou 1 pt (1x)', 'tankHeight'],
+      ['Liquide', '6 pt de haut (y 6 à 12), à 1,5 pt (2x) ou 2 pt (1x) des parois ; la cuve dépasse la course de ce même écart à droite', 'liquidHeight, liquidInset'],
+      ['Course (largeur du liquide)', '40 pt jusqu\'à 4 comptes, puis 4 pt de plus par compte, 64 pt à 10 comptes et au-delà', 'runFewAccounts, runPerExtraAccount, runMax'],
+      ['Trait de la limite', '16 pt de haut (y 1 à 17), 1,5 pt de large (2x) ou 1 pt (1x), à 2 pt du bout de la cuve, jamais en contact', 'lineHeight, lineGap'],
+      ['Repère d\'alerte « ! »', 'à la place du trait : barre de 2,5 x 10,5 pt et point de 2,5 pt (2x), 2 x 10 et 2 x 2 (1x), en gaugeCrit ; sa place est toujours réservée', 'alertMarkWidth'],
+      ['Part d\'un compte', 'p / N de la course, 1 pixel au moins si p > 0 ; atténuée à 0,45 si dernière valeur connue', 'minPart, staleOpacity'],
+      ['Case par compte (variante)', '(course - (N - 1) x 1 pt) / N, fond au texte de la barre à 16 %', 'cellGap'],
+      ['Élément entier', '80 pt au plus avec le pourcentage écrit masqué ; le texte du pourcentage suit à 4 pt', 'maxItemWidth'],
+    ] : [
+      ['Image', '18 pt high, width = run + 10 pt (50 to 74 pt); centered in the 24 pt bar', 'menubarGauge.imageHeight'],
+      ['Lying tank', '12 pt high (y 3 to 15), closed on the left (outer radius 2.5), open on the right; 1.5 pt stroke (2x) or 1 pt (1x)', 'tankHeight'],
+      ['Liquid', '6 pt high (y 6 to 12), 1.5 pt (2x) or 2 pt (1x) from the walls; the tank runs past the liquid by the same gap on the right', 'liquidHeight, liquidInset'],
+      ['Run (liquid width)', '40 pt up to 4 accounts, then 4 pt more per account, 64 pt at 10 accounts and beyond', 'runFewAccounts, runPerExtraAccount, runMax'],
+      ['Limit line', '16 pt high (y 1 to 17), 1.5 pt wide (2x) or 1 pt (1x), 2 pt past the tank end, never touching it', 'lineHeight, lineGap'],
+      ['Alert mark "!"', 'replaces the line: 2.5 x 10.5 pt bar and 2.5 pt dot (2x), 2 x 10 and 2 x 2 (1x), in gaugeCrit; its room is always reserved', 'alertMarkWidth'],
+      ['Share of an account', 'p / N of the run, at least 1 pixel if p > 0; dimmed to 0.45 for a last known value', 'minPart, staleOpacity'],
+      ['One cell per account (variant)', '(run - (N - 1) x 1 pt) / N, background in the bar text color at 16%', 'cellGap'],
+      ['Whole item', '80 pt at most without the written percentage; the percentage text follows 4 pt after', 'maxItemWidth'],
+    ];
+    return `<thead><tr><th>${fr ? 'Partie' : 'Part'}</th><th>${fr ? 'Mesure' : 'Measure'}</th><th>tokens.json</th></tr></thead><tbody>` + rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><code>${esc(r[2])}</code></td></tr>`).join('') + '</tbody>';
+  },
+  variants(t) {
+    const V = t.var;
+    const head = `<thead><tr><th></th><th>${esc(t.cases.three)}</th><th>${esc(t.cases.ten)}</th><th>${esc(t.cases.alert)}</th></tr></thead>`;
+    const row = (v, name, rec) => ['light', 'dark'].map(k => `<tr><th>${esc(name)}${rec ? ` <span class="tag">${esc(t.rec)}</span>` : ''}<br><span class="muted" style="font-weight:400">${esc(t.bars[k])}</span></th>` + ['three', 'ten', 'alert'].map(set => `<td>${pair(t, k, v, set)}</td>`).join('') + '</tr>').join('');
+    return head + '<tbody>' + row('A', V.A, true) + row('cells', V.cells) + row('B', V.B) + row('C', V.C) + '</tbody>';
+  },
+  panel(t) {
+    const inner = [
+      grp('Claude'),
+      acard(t, 'principal', 'vous@exemple.fr · Max', lim(t, t.session, 34, t.r.a) + lim(t, t.week, 58, t.r.b)),
+      acard(t, 'asso', 'asso@exemple.org · Max', lim(t, t.session, 12, t.r.a) + lim(t, t.week, 22, t.r.b)),
+      acard(t, 'agence', 'agence@exemple.com · Max', lim(t, t.session, 94, t.r.c) + lim(t, t.week, 61, t.r.b)),
+      acard(t, 'secours', t.keychain + ' · Max', lim(t, t.week, 9, t.r.d, true, t.ago3h), `<div class="note">${icon('person')}<span>${esc(t.expired)}</span></div>`),
+      grp('ChatGPT', t.via),
+      acard(t, 'plus', null, lim(t, t.session, 22, t.r.a) + lim(t, t.week, 41, t.r.d)),
+      grp('Gemini'),
+      acard(t, 'gemini', null, null, `<div class="note">${icon('info')}<span>${esc(t.gemini)}<br><span class="more">${esc(t.more)}</span></span></div>`),
+    ].join('');
+    return `<div class="mac-panel" role="group" aria-label="Brimline"><div class="ph">${glyphSvg(0.94)}<span>Brimline</span></div><div class="cards">${inner}</div><div class="pf"><span class="upd">${esc(t.updated)}</span><span class="acc">${esc(t.refresh)}</span><span>${esc(t.settings)}</span><span>${esc(t.quit)}</span></div></div>`;
+  },
+  panelBar(t) {
+    return ['light', 'dark'].map(k => pair(t, k, 'A', 'panel', { pct: true, clock: t.clock })).join('<div style="height:8px"></div>');
+  },
+  panelVo(t) {
+    const v = voText(t, 'panel');
+    const al = v.al[0];
+    return `<b>VoiceOver</b> : ${esc(v.text + ' ' + t.voNoFig('Gemini'))}<br><b>${t === T.fr ? 'Infobulle' : 'Tooltip'}</b> : ${esc(t.tip(v.avg, model(SETS.panel).N, al ? { n: ACC[al.k].n, p: al.p } : null))}`;
+  },
+  settings(t) {
+    const fr = t === T.fr;
+    const name = i => fr ? SLOTS[i][1] : SLOTS[i][2];
+    // Couleurs choisies dans l'exemple : Asso et Secours en couleur libre.
+    const rows = [
+      { k: 'principal', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude', label: 'Principal', sel: 0, def: true },
+      { k: 'asso', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude-asso', label: 'Asso', custom: CUSTOM_CLOSE, warn: [t.close('Principal')] },
+      { k: 'agence', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude-agence', label: 'Agence', sel: 6, def: true, focus: 7 },
+      { k: 'secours', sub: `Claude · Max · ${t.expiredSt}`, path: 'keychain:secours', label: 'Secours', custom: CUSTOM_PALE, warn: [t.contrast(t.light, fr ? '1,4' : '1.4')] },
+    ];
+    // Le violet trop proche est aussi signalé sur Principal.
+    rows[0].warn = [t.close('Asso')];
+    const acct = r => {
+      const sw = SLOTS.map((s, i) => `<span class="sw${r.sel === i ? ' on' : ''}${r.focus === i ? ' focus' : ''}" style="--c:var(--a${i})" role="radio" aria-checked="${r.sel === i}" aria-label="${esc(name(i))}" title="${esc(name(i))}"></span>`).join('');
+      const other = r.custom ? `<span class="sw other filled on" style="--c:${r.custom}" role="radio" aria-checked="true" aria-label="${esc(t.customName)}" title="${esc(t.customName)}"></span>` : `<span class="sw other" role="radio" aria-checked="false" aria-label="${esc(t.other)}" title="${esc(t.other)}">+</span>`;
+      const reset = r.def ? `<span class="linkbtn off" aria-disabled="true">${esc(t.reset)}</span><span class="defnote">${esc(t.isDefault)}</span>` : `<span class="linkbtn">${esc(t.reset)}</span>`;
+      const warns = (r.warn || []).map(w => `<div class="warnline" role="note">${icon('warn')}<span>${esc(w)}</span></div>`).join('');
+      if (r.custom) ACC[r.k] = Object.assign({}, ACC[r.k], { custom: r.custom });
+      return `<div class="acct"><div><div class="ttl">${adot(r.k)}<span class="t">${esc(r.label)}</span></div><div class="s" style="padding-left:14px">${esc(r.sub)}</div><div class="path" style="padding-left:14px">${esc(r.path)}</div></div><div class="show">${esc(t.show)} <span class="tg on" role="switch" aria-checked="true"></span></div>
+        <div class="full"><div class="input">${esc(r.label)}</div>
+        <div class="colrow" role="radiogroup" aria-label="${esc(t.voGroup(r.label))}"><span class="lbl">${esc(t.color)}</span><span class="swatches">${sw}${other}</span>${reset}</div>${warns}
+        <div class="chk"><span class="box2" role="checkbox" aria-checked="false"></span><span>${esc(t.dontRead)}</span></div></div></div>`;
+    };
+    const saved = JSON.stringify(ACC);
+    const body = rows.map(acct).join('');
+    Object.assign(ACC, JSON.parse(saved)); // les couleurs libres restent propres à cette maquette
+    Object.keys(ACC).forEach(k => { if (ACC[k].custom) delete ACC[k].custom; });
+    const tabs = t.tabs.map((x, i) => `<span class="${i === 0 ? 'on' : ''}">${esc(x)}</span>`).join('');
+    return `<div class="mac-win" role="group" aria-label="${esc(t.winTitle)}"><div class="tb"><span class="lights"><i></i><i></i><i></i></span>${esc(t.winTitle)}</div><div class="tabs">${tabs}</div><div class="form">
+      <div class="sec-h"><span class="name">Claude</span><span class="tg big on" role="switch" aria-checked="true"></span></div>
+      <div class="sec-cap">${esc(t.capClaude)}<br>${esc(t.colorCap)}</div>
+      <div class="sec-body">${body}</div></div></div>`;
+  },
+  palette(t) {
+    const fr = t === T.fr;
+    return SLOTS.map(([tok, nf, ne, l, d], i) => {
+      const cL = [contrast(l, '#E7EAED'), contrast(l, '#DADDE0'), contrast(l, '#F5F6F7')];
+      const cD = [contrast(d, '#2B3035'), contrast(d, '#2F3338'), contrast(d, '#111315')];
+      const f = x => x.toFixed(1).replace('.', fr ? ',' : '.');
+      return `<div><b><i class="dot" style="--c:var(--a${i});width:14px;height:14px;flex-basis:14px"></i>${i}. ${esc(fr ? nf : ne)} <code class="muted" style="font-weight:400">${tok}</code></b>
+        <div class="chips"><span class="chip" style="background:${l};color:#FFFFFF">${l}</span><span class="chip" style="background:${d};color:#15191D">${d}</span></div>
+        <span class="muted">${fr ? 'Clair' : 'Light'} : ${fr ? 'piste' : 'track'} ${f(cL[0])}, ${fr ? 'barre' : 'bar'} ${f(cL[1])}, ${fr ? 'fond' : 'bg'} ${f(cL[2])}<br>${fr ? 'Sombre' : 'Dark'} : ${fr ? 'piste' : 'track'} ${f(cD[0])}, ${fr ? 'barre' : 'bar'} ${f(cD[1])}, ${fr ? 'fond' : 'bg'} ${f(cD[2])}</span></div>`;
+    }).join('');
+  },
+  paletteSummary(t) {
+    const fr = t === T.fr;
+    const pairs = th => { let best = [99, '', '']; for (let i = 0; i < 10; i++) for (let j = i + 1; j < 10; j++) { const e = ciede2000(SLOTS[i][th], SLOTS[j][th]); if (e < best[0]) best = [e, i, j]; } return best; };
+    const nm = i => fr ? SLOTS[i][1] : SLOTS[i][2];
+    const [eL, iL, jL] = pairs(3), [eD, iD, jD] = pairs(4);
+    const minC = Math.min(...SLOTS.flatMap(s => [contrast(s[3], '#E7EAED'), contrast(s[3], '#DADDE0'), contrast(s[4], '#2B3035'), contrast(s[4], '#2F3338')]));
+    const f = x => x.toFixed(1).replace('.', fr ? ',' : '.');
+    return `<p class="muted" style="font-size:13px;margin-top:10px">${fr ? 'Écart CIEDE2000 le plus petit' : 'Smallest CIEDE2000 difference'} : ${f(eL)} (${fr ? 'clair' : 'light'}, ${nm(iL)} / ${nm(jL)}), ${f(eD)} (${fr ? 'sombre' : 'dark'}, ${nm(iD)} / ${nm(jD)}) ; ${fr ? 'seuil 15' : 'threshold 15'}. ${fr ? 'Contraste le plus faible sur la piste ou la barre' : 'Lowest contrast on the track or the bar'} : ${f(minC)}:1 ; ${fr ? 'seuil 3' : 'threshold 3'}.</p>`;
+  },
+  strings() {
+    const f = T.fr, e = T.en;
+    const rows = [
+      ['VoiceOver, alerte', f.voAlert('Agence', 94), e.voAlert('Agence', 94)],
+      ['VoiceOver, moyenne', f.voMain(45, 5), e.voMain(45, 5)],
+      ['VoiceOver, un compte', f.voOne('Secours', 9, true), e.voOne('Secours', 9, true)],
+      ['VoiceOver, sans chiffre', f.voNoFig('Gemini'), e.voNoFig('Gemini')],
+      ['Infobulle de l\'élément', f.tip(45, 5, { n: 'Agence', p: 94 }), e.tip(45, 5, { n: 'Agence', p: 94 })],
+      ['Réglages, légende', f.colorCap, e.colorCap],
+      ['Réglages, libellé', f.color, e.color], ['Bouton', f.other, e.other], ['Bouton', f.reset, e.reset], ['Note', f.isDefault, e.isDefault],
+      ['Avertissement de proximité', f.close('Principal'), e.close('Principal')],
+      ['Avertissement de contraste', f.contrast(f.light, '1,4'), e.contrast(e.light, '1.4')],
+      ['Option couleur libre', f.customName, e.customName], ['VoiceOver du groupe', f.voGroup('Asso'), e.voGroup('Asso')],
+      ...SLOTS.map((s, i) => ['Couleur ' + i, s[1], s[2]]),
+    ];
+    return '<thead><tr><th>Où</th><th>FR</th><th>EN</th></tr></thead><tbody>' + rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('') + '</tbody>';
+  },
+};
+
+// ---------- Calculs de couleur (mêmes formules que tests/test_design_tokens.py) ----------
+function lin(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+function rgb(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); }
+function lum(h) { const [r, g, b] = rgb(h).map(lin); return 0.2126 * r + 0.7152 * g + 0.0722 * b; }
+function contrast(a, b) { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); }
+function lab(h) {
+  const [r, g, b] = rgb(h).map(lin);
+  const X = (0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047, Y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b, Z = (0.0193339 * r + 0.1191920 * g + 0.9503041 * b) / 1.08883;
+  const f = v => v > 216 / 24389 ? Math.cbrt(v) : (24389 / 27 * v + 16) / 116;
+  return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))];
+}
+function ciede2000(h1, h2) {
+  const [L1, a1, b1] = lab(h1), [L2, a2, b2] = lab(h2), rad = Math.PI / 180;
+  const Cb = (Math.hypot(a1, b1) + Math.hypot(a2, b2)) / 2, G = 0.5 * (1 - Math.sqrt(Cb ** 7 / (Cb ** 7 + 25 ** 7)));
+  const a1p = (1 + G) * a1, a2p = (1 + G) * a2, C1 = Math.hypot(a1p, b1), C2 = Math.hypot(a2p, b2);
+  const h1p = C1 ? (Math.atan2(b1, a1p) / rad + 360) % 360 : 0, h2p = C2 ? (Math.atan2(b2, a2p) / rad + 360) % 360 : 0;
+  let dh = C1 * C2 ? h2p - h1p : 0; if (dh > 180) dh -= 360; else if (dh < -180) dh += 360;
+  const dL = L2 - L1, dC = C2 - C1, dH = 2 * Math.sqrt(C1 * C2) * Math.sin(dh * rad / 2);
+  const Lb = (L1 + L2) / 2, Cbp = (C1 + C2) / 2;
+  let hb = h1p + h2p; if (C1 * C2) hb = Math.abs(h1p - h2p) <= 180 ? hb / 2 : (hb < 360 ? (hb + 360) / 2 : (hb - 360) / 2);
+  const T2 = 1 - 0.17 * Math.cos((hb - 30) * rad) + 0.24 * Math.cos(2 * hb * rad) + 0.32 * Math.cos((3 * hb + 6) * rad) - 0.2 * Math.cos((4 * hb - 63) * rad);
+  const dth = 30 * Math.exp(-(((hb - 275) / 25) ** 2)), Rc = 2 * Math.sqrt(Cbp ** 7 / (Cbp ** 7 + 25 ** 7));
+  const Sl = 1 + 0.015 * (Lb - 50) ** 2 / Math.sqrt(20 + (Lb - 50) ** 2), Sc = 1 + 0.045 * Cbp, Sh = 1 + 0.015 * Cbp * T2, Rt = -Math.sin(2 * dth * rad) * Rc;
+  return Math.sqrt((dL / Sl) ** 2 + (dC / Sc) ** 2 + (dH / Sh) ** 2 + Rt * (dC / Sc) * (dH / Sh));
+}
+
+function render() {
+  const k = (location.hash || '#fr-light').slice(1);
+  const [lang, theme] = /^(fr|en)-(light|dark)$/.test(k) ? k.split('-') : ['fr', 'light'];
+  document.body.className = theme;
+  document.documentElement.lang = lang;
+  const t = T[lang];
+  JOBS.length = 0; jobId = 0;
+  document.querySelectorAll('[data-render]').forEach(el => { el.innerHTML = R[el.dataset.render](t); });
+  JOBS.forEach(j => {
+    const cv = document.querySelector(`canvas[data-item="${j.id}"]`);
+    if (!cv) return;
+    const C = cssColors(cv.closest('.mb'));
+    const m = drawItem(cv, j.v, SETS[j.set], j.s, C);
+    if (j.zoom) { cv.style.width = (parseFloat(cv.style.width) * j.zoom) + 'px'; cv.style.height = (18 * j.zoom) + 'px'; cv.classList.add('px'); }
+    const it = cv.closest('.it');
+    if (it && m) { const v = voText(t, j.set); it.setAttribute('role', 'img'); it.setAttribute('aria-label', v.text); it.title = t.tip(v.avg, m.N, v.al[0] ? { n: ACC[v.al[0].k].n, p: v.al[0].p } : null); }
+  });
+  document.querySelectorAll('.switch a').forEach(a => a.setAttribute('aria-current', String(a.dataset.k === lang + '-' + theme)));
+}
+addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
