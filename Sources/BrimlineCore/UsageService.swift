@@ -1,18 +1,20 @@
 import Foundation
 
-/// Reads the usage of every account: the sign-in from the Keychain, then the provider's answer.
+/// Reads the usage of every account: each account goes to the reader of its provider.
 ///
 /// The same code serves the app (every few minutes) and `brimline status --live`.
-/// Rules: an expired token is never sent and never renewed; a refused token asks to sign in
-/// again; a failure keeps the last known numbers and waits longer before the next attempt.
+/// The readers only report what they saw. The rules live here: the last known numbers are kept
+/// on a failure, and an `unavailable` account waits longer before each new attempt.
 public struct UsageService: Sendable {
-    public var credentials: any CredentialReading
-    public var http: any HTTPClient
+    public var readers: [any ProviderReader]
 
-    public init(credentials: any CredentialReading = SecurityToolCredentialReader(),
-                http: any HTTPClient = URLSessionHTTPClient()) {
-        self.credentials = credentials
-        self.http = http
+    public init(readers: [any ProviderReader] = Providers.all) {
+        self.readers = readers
+    }
+
+    /// The Claude reader with its Keychain and network replaced (tests).
+    public init(credentials: any CredentialReading, http: any HTTPClient = URLSessionHTTPClient()) {
+        self.init(readers: Providers.make(credentials: credentials, http: http))
     }
 
     /// Growing delay after consecutive failures: 2, 4, 8, 16, 32, then 60 minutes.
@@ -50,53 +52,32 @@ public struct UsageService: Sendable {
         }
         usage.checkedAt = now
 
-        let credential: ClaudeCredential
-        do throws(CredentialError) {
-            credential = try await Self.read(credentials, service: account.keychainService)
-        } catch {
-            switch error {
-            case .notFound:
-                return failed(usage, status: .signedOut, detail: "no Keychain item", now: now, backoff: false)
-            case .unreadable:
-                return failed(usage, status: .signedOut, detail: "unreadable Keychain item", now: now, backoff: false)
-            case .toolFailed(let code):
-                return failed(usage, status: .unavailable, detail: "security exited with \(code)", now: now, backoff: true)
-            }
+        guard let reader = readers.first(where: { $0.provider == account.provider }) else {
+            return failed(usage, status: .unavailable, detail: "no reader for \(account.provider.rawValue)",
+                          now: now, backoff: false)
         }
 
-        if credential.isExpired(at: now) {
+        switch await reader.read(account: account, now: now) {
+        case .limits(let limits, _):
+            usage.limits = limits
+            usage.status = .ok
+            usage.fetchedAt = now
+            usage.failureCount = 0
+            usage.retryAfter = nil
+            usage.detail = nil
+            return usage
+        case .expired:
             return failed(usage, status: .expired, detail: nil, now: now, backoff: false)
-        }
-
-        do {
-            let (data, response) = try await http.send(ClaudeUsageAPI.request(accessToken: credential.accessToken))
-            switch response.statusCode {
-            case 200:
-                do {
-                    usage.limits = try UsageParser.parse(data)
-                } catch {
-                    return failed(usage, status: .unavailable, detail: "unknown answer", now: now, backoff: true)
-                }
-                usage.status = .ok
-                usage.fetchedAt = now
-                usage.failureCount = 0
-                usage.retryAfter = nil
-                usage.detail = nil
-                return usage
-            case 401:
-                return failed(usage, status: .reconnect, detail: "HTTP 401", now: now, backoff: false)
-            default:
-                var result = failed(usage, status: .unavailable, detail: "HTTP \(response.statusCode)", now: now, backoff: true)
-                if response.statusCode == 429,
-                   let header = response.value(forHTTPHeaderField: "Retry-After"),
-                   let seconds = TimeInterval(header.trimmingCharacters(in: .whitespaces)), seconds > 0 {
-                    let candidate = now.addingTimeInterval(min(seconds, 3600))
-                    if candidate > (result.retryAfter ?? now) { result.retryAfter = candidate }
-                }
-                return result
+        case .notReadable:
+            // No provider reports this yet; the status for it comes with the next lot.
+            return failed(usage, status: .unavailable, detail: "not readable", now: now, backoff: false)
+        case .failure(let status, let detail, let wait):
+            var result = failed(usage, status: status, detail: detail, now: now, backoff: status == .unavailable)
+            if let wait {
+                let candidate = now.addingTimeInterval(wait)
+                if candidate > (result.retryAfter ?? now) { result.retryAfter = candidate }
             }
-        } catch {
-            return failed(usage, status: .unavailable, detail: "network", now: now, backoff: true)
+            return result
         }
     }
 
@@ -113,19 +94,5 @@ public struct UsageService: Sendable {
             u.retryAfter = nil
         }
         return u
-    }
-
-    /// Runs the blocking Keychain read off the caller's thread.
-    private static func read(_ reader: any CredentialReading, service: String) async throws(CredentialError) -> ClaudeCredential {
-        let result: Result<ClaudeCredential, CredentialError> = await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .utility).async {
-                do throws(CredentialError) {
-                    continuation.resume(returning: .success(try reader.readCredential(service: service)))
-                } catch {
-                    continuation.resume(returning: .failure(error))
-                }
-            }
-        }
-        return try result.get()
     }
 }
