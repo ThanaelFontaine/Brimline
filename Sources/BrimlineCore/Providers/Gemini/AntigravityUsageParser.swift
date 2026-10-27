@@ -2,52 +2,48 @@ import Foundation
 
 /// Turns the text `agy --print /usage` prints into Brimline limits.
 ///
-/// **Provisional.** Google documents the command (`/usage`, alias `/quota`: "a breakdown of your usage
-/// limits and remaining requests/tokens for each supported model", and in headless mode "a text
-/// report", https://antigravity.google/docs/cli/commands/usage/ and
-/// https://antigravity.google/docs/cli/headless/) but not the format of that text. The shape below is
-/// a guess that the real try (R4 of QUOTA-35) replaces with the real one:
+/// Google documents the command (`/usage`, alias `/quota`, https://antigravity.google/docs/cli/commands/usage/
+/// and https://antigravity.google/docs/cli/headless/) but not the format of its text. This is the real one,
+/// seen on Antigravity CLI 1.4.8 on 27/10/2026 (values and dates replaced here):
 ///
-///     Model quotas
-///     Gemini 3.1 Pro: 42% used (resets in 3h 12m)
-///     Gemini 3.5 Flash: 7% remaining
+///     Gemini Models<TAB>Weekly Limit Remaining<TAB>100%<TAB>2026-11-03T18:10:18Z
+///     Gemini Models<TAB>Five Hour Limit Remaining<TAB>100%<TAB>2026-10-27T23:10:18Z
+///     Claude and GPT models<TAB>Weekly Limit Remaining<TAB>100%<TAB>2026-11-03T18:10:18Z
+///     Gemini 4 Argon<TAB>Gemini 4 Argon Weekly Limit<TAB>100%<TAB>2026-11-03T18:10:18Z
 ///
-/// A first line, then one line per model: its name, `: `, a percentage followed by `used` or
-/// `remaining` (`left` is accepted too), and optionally `(resets in <duration>)` with days, hours and
-/// minutes (`1d 2h 5m`). Empty lines are ignored.
+/// No header line. One line per limit, four columns separated by tabs: the group (a family of models, or one
+/// model), the name of the limit, the percentage **remaining** (100 % is nothing used: Brimline keeps the share
+/// used, 100 minus it) and the reset time in ISO 8601. The name of the limit says its window: `Five Hour`
+/// (5 hours) or `Weekly` (a week). A limit is kept as the limit of the group, in the window of its name.
 ///
-/// The text is data, never an instruction: it is read strictly. The first line must be exactly the
-/// expected one (if `/usage` were no longer recognized, the line would have gone to the model: any
-/// other output is refused); every other line must be one model line, with a name that passes
-/// `ProviderText.label`; a control character, an invalid UTF-8 sequence, more than 50 lines, no model
-/// at all, a percentage over 100, a model twice or a line of any other form makes the whole text
+/// The text is data, never an instruction: it is read strictly. Every line must have exactly this form (a
+/// percentage from 0 to 100 followed by `%`, a valid ISO 8601 date, a group and a name that pass
+/// `ProviderText.label`, a window Brimline knows); one line that does not, a control character, an invalid
+/// UTF-8 sequence, more than 50 lines, no line at all, or a group and window given twice makes the whole text
 /// `unrecognized`, never a number. Nothing else of the text is kept.
 public enum AntigravityUsageParser {
     public enum ParseError: Error, Equatable {
         case unrecognized
     }
 
-    /// The first line of the report. PROVISIONAL: replaced by the real one at R4.
-    public static let expectedFirstLine = "Model quotas"
-
     static let maxLines = 50
+    static let fiveHours = 18_000
+    static let week = 604_800
 
-    /// One limit per model. A limit with no `resetsAt` is one whose text gave no reset time.
-    public static func parse(_ data: Data, now: Date) throws(ParseError) -> [UsageLimit] {
+    /// One limit per group and window, in the order of the text.
+    public static func parse(_ data: Data) throws(ParseError) -> [UsageLimit] {
         guard let text = String(data: data, encoding: .utf8),
               !text.unicodeScalars.contains(where: isForbidden) else { throw .unrecognized }
         let lines = text.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
             .split(separator: "\n", omittingEmptySubsequences: true)
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
-        guard lines.count >= 2, lines.count <= maxLines, lines[0] == expectedFirstLine else { throw .unrecognized }
+            .filter { !$0.allSatisfy { $0 == " " || $0 == "\t" } }
+        guard !lines.isEmpty, lines.count <= maxLines else { throw .unrecognized }
 
         var limits: [UsageLimit] = []
         var seen = Set<String>()
-        for line in lines.dropFirst() {
-            guard let limit = modelLine(line, now: now), let model = limit.model, seen.insert(model).inserted else {
-                throw .unrecognized
-            }
+        for line in lines {
+            guard let limit = limitLine(line), let model = limit.model, let window = limit.windowSeconds,
+                  seen.insert("\(model)\t\(window)").inserted else { throw .unrecognized }
             limits.append(limit)
         }
         return limits
@@ -60,47 +56,36 @@ public enum AntigravityUsageParser {
         return scalar.value < 0x20 || scalar.value == 0x7F || (0x80...0x9F).contains(scalar.value)
     }
 
-    private static func modelLine(_ line: String, now: Date) -> UsageLimit? {
-        guard let colon = line.range(of: ": "),
-              let name = ProviderText.label(String(line[..<colon.lowerBound])) else { return nil }
-        var rest = Substring(line[colon.upperBound...])
-
-        guard let percentEnd = rest.firstIndex(of: "%"),
-              let value = Double(rest[..<percentEnd]), value.isFinite, value >= 0, value <= 100 else { return nil }
-        rest = rest[rest.index(after: percentEnd)...]
-
-        let used: Bool
-        if let after = strip(" used", from: rest) { used = true; rest = after }
-        else if let after = strip(" remaining", from: rest) { used = false; rest = after }
-        else if let after = strip(" left", from: rest) { used = false; rest = after }
-        else { return nil }
-
-        var resetsAt: Date?
-        if !rest.isEmpty {
-            let opening = " (resets in "
-            guard rest.hasPrefix(opening), rest.hasSuffix(")"),
-                  let seconds = duration(rest.dropFirst(opening.count).dropLast()) else { return nil }
-            resetsAt = now.addingTimeInterval(seconds)
-        }
-        return UsageLimit(kind: .model, model: name, percent: used ? value : 100 - value, resetsAt: resetsAt,
-                          windowSeconds: nil, label: name)
+    private static func limitLine(_ line: Substring) -> UsageLimit? {
+        let columns = line.split(separator: "\t", omittingEmptySubsequences: false)
+        guard columns.count == 4,
+              let group = ProviderText.label(String(columns[0])),
+              let name = ProviderText.label(String(columns[1])),
+              let window = window(of: name),
+              let remaining = percent(columns[2].trimmingCharacters(in: .whitespaces)),
+              let resetsAt = ISODate.parse(columns[3].trimmingCharacters(in: .whitespaces)) else { return nil }
+        // The text gives what is left: the card shows what is used.
+        return UsageLimit(kind: .model, model: group, percent: 100 - remaining, resetsAt: resetsAt,
+                          windowSeconds: window)
     }
 
-    private static func strip(_ prefix: String, from text: Substring) -> Substring? {
-        text.hasPrefix(prefix) ? text.dropFirst(prefix.count) : nil
+    /// The window a limit name says: "Five Hour Limit Remaining", "Weekly Limit Remaining" or, for one
+    /// model, "<model> Weekly Limit". A name that says neither is not one Brimline knows.
+    private static func window(of name: String) -> Int? {
+        var rest = Substring(name)
+        for suffix in [" Limit Remaining", " Limit"] where rest.hasSuffix(suffix) {
+            rest = rest.dropLast(suffix.count)
+            break
+        }
+        if rest == "Five Hour" || rest.hasSuffix(" Five Hour") { return fiveHours }
+        if rest == "Weekly" || rest.hasSuffix(" Weekly") { return week }
+        return nil
     }
 
-    /// `1d 2h 5m`: days, hours, minutes, in that order, each at most once, at least one. In seconds.
-    private static func duration(_ text: Substring) -> TimeInterval? {
-        let units: [(Character, Double)] = [("d", 86_400), ("h", 3_600), ("m", 60)]
-        var total = 0.0
-        var next = 0
-        for part in text.split(separator: " ", omittingEmptySubsequences: false) {
-            guard let unit = part.last, let rank = units.firstIndex(where: { $0.0 == unit }), rank >= next,
-                  let count = Int(part.dropLast()), count >= 0, count < 1000 else { return nil }
-            total += Double(count) * units[rank].1
-            next = rank + 1
-        }
-        return next > 0 ? total : nil
+    /// `42%`, `7.5%`: from 0 to 100, the sign `%` right after the number.
+    private static func percent(_ text: String) -> Double? {
+        guard text.hasSuffix("%"), let match = text.dropLast().wholeMatch(of: /\d{1,3}(\.\d{1,4})?/),
+              let value = Double(match.0), value >= 0, value <= 100 else { return nil }
+        return value
     }
 }

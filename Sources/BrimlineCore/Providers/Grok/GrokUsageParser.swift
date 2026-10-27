@@ -5,11 +5,17 @@ import Foundation
 /// `config.creditUsagePercent` is the share of the included credits used in the current period
 /// (0 to 100) and `config.currentPeriod` says which period: its `type` (`USAGE_PERIOD_TYPE_WEEKLY` or
 /// `..._MONTHLY`), its `start` and its `end` (RFC 3339). It is one `period` limit, whose length is
-/// `end - start` and whose reset time is `end`. The percentage is absent early in a period (the
-/// server leaves out what is zero): that is "no number yet", never a 0 %. The older answer
+/// `end - start` and whose reset time is `end`. The percentage is absent when the server leaves out
+/// what is zero: with an allowance (`monthlyLimit`) that is "no number yet", never a 0 %; with no allowance either (a free
+/// account), it is the "no credit limit" sentence. The older answer
 /// (`monthlyLimit` and `used` in cents, `billingPeriodStart` and `billingPeriodEnd`) is read when the
 /// new field is not there. Every other key (on-demand credits, prepaid balance, history, tier, usage
 /// per product) is ignored.
+///
+/// An answer with no percentage and no allowance (a free account: no `creditUsagePercent`, no `monthlyLimit`) says
+/// that xAI gives no credit limit for the account: `hasCap` is false and the reader says so, with no figure
+/// promised. An allowance with no use yet (`monthlyLimit` above zero, no `used`) is a cap whose number is not
+/// there yet: `hasCap` is true.
 public enum GrokUsageParser {
     public enum ParseError: Error, Equatable {
         case notJSON
@@ -22,6 +28,8 @@ public enum GrokUsageParser {
     public struct Reading: Equatable, Sendable {
         public var limits: [UsageLimit]
         public var sharedPool: Bool
+        /// Whether the answer gives an allowance of credits (`monthlyLimit` above zero).
+        public var hasCap: Bool
     }
 
     static let weekSeconds = 604_800
@@ -31,26 +39,27 @@ public enum GrokUsageParser {
               let root = object as? [String: Any] else { throw .notJSON }
         guard let rawConfig = root["config"], rawConfig is [String: Any] || rawConfig is NSNull else { throw .unrecognized }
         // `config: null` is an answer the CLI accepts: an account with no credits configuration.
-        guard let config = rawConfig as? [String: Any] else { return Reading(limits: [], sharedPool: false) }
+        guard let config = rawConfig as? [String: Any] else { return Reading(limits: [], sharedPool: false, hasCap: false) }
 
         let shared = isTrue(config["isUnifiedBillingUser"])
+        let allowance = cents(config["monthlyLimit"]) ?? 0
         var percent = UsageParser.number(config["creditUsagePercent"])
         let period = config["currentPeriod"] as? [String: Any]
         var start = UsageParser.date(period?["start"])
         var end = UsageParser.date(period?["end"])
         var type = period?["type"] as? String
 
-        if percent == nil, let allowance = cents(config["monthlyLimit"]), allowance > 0, let used = cents(config["used"]) {
+        if percent == nil, allowance > 0, let used = cents(config["used"]) {
             percent = used / allowance * 100
             start = start ?? UsageParser.date(config["billingPeriodStart"])
             end = end ?? UsageParser.date(config["billingPeriodEnd"])
             type = type ?? "USAGE_PERIOD_TYPE_MONTHLY"
         }
-        guard let percent, percent.isFinite else { return Reading(limits: [], sharedPool: shared) }
+        guard let percent, percent.isFinite else { return Reading(limits: [], sharedPool: shared, hasCap: allowance > 0) }
 
         return Reading(limits: [UsageLimit(kind: .period, percent: percent, resetsAt: end,
                                            windowSeconds: windowSeconds(start: start, end: end, type: type))],
-                       sharedPool: shared)
+                       sharedPool: shared, hasCap: allowance > 0)
     }
 
     private static func isTrue(_ value: Any?) -> Bool {

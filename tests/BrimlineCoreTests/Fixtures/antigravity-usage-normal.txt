@@ -1,3 +1,5 @@
-Model quotas
-Gemini 3.1 Pro: 42% used (resets in 3h 12m)
-Gemini 3.5 Flash: 7% used (resets in 1d 2h)
+Gemini Models	Weekly Limit Remaining	64%	2026-11-03T18:10:18Z
+Gemini Models	Five Hour Limit Remaining	90%	2026-10-27T23:10:18Z
+Claude and GPT models	Weekly Limit Remaining	100%	2026-11-03T18:10:18Z
+Claude and GPT models	Five Hour Limit Remaining	100%	2026-10-27T23:10:18Z
+Gemini 4 Argon	Gemini 4 Argon Weekly Limit	75%	2026-11-03T18:10:18Z

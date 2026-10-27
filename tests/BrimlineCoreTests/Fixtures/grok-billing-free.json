@@ -1,0 +1,23 @@
+{
+  "_fixture_source": "Skeleton of a real answer: GET <cli proxy>/v1/billing?format=credits, Grok free account, seen with the Grok CLI 1.0.70 on 27/10/2026 (Mac mini). Keys as they were, values invented (dates moved). No creditUsagePercent and no monthlyLimit: xAI gives no credit limit for this account. Replaces grok-billing-fresh.json, which was written from the public code of the CLI.",
+  "config": {
+    "billingPeriodEnd": "2026-11-04T00:00:00Z",
+    "billingPeriodStart": "2026-10-28T00:00:00Z",
+    "currentPeriod": {
+      "end": "2026-11-04T00:00:00Z",
+      "start": "2026-10-28T00:00:00Z",
+      "type": "USAGE_PERIOD_TYPE_WEEKLY"
+    },
+    "isUnifiedBillingUser": true,
+    "onDemandCap": {
+      "val": 0
+    },
+    "onDemandUsed": {
+      "val": 0
+    },
+    "prepaidBalance": {
+      "val": 0
+    },
+    "topUpMethod": "TOP_UP_METHOD_SAVED_PAYMENT_METHOD"
+  }
+}

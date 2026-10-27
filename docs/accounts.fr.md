@@ -70,7 +70,7 @@ Cursor n'a pas de compte à relier : Brimline utilise la connexion que l'app Cur
 
 ## Gemini, par Antigravity
 
-Gemini se lit par l'outil de Google, Antigravity CLI (`agy`), que vous installez et dans lequel vous vous connectez vous-même : Brimline ne vous connecte jamais. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`). Quand `agy` est dans `~/.local/bin/agy`, Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; l'outil de Google peut renouveler lui-même sa connexion) et montre l'usage de chaque modèle. Sans lui, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). **Gemini n'est pas encore lu et vérifié :** tant qu'un vrai Antigravity n'a pas été essayé, Brimline ne le lance pas. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
+Gemini se lit par l'outil de Google, Antigravity CLI (`agy`), que vous installez et dans lequel vous vous connectez vous-même : Brimline ne vous connecte jamais. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`). Quand `agy` est dans `~/.local/bin/agy`, Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; l'outil de Google peut renouveler lui-même sa connexion) et montre, par groupe de modèles, la fenêtre de 5 heures et la semaine. Sans lui, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). **Gemini n'est pas encore lu et vérifié :** seule la build vérifiée le 27/10/2026 (Antigravity CLI 1.4.8) est lancée ; toute autre ne l'est pas. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
 
 ## Grok, par le CLI Grok
 
@@ -80,7 +80,7 @@ Brimline lit les limites de Grok par le CLI Grok, l'outil officiel : il n'y a ri
 2. Allumez Grok dans **Réglages, Comptes** (ou `brimline providers enable grok`) : il démarre coupé.
 3. Brimline montre une carte quand le dossier `~/.grok` existe. Sans le CLI Grok, pas de carte : xAI ne publie les limites de Grok que pour le CLI, et les autres sont dans les réglages de votre compte Grok.
 
-Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement la connexion d'un compte xAI : le jeton de session et l'identifiant, en mémoire, le temps d'une requête vers `https://cli-chat-proxy.grok.com`. Il ne renouvelle jamais la connexion : si le CLI Grok est resté fermé longtemps, la carte dit « Ouvrez le CLI Grok pour rafraîchir la connexion. » Un CLI connecté par une clé d'API n'a pas de limite d'abonnement à montrer. En début de période, la carte dit « Pas encore de chiffre pour cette période. » Détails dans [providers](providers.md) (en anglais).
+Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement la connexion d'un compte xAI : le jeton de session et l'identifiant, en mémoire, le temps d'une requête vers `https://cli-chat-proxy.grok.com`. Il ne renouvelle jamais la connexion : si le CLI Grok est resté fermé longtemps, la carte dit « Ouvrez le CLI Grok pour rafraîchir la connexion. » Un CLI connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Un compte gratuit, dont la réponse ne donne aucune limite de crédits, dit « xAI ne renvoie aucune limite de crédits pour ce compte. » ; un plafond sans usage encore dit « Pas encore de chiffre pour cette période. » Détails dans [providers](providers.md) (en anglais).
 
 ## Situations courantes
 

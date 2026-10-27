@@ -11,8 +11,8 @@ import Foundation
 /// - only when Gemini is on (the service checks consent before any reader runs);
 /// - only the exact path `~/.local/bin/agy` (`AntigravityBinary`: no `PATH`, no link, a file of the
 ///   user's, not writable by others);
-/// - only a build listed in `AntigravityTrust` (SHA-256 of the binary and the text of `--version`): the
-///   list is empty until the real try, so for now Gemini says `format_changed` and launches nothing;
+/// - only a build listed in `AntigravityTrust` (SHA-256 of the binary and the text of `--version`): any
+///   other build says `format_changed` and launches nothing;
 /// - fixed arguments, a new empty working folder, a reduced environment, 20 seconds, 64 KiB
 ///   (`ProcessAntigravityRunner`), one run at a time and one read every 15 minutes at
 ///   most (`minimumReadInterval`, applied by the service);
@@ -63,7 +63,7 @@ public struct GeminiReader: ProviderReader {
         let binary = AntigravityBinary.url(home: home)
 
         guard AntigravityBinary.isPresent(at: binary) else { return .notReadable(reason: .consumerPlan) }
-        // Nothing is verified yet: nothing is launched, and nothing is hashed.
+        // No verified build: nothing is launched, and nothing is hashed.
         guard !trust.isEmpty else { return Self.updated("no verified Antigravity build") }
 
         let digest: String
@@ -98,11 +98,7 @@ public struct GeminiReader: ProviderReader {
             return .expired
         }
         do {
-            let limits = try AntigravityUsageParser.parse(usage.stdout, now: now)
-            // Google may give no reset time: the card then says so, it never invents one.
-            let note: AccountNote? = limits.contains { $0.resetsAt == nil } ? .resetNotPublished : nil
-            if let note { return .annotated(limits, shape: "", note: note) }
-            return .limits(limits, shape: "")
+            return .limits(try AntigravityUsageParser.parse(usage.stdout), shape: "")
         } catch {
             return Self.updated("unknown report")
         }

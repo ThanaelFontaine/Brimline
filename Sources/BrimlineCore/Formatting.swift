@@ -246,6 +246,9 @@ public struct Strings: Sendable {
     public var noFigureYetMessage: String {
         t("No number yet for this period.", "Pas encore de chiffre pour cette période.")
     }
+    public var noCreditLimitMessage: String {
+        t("xAI returns no credit limit for this account.", "xAI ne renvoie aucune limite de crédits pour ce compte.")
+    }
     /// Under a Grok account's title when its credits are a pool shared by the Grok products.
     public var sharedPoolSubtitle: String { t("Credits shared across Grok products", "Crédits partagés entre les produits Grok") }
     public var noLimitMessage: String {
@@ -299,6 +302,7 @@ public struct Strings: Sendable {
     public func noteMessage(_ note: AccountNote) -> String {
         switch note {
         case .noFigureYet: return noFigureYetMessage
+        case .noCreditLimit: return noCreditLimitMessage
         case .sharedPool: return sharedPoolMessage
         case .resetNotPublished: return resetNotPublishedMessage
         case .noLimit: return noLimitMessage

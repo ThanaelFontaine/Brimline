@@ -201,6 +201,9 @@ struct ChatGPTTests {
 
         let free = try ChatGPTUsageParser.parse(try fixture("chatgpt-usage-free"), now: now)
         #expect(free == [UsageLimit(kind: .period, percent: 60, resetsAt: now.addingTimeInterval(1_000_000), windowSeconds: 2_592_000)])
+        // The real answer carries an address and identifiers (invented in the fixture): none of them is kept.
+        let kept = String(describing: free)
+        #expect(!kept.contains("example.invalid") && !kept.contains("fixture"))
     }
 
     @Test("Missing fields: a window with no percentage is left out, the delay stands in for a missing date")

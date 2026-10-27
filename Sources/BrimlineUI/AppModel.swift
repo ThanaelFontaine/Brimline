@@ -175,29 +175,16 @@ public final class AppModel {
     /// The name of an account without its label: the address for Claude, the provider and its plan for the others
     /// ("ChatGPT Plus"); a provider's address is never shown (the readers do not keep it).
     public func identity(for account: Account) -> String {
-        if account.provider == .claude { return account.email ?? account.folderName }
-        return providerAndPlan(account)
-    }
-
-    private func providerAndPlan(_ account: Account) -> String {
-        [account.provider.displayName, account.seatTier?.capitalized].compactMap { $0 }.joined(separator: " ")
+        AccountNames.identity(for: account)
     }
 
     public func title(for account: Account) -> String {
-        settings.label(for: account.id) ?? identity(for: account)
+        AccountNames.title(for: account, settings: settings)
     }
 
     public func subtitle(for account: Account) -> String? {
-        if account.provider == .claude {
-            if settings.label(for: account.id) != nil, let email = account.email { return email }
-            let parts = [account.organization, account.seatTier?.capitalized].compactMap { $0 }
-            return parts.isEmpty ? nil : parts.joined(separator: " · ")
-        }
-        // Another provider: under a custom label the provider and plan come back; with several accounts of the
-        // provider, the place of the connection tells them apart.
-        if settings.label(for: account.id) != nil { return providerAndPlan(account) }
         let siblings = allUsages.filter { $0.account.provider == account.provider }.count
-        return siblings > 1 ? displayPath(account.source) : nil
+        return AccountNames.subtitle(for: account, settings: settings, siblings: siblings, home: home)
     }
 
     /// Opens or closes the rest of an account's "not readable" sentence.
@@ -374,10 +361,5 @@ public final class AppModel {
     public func openSettings() { openSettingsAction?() }
 
     /// A folder as people write it: "~/.claude-work" for a folder of the home.
-    public func displayPath(_ path: String) -> String {
-        let h = KeychainServiceName.normalize(home.path)
-        if path == h { return "~" }
-        if path.hasPrefix(h + "/") { return "~" + path.dropFirst(h.count) }
-        return path
-    }
+    public func displayPath(_ path: String) -> String { AccountNames.displayPath(path, home: home) }
 }

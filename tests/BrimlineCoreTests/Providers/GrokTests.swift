@@ -168,16 +168,28 @@ struct GrokTests {
         #expect(Strings(.en).limitName(UsageLimit(kind: .period, percent: 1, resetsAt: nil)) == "Period")
     }
 
-    @Test("Early in a period the percentage is absent: no number yet, never a 0 %")
-    func noNumberYet() async throws {
+    @Test("No percentage and no allowance (a free account): xAI gives no credit limit, said as seen, never a 0 %")
+    func noCreditLimit() async throws {
         let home = try signedIn()
-        guard case .annotated(let limits, let shape, .noFigureYet) = await read(answering(try fixture("grok-billing-fresh")), in: home) else {
-            Issue.record("expected the no number yet note")
+        guard case .annotated(let limits, let shape, .noCreditLimit) = await read(answering(try fixture("grok-billing-free")), in: home) else {
+            Issue.record("expected the no credit limit note")
             return
         }
         #expect(limits.isEmpty && !shape.isEmpty)
         for body in [#"{"config":null}"#, #"{"config":{}}"#, #"{"config":{"creditUsagePercent":null}}"#,
-                     #"{"config":{"creditUsagePercent":"41"}}"#] {
+                     #"{"config":{"creditUsagePercent":"41"}}"#, #"{"config":{"monthlyLimit":{},"used":{"val":10}}}"#] {
+            guard case .annotated(let none, _, .noCreditLimit) = await read(answering(Data(body.utf8)), in: home) else {
+                Issue.record("expected the no credit limit note for \(body)")
+                return
+            }
+            #expect(none.isEmpty)
+        }
+    }
+
+    @Test("An allowance with no use yet is a cap whose number is not there yet: the old sentence stays for it")
+    func capWithoutUse() async throws {
+        let home = try signedIn()
+        for body in [#"{"config":{"monthlyLimit":{"val":2000}}}"#, #"{"config":{"monthlyLimit":{"val":2000},"used":null}}"#] {
             guard case .annotated(let none, _, .noFigureYet) = await read(answering(Data(body.utf8)), in: home) else {
                 Issue.record("expected the no number yet note for \(body)")
                 return
@@ -646,9 +658,9 @@ struct GrokTests {
             .refresh(account: card, settings: on, previous: shared, now: now)
         #expect(plain.note == nil)
 
-        let fresh = await UsageService(readers: [GrokReader(http: answering(try fixture("grok-billing-fresh")))])
+        let fresh = await UsageService(readers: [GrokReader(http: answering(try fixture("grok-billing-free")))])
             .refresh(account: card, settings: on, previous: shared, now: now)
-        #expect(fresh.note == .noFigureYet && fresh.status == .ok && fresh.limits.isEmpty && fresh.fetchedAt == now)
+        #expect(fresh.note == .noCreditLimit && fresh.status == .ok && fresh.limits.isEmpty && fresh.fetchedAt == now)
 
         let failed = await UsageService(readers: [GrokReader(http: answering(Data(), status: 500))])
             .refresh(account: card, settings: on, previous: shared, now: now.addingTimeInterval(600), force: true)
@@ -688,6 +700,8 @@ struct GrokTests {
             (usage(.reconnect), "xAI refused the Grok CLI's sign-in: run grok login again.",
              "xAI a refusé la connexion du CLI Grok : relancez grok login."),
             (usage(.ok, note: .noFigureYet), "No number yet for this period.", "Pas encore de chiffre pour cette période."),
+            (usage(.ok, note: .noCreditLimit), "xAI returns no credit limit for this account.",
+             "xAI ne renvoie aucune limite de crédits pour ce compte."),
             (usage(.ok, note: .sharedPool), "This limit is a pool shared by the Grok products.",
              "Cette limite est un pool partagé entre les produits Grok."),
         ]
@@ -711,13 +725,18 @@ struct GrokTests {
         let fresh = AccountUsage(account: Account(provider: .grok, source: "/opt/box/you/.grok-b/auth.json", email: nil,
                                                   organization: nil, seatTier: nil, keychainService: nil),
                                  status: .ok, fetchedAt: now, note: .noFigureYet)
-        let snapshot = UsageSnapshot(generatedAt: now, accounts: [unread, fresh])
+        let free = AccountUsage(account: Account(provider: .grok, source: "/opt/box/you/.grok-c/auth.json", email: nil,
+                                                 organization: nil, seatTier: nil, keychainService: nil),
+                                status: .ok, fetchedAt: now, note: .noCreditLimit)
+        let snapshot = UsageSnapshot(generatedAt: now, accounts: [unread, fresh, free])
         let report = AgentUsageReport(snapshot: snapshot, settings: on, source: "cache", now: now, home: home)
         #expect(report.accounts[0].message == Strings(.en).grokNoCLIMessage)
         #expect(report.accounts[0].reason == "no_cli")
         #expect(report.accounts[0].source == "~/.grok/auth.json")
         #expect(report.accounts[1].message == "No number yet for this period.")
         #expect(report.accounts[1].reason == nil)
+        #expect(report.accounts[2].message == "xAI returns no credit limit for this account.")
+        #expect(Ranking.rank([free], window: .any, model: nil, now: now).isEmpty)
         // An account with no number yet is never ranked: it would read as 100% room.
         let measured = AccountUsage(account: account, status: .ok,
                                     limits: [UsageLimit(kind: .period, percent: 40, resetsAt: now.addingTimeInterval(3600))],
@@ -730,6 +749,7 @@ struct GrokTests {
         #expect(line.contains("no_cli"))
         #expect(line.contains("xAI only publishes Grok limits"))
         #expect(line.contains("No number yet for this period."))
+        #expect(line.contains("xAI returns no credit limit for this account."))
         // The windows of Grok are `any` and `period`: a session is an error, not an empty answer.
         #expect(Provider.grok.windows == [.any, .period])
     }

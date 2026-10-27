@@ -158,6 +158,22 @@ struct CursorUsageTests {
 
     // MARK: The answers
 
+    @Test("The free plan, on the skeleton of a real answer (27/10/2026): month, Auto and API, the cap on demand left out")
+    func free() async throws {
+        let reading = try await read(wal: false, http: try .answering("free"))
+        guard case .limits(let got, _) = reading else {
+            Issue.record("expected limits, got \(reading)")
+            return
+        }
+        let resets = date("2026-11-21T08:30:00Z")
+        let window = 31 * 86_400
+        #expect(got == [
+            UsageLimit(kind: .monthly, percent: 7.25, resetsAt: resets, windowSeconds: window, label: "free"),
+            UsageLimit(kind: .model, model: "Auto", percent: 11, resetsAt: resets, windowSeconds: window),
+            UsageLimit(kind: .model, model: "API", percent: 4.5, resetsAt: resets, windowSeconds: window),
+        ])
+    }
+
     @Test("An individual plan: the total as a monthly limit with the plan name, Auto and API as model limits", arguments: [false, true])
     func pro(wal: Bool) async throws {
         let reading = try await read(wal: wal, http: try .answering("pro"))

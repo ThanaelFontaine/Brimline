@@ -1,19 +1,42 @@
 {
-  "_fixture_source": "Shape from openai/codex at commit aeb6b22c8bda5f4d4b6ab80ebd3ccdb3f47fb3ab: codex-rs/codex-backend-openapi-models/src/models (rate_limit_status_payload.rs and its window, details, additional and credit models) and codex-rs/backend-client/src/client/rate_limit_resets.rs (GET /wham/usage). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider chatgpt). Free plan: a 30 day window (observed by CodexBar, not documented by OpenAI).",
+  "_fixture_source": "Skeleton of a real answer: GET /wham/usage of ChatGPT through Codex, free plan, seen by `brimline status --live --shape --provider chatgpt` on 27/10/2026 (Mac mini, Codex of ChatGPT.app). Keys as they were, values invented (no identifier, address or token is real). The free plan has one 30 day window and no secondary window.",
+  "account_id": "acct-0000-fixture",
+  "additional_rate_limits": null,
+  "code_review_rate_limit": null,
+  "credits": {
+    "approx_cloud_messages": null,
+    "approx_local_messages": null,
+    "balance": null,
+    "has_credits": false,
+    "overage_limit_reached": false,
+    "unlimited": false
+  },
+  "email": "someone@example.invalid",
+  "model_usage": {},
   "plan_type": "free",
+  "promo": {
+    "campaign_id": "campaign-fixture",
+    "message": "Fixture promotion text."
+  },
   "rate_limit": {
     "allowed": true,
     "limit_reached": false,
     "primary_window": {
-      "used_percent": 60,
       "limit_window_seconds": 2592000,
       "reset_after_seconds": 1000000,
-      "reset_at": 1794095200
+      "reset_at": 1794095200,
+      "used_percent": 60
     },
     "secondary_window": null
   },
-  "additional_rate_limits": [],
-  "credits": null,
-  "spend_control": null,
-  "rate_limit_reached_type": null
+  "rate_limit_reached_type": null,
+  "rate_limit_reset_credits": {
+    "applicable_available_count": 0,
+    "available_count": 0
+  },
+  "spend_control": {
+    "individual_limit": null,
+    "reached": false
+  },
+  "user_id": "user-0000-fixture"
 }

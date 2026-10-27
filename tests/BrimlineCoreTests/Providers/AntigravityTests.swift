@@ -34,8 +34,8 @@ final class FakeAntigravity: AntigravityRunning, @unchecked Sendable {
     }
 }
 
-/// Gemini read through Antigravity, on data written from Google's documentation (provisional).
-@Suite("Gemini: read through Antigravity (provisional test data)")
+/// Gemini read through Antigravity, on the shape of the real text of `/usage` (Antigravity CLI 1.4.8, 27/10/2026).
+@Suite("Gemini: read through Antigravity")
 struct AntigravityTests {
     let now = date("2026-10-27T10:00:00Z")
     static let version = "agy 9.9.9"
@@ -79,12 +79,11 @@ struct AntigravityTests {
 
     // MARK: the default: nothing verified, nothing launched
 
-    @Test("The list of verified builds is empty: format_changed and not one launch, even with agy there")
+    @Test("A list with no entry: format_changed and not one launch, even with agy there")
     func emptyTrustLaunchesNothing() async throws {
         let (home, _, account) = try installed()
-        #expect(AntigravityTrust.verified.isEmpty)
         let fake = runner(usage: ok(try text("antigravity-usage-normal")))
-        let reader = GeminiReader(runner: fake, trust: .verified)
+        let reader = GeminiReader(runner: fake, trust: AntigravityTrust(entries: []))
         guard case .failure(.formatChanged, _, _) = await reader.read(account: account, now: now) else {
             Issue.record("expected format_changed")
             return
@@ -93,10 +92,13 @@ struct AntigravityTests {
         _ = home
     }
 
-    @Test("The registry's Gemini reader has the empty list: a real Brimline launches nothing yet")
-    func registryReaderIsEmpty() throws {
+    @Test("The registry's Gemini reader trusts the one build seen on a real account: 1.4.8, by its SHA-256")
+    func registryReaderTrustsOnlyTheVerifiedBuild() throws {
         let reader = try #require(Providers.all.compactMap { $0 as? GeminiReader }.first)
-        #expect(reader.trust.isEmpty)
+        #expect(reader.trust == .verified)
+        #expect(AntigravityTrust.verified.entries == [
+            .init(sha256: "09fcdd8554e03bed9b2ec936e454c7f115d5610610de09ed7d79fa2feae76940", versionOutput: "1.4.8"),
+        ])
         #expect(reader.allowedURLs.isEmpty)
         #expect(reader.minimumReadInterval == 15 * 60)
     }
@@ -144,7 +146,7 @@ struct AntigravityTests {
 
     // MARK: a verified build
 
-    @Test("A verified build: --version, then --print /usage --sandbox, and the models come out as limits")
+    @Test("A verified build: --version, then --print /usage --sandbox; each line is a limit, the percentage remaining becomes the share used")
     func reads() async throws {
         let (home, trust, account) = try installed()
         let fake = runner(usage: ok(try text("antigravity-usage-normal")))
@@ -158,34 +160,39 @@ struct AntigravityTests {
             .init(binary: agy, arguments: ["--version"], home: home.path("")),
             .init(binary: agy, arguments: ["--print", "/usage", "--sandbox"], home: home.path("")),
         ])
-        #expect(limits.map(\.model) == ["Gemini 3.1 Pro", "Gemini 3.5 Flash"])
-        #expect(limits.map(\.percent) == [42, 7])
-        #expect(limits.map(\.kind) == [.model, .model])
-        #expect(limits[0].resetsAt == now.addingTimeInterval(3 * 3600 + 12 * 60))
-        #expect(limits[1].resetsAt == now.addingTimeInterval(86_400 + 2 * 3600))
-        #expect(limits.allSatisfy { $0.label == $0.model && $0.windowSeconds == nil })
+        #expect(limits.map(\.model) == ["Gemini Models", "Gemini Models", "Claude and GPT models", "Claude and GPT models", "Gemini 4 Argon"])
+        #expect(limits.map(\.windowSeconds) == [604_800, 18_000, 604_800, 18_000, 604_800])
+        // The text says what remains (64 %, 90 %, 100 %, 100 %, 75 %): the card shows what is used.
+        #expect(limits.map(\.percent) == [36, 10, 0, 0, 25])
+        #expect(limits.map(\.kind) == Array(repeating: .model, count: 5))
+        #expect(limits[0].resetsAt == date("2026-11-03T18:10:18Z"))
+        #expect(limits[1].resetsAt == date("2026-10-27T23:10:18Z"))
+        #expect(limits.allSatisfy { $0.label == nil })
     }
 
-    @Test("\"remaining\" and \"left\" become the share used; no reset time gives the note, never an invented time")
-    func remainingAndNoReset() async throws {
+    @Test("The service keeps them, ok and with no note, and the card names each window and group")
+    func namesInTheCard() async throws {
         let (_, trust, account) = try installed()
-        let fake = runner(usage: ok(try text("antigravity-usage-remaining")))
-        let reader = GeminiReader(runner: fake, trust: trust)
-        guard case .annotated(let limits, _, .resetNotPublished) = await reader.read(account: account, now: now) else {
-            Issue.record("expected limits with the note")
-            return
-        }
-        #expect(limits.map(\.percent) == [42, 7])
-        #expect(limits[0].resetsAt != nil)
-        #expect(limits[1].resetsAt == nil)
-
-        let service = UsageService(readers: [reader])
+        let service = UsageService(readers: [GeminiReader(runner: runner(usage: ok(try text("antigravity-usage-normal"))), trust: trust)])
         let usage = await service.refresh(account: account, settings: on, previous: nil, now: now)
-        #expect(usage.status == .ok)
-        #expect(usage.note == .resetNotPublished)
-        #expect(Strings(.en).message(for: usage) == "Reset time not published by Google")
-        #expect(Strings(.fr).message(for: usage) == "Remise à zéro non publiée par Google")
-        #expect(Strings(.en).limitName(limits[0], provider: .gemini) == "Gemini 3.1 Pro")
+        #expect(usage.status == .ok && usage.note == nil)
+        #expect(usage.limits.count == 5)
+        let en = Strings(.en), fr = Strings(.fr)
+        #expect(usage.limits.map { en.limitName($0, provider: .gemini) } == [
+            "Week · Gemini Models", "5 h · Gemini Models", "Week · Claude and GPT models", "5 h · Claude and GPT models",
+            "Week · Gemini 4 Argon",
+        ])
+        #expect(fr.limitName(usage.limits[0], provider: .gemini) == "Semaine · Gemini Models")
+    }
+
+    @Test("A model's own limit (Gemini 4 Argon Weekly Limit) is the limit of that model: an agent can ask for it by name")
+    func ownLimitOfAModel() async throws {
+        let (_, trust, account) = try installed()
+        let service = UsageService(readers: [GeminiReader(runner: runner(usage: ok(try text("antigravity-usage-normal"))), trust: trust)])
+        let usage = await service.refresh(account: account, settings: on, previous: nil, now: now)
+        let best = try #require(Ranking.rank([usage], window: .any, model: "gemini 4 argon", now: now).first)
+        #expect(best.headroom == 75)
+        #expect(best.bindingLimit?.model == "Gemini 4 Argon")
     }
 
     // MARK: the guards of the launch
@@ -263,17 +270,21 @@ struct AntigravityTests {
 
     @Test("A report that is not the expected one is format_changed, never a number")
     func unexpectedReports() async throws {
+        let line = "Gemini Models\tFive Hour Limit Remaining\t42%\t2026-10-27T15:00:00Z"
         let cases = [
             try text("antigravity-usage-hostile"),
+            try text("antigravity-usage-model-line"),
+            try text("antigravity-usage-three-columns"),
+            try text("antigravity-usage-out-of-bounds"),
+            try text("antigravity-usage-empty"),
             "",
             "   \n\n",
-            "Model quotas\n",
-            "I am sorry, I cannot run /usage.\nGemini 3.1 Pro: 42% used\n",
-            "Model quotas\nGemini 3.1 Pro: 142% used\n",
-            "Model quotas\nGemini 3.1 Pro: 42% used\nGemini 3.1 Pro: 43% used\n",
-            "Model quotas\nGemini 3.1 Pro: 42% used \u{1B}[31m\n",
-            "Model quotas\nGemini 3.1 Pro: 42% used (resets tomorrow)\n",
-            "Model quotas\n" + (0..<60).map { "Model \($0): 1% used" }.joined(separator: "\n"),
+            "I am sorry, I cannot run /usage.\n" + line + "\n",
+            "Model quotas\n" + line + "\n",
+            "Gemini 3.1 Pro: 42% used\n",
+            line + "\n" + line + "\n",
+            line + " \u{1B}[31m\n",
+            (0..<60).map { "Model \($0)\tFive Hour Limit Remaining\t1%\t2026-10-27T15:00:00Z" }.joined(separator: "\n"),
         ]
         let (_, trust, account) = try installed()
         for report in cases {
@@ -323,7 +334,7 @@ struct AntigravityTests {
         let (_, trust, account) = try installed()
         for answer in [ok("", stderr: "error: authentication required", code: 1),
                        ok(try text("antigravity-usage-normal"), stderr: "Authentication required"),
-                       ok("Model quotas\n", code: 3)] {
+                       ok("", code: 3)] {
             let reader = GeminiReader(runner: runner(usage: answer), trust: trust)
             guard case .expired = await reader.read(account: account, now: now) else {
                 Issue.record("expected expired")
@@ -404,7 +415,7 @@ struct AntigravityTests {
                                    settings: BrimlineSettings()).isEmpty)
     }
 
-    @Test("Nothing of the report but the model names, the percentages and the reset times is kept")
+    @Test("Nothing of the report but the group names, the windows, the percentages and the reset times is kept")
     func nothingElseKept() async throws {
         let (_, trust, account) = try installed()
         let service = UsageService(readers: [GeminiReader(runner: runner(usage: ok(try text("antigravity-usage-normal"))), trust: trust)])
@@ -412,9 +423,9 @@ struct AntigravityTests {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         let json = String(decoding: try encoder.encode(usage), as: UTF8.self)
-        #expect(!json.contains("Model quotas"))
+        #expect(!json.contains("Limit Remaining") && !json.contains("Weekly Limit"))
         #expect(usage.responseShape == nil)
-        #expect(usage.limits.count == 2)
+        #expect(usage.limits.count == 5)
     }
 
     @Test("No long dash in the new sentences")

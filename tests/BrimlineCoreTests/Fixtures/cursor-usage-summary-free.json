@@ -1,0 +1,33 @@
+{
+  "_fixture_source": "Skeleton of a real answer: GET https://cursor.com/api/usage-summary, Cursor Free plan, seen by `brimline status --live --shape --provider cursor` on 27/10/2026 (Mac mini). Keys as they were, values invented (the real answer was at 0 % everywhere). Individual free plan: the three percentages, no cap on demand (`limit` and `remaining` null).",
+  "autoModelSelectedDisplayMessage": "You are using Auto.",
+  "billingCycleEnd": "2026-11-21T08:30:00.000Z",
+  "billingCycleStart": "2026-10-21T08:30:00.000Z",
+  "individualUsage": {
+    "onDemand": {
+      "enabled": false,
+      "limit": null,
+      "remaining": null,
+      "used": 0
+    },
+    "plan": {
+      "apiPercentUsed": 4.5,
+      "autoPercentUsed": 11,
+      "breakdown": {
+        "bonus": 0,
+        "included": 2000,
+        "total": 145
+      },
+      "enabled": true,
+      "limit": 2000,
+      "remaining": 1855,
+      "totalPercentUsed": 7.25,
+      "used": 145
+    }
+  },
+  "isUnlimited": false,
+  "limitType": "user",
+  "membershipType": "free",
+  "namedModelSelectedDisplayMessage": "You are using a named model.",
+  "teamUsage": {}
+}

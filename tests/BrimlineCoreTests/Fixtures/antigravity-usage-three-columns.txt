@@ -1,0 +1,2 @@
+Gemini Models	Weekly Limit Remaining	64%
+Gemini Models	Five Hour Limit Remaining	90%

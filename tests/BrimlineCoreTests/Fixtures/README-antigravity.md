@@ -1,4 +1,10 @@
-PROVISIONAL. The `antigravity-usage-*.txt` files are test data written from Google's documentation of
-`/usage` (https://antigravity.google/docs/cli/commands/usage/ and
-https://antigravity.google/docs/cli/headless/), which gives no sample of the text. The shape is a guess;
-the values are invented. They are replaced by the real text (values replaced) at the real try (R4 of QUOTA-35).
+The `antigravity-usage-*.txt` files are test data for `agy --print /usage`.
+
+`antigravity-usage-normal.txt` has the form of the real text, seen on Antigravity CLI 1.4.8 on the Mac mini on
+27/10/2026 (`agy --print /usage --sandbox`, a free Google account): no header line, four columns separated by tabs
+(group, name of the limit, percentage remaining, reset time in ISO 8601), two windows (`Five Hour`, `Weekly`), a group
+of other vendors' models (`Claude and GPT models`) and a limit of one model (`Gemini 4 Argon Weekly Limit`). The
+percentages and the dates are replaced (the real text said 100 % everywhere); the names are the real ones.
+
+The other files are broken variants, each with one defect: a line of a model's sentence in a name (`-model-line`), a valid line followed by a sentence of the old guessed form (`-hostile`), three columns instead of
+four, a percentage out of bounds, an empty text.

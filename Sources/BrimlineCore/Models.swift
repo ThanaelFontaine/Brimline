@@ -122,11 +122,15 @@ public enum AccountStatus: String, Codable, Sendable, CaseIterable {
 
 /// Something to say next to the numbers of an account that was read (`status` is `ok`).
 public enum AccountNote: String, Codable, Sendable {
-    /// The provider answered but has no percentage yet for this period (Grok, early in a period): never a 0 %.
+    /// The provider answered but has no percentage yet for this period (Grok, an allowance with no use yet): never a 0 %.
     case noFigureYet = "no_figure_yet"
+    /// The provider answered with no credit limit at all for this account (Grok, a free account: no percentage, no
+    /// allowance). It is what was seen, said as such: no number is promised and none is invented.
+    case noCreditLimit = "no_credit_limit"
     /// The limit is a pool shared by several products of the provider (Grok's unified billing).
     case sharedPool = "shared_pool"
-    /// Some limits have no reset time because the provider's text gives none (Gemini, through Antigravity).
+    /// Some limits have no reset time because the provider's text gives none. No reader produces it any more (the real
+    /// Antigravity text gives a reset time on every line); the case stays so that an older cache still decodes.
     case resetNotPublished = "reset_not_published"
     /// The provider says the plan has no cap (Cursor's `isUnlimited`): there is no limit to show, and that is the answer.
     case noLimit = "no_limit"

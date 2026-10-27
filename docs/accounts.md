@@ -70,7 +70,7 @@ Cursor has no account to link: Brimline uses the sign-in the Cursor app already 
 
 ## Gemini, through Antigravity
 
-Gemini is read through Google's own tool, Antigravity CLI (`agy`), which you install and sign in to yourself: Brimline never signs you in. Turn Gemini on in **Settings, Accounts** (or `brimline providers enable gemini`). When `agy` is at `~/.local/bin/agy`, Brimline launches `agy --print /usage` (Google's official command for your limits; Google's program may renew its own sign-in) and shows the usage of each model. Without it, one card tells you where your limits are (the Gemini app, Settings, Usage limits). **Gemini is not read and checked yet:** until a real Antigravity has been tried, Brimline does not launch it. Details in [providers](providers.md) and [SECURITY.md](../SECURITY.md).
+Gemini is read through Google's own tool, Antigravity CLI (`agy`), which you install and sign in to yourself: Brimline never signs you in. Turn Gemini on in **Settings, Accounts** (or `brimline providers enable gemini`). When `agy` is at `~/.local/bin/agy`, Brimline launches `agy --print /usage` (Google's official command for your limits; Google's program may renew its own sign-in) and shows, per group of models, the 5 hour window and the week. Without it, one card tells you where your limits are (the Gemini app, Settings, Usage limits). **Gemini is not read and checked yet:** only the build verified on 27/10/2026 (Antigravity CLI 1.4.8) is launched; any other build is not. Details in [providers](providers.md) and [SECURITY.md](../SECURITY.md).
 
 ## Grok, through the Grok CLI
 
@@ -80,7 +80,7 @@ Brimline reads the limits of Grok through the Grok CLI, the official tool: there
 2. Turn Grok on in **Settings, Accounts** (or `brimline providers enable grok`): it starts off.
 3. Brimline shows one card when the folder `~/.grok` exists. Without the Grok CLI there is no card: xAI publishes the limits of Grok for the CLI only, and the others are in your Grok account settings.
 
-Brimline reads only `auth.json` in that folder, and of it the sign-in with an xAI account: the session token and the user id, in memory, for one request to `https://cli-chat-proxy.grok.com`. It never renews the sign-in: if the Grok CLI has been closed for a long time the card says "Open the Grok CLI to refresh the sign-in." A CLI signed in with an API key has no subscription limit to show. Early in a period the card says "No number yet for this period." Details in [providers](providers.md).
+Brimline reads only `auth.json` in that folder, and of it the sign-in with an xAI account: the session token and the user id, in memory, for one request to `https://cli-chat-proxy.grok.com`. It never renews the sign-in: if the Grok CLI has been closed for a long time the card says "Open the Grok CLI to refresh the sign-in." A CLI signed in with an API key has no subscription limit to show. A free account, whose answer has no credit limit, says "xAI returns no credit limit for this account."; an allowance with no use yet says "No number yet for this period." Details in [providers](providers.md).
 
 ## Common situations
 
