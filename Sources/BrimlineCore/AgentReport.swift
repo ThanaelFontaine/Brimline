@@ -112,7 +112,7 @@ public struct AgentAccount: Codable, Sendable, Equatable {
         hidden = settings.isHidden(account.id)
         status = usage.status.rawValue
         reason = usage.status == .notReadable ? usage.reason?.rawValue : nil
-        message = Strings(.en).statusMessage(usage.status)
+        message = Strings(.en).message(for: usage)
         fetchedAt = usage.fetchedAt.map(ISODate.format)
         ageSeconds = usage.age(at: now).map { Int($0) }
         let staleAfter = TimeInterval(settings.refreshMinutes * 60 * 2 + 60)

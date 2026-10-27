@@ -1,8 +1,7 @@
 import Foundation
 
-/// Why an account cannot be read at all, as opposed to a read that failed. Nothing uses it yet:
-/// Claude is always readable or fails. It is declared with the protocol so a reader's answer has
-/// its final shape from the start.
+/// Why an account cannot be read at all, as opposed to a read that failed. Claude is always readable
+/// or fails; Gemini answers `consumerPlan`. The other reasons come with their readers.
 public enum NotReadableReason: String, Codable, Sendable, CaseIterable {
     case apiKey = "api_key"
     case keychainOrSignedOut = "keychain_or_signed_out"

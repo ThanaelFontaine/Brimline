@@ -141,8 +141,11 @@ struct AgentProviderTests {
 
         var settings = BrimlineSettings()
         settings.enabledProviders = ["claude"]
+        // Gemini has a reader (a sentence only): off, it points at the switch.
         let off = try data(try call(server(settings: settings), "best_account", #"{"provider":"gemini"}"#))
-        #expect((off["note"] as? String)?.contains("does not read gemini yet") == true)
+        #expect((off["note"] as? String)?.contains("gemini is off in Brimline") == true)
+        // Grok has no reader yet: no switch to point at.
+        #expect(MCPServer.emptyNote(.grok, settings: settings).contains("does not read grok yet"))
     }
 
     @Test("The tools list names the providers and the windows")

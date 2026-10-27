@@ -54,6 +54,10 @@ For each folder, Brimline reads:
 
 From the sign-in, only the access token is used, in memory, for one request to `https://api.anthropic.com/api/oauth/usage`. Brimline never uses the refresh token, never renews a sign-in, never writes to the Keychain, and never writes a token to a file, a log or its answers to agents.
 
+## Gemini
+
+Gemini has no account to link: Google publishes no limit Brimline can read. Turn Gemini on in **Settings, Accounts** (or `brimline providers enable gemini`) and, if `~/.gemini` exists on your Mac, one card tells you where your limits are (the Gemini app, Settings, Usage limits, and `/stats model` in Gemini CLI). Brimline only checks that the folder exists and opens nothing in it. Details in [providers](providers.md).
+
 ## Common situations
 
 | What you see | What it means | What to do |

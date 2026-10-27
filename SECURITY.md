@@ -43,6 +43,10 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
   - An answer that is not the expected one (other JSON, a page) is shown as "The provider changed its answer" and never as a number. The cache keeps a fingerprint of the keys of the last answer (SHA-256), with no value in it. `brimline status --live --shape` prints the keys and the types of an answer, never a value.
   - Nothing is ever written, renewed or moved at a provider.
 
+### What it looks at for Gemini
+
+- Gemini is a sentence only: when Gemini is on, Brimline checks that `~/.gemini` exists and is a folder (one `stat`, following no file inside it). It opens and lists nothing in that folder (no `oauth_creds.json`, no settings), reads no Keychain item, makes no request and launches no program. A test with a bait token in the folder, made unreadable, checks that nothing is opened. When Gemini is off, the folder is not even checked.
+
 ### How it reads Claude Code sign-ins
 
 - Claude Code keeps each sign-in in the macOS Keychain, one generic password per configuration folder. Brimline computes the item's exact service name from the folder (`Claude Code-credentials`, or `Claude Code-credentials-` followed by the first 8 hex digits of the SHA-256 of the folder's absolute path) and asks for that one item. It never lists or searches the Keychain.

@@ -106,11 +106,11 @@ struct AccountsTab: View {
                 if model.allUsages.isEmpty {
                     Text(s.noAccountBody).foregroundStyle(.secondary)
                 }
-                ForEach(model.allUsages) { usage in
+                ForEach(model.allUsages.filter { $0.account.provider == .claude }) { usage in
                     AccountSettingsRow(usage: usage, model: model)
                 }
             } header: {
-                Text("Claude")
+                Text(Provider.claude.displayName)
             } footer: {
                 HStack {
                     Button(s.addFolder) { chooseFolder() }
@@ -118,6 +118,17 @@ struct AccountsTab: View {
                     Spacer()
                 }
                 .padding(.top, SGTheme.Space.xs)
+            }
+
+            ForEach(Provider.allCases.filter { $0 != .claude }, id: \.self) { provider in
+                let usages = model.allUsages.filter { $0.account.provider == provider }
+                if !usages.isEmpty {
+                    Section(provider.displayName) {
+                        ForEach(usages) { usage in
+                            AccountSettingsRow(usage: usage, model: model)
+                        }
+                    }
+                }
             }
 
             Section {
@@ -176,7 +187,7 @@ struct AccountSettingsRow: View {
                         .truncationMode(.middle)
                         .fixedSize(horizontal: false, vertical: true)
                         .help(account.email ?? account.source)
-                    Text(details(for: account))
+                    Text(Self.details(for: usage, strings: s))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -225,10 +236,10 @@ struct AccountSettingsRow: View {
         .padding(.vertical, SGTheme.Space.xs)
     }
 
-    private func details(for account: Account) -> String {
-        let s = model.strings
-        var parts = ["Claude"]
-        if let org = account.organization { parts.append(org) }
+    /// The line under an account: its provider (never another provider's name), organization and status.
+    static func details(for usage: AccountUsage, strings s: Strings) -> String {
+        var parts = [usage.account.provider.displayName]
+        if let org = usage.account.organization { parts.append(org) }
         parts.append(s.statusName(usage.status))
         return parts.joined(separator: " · ")
     }

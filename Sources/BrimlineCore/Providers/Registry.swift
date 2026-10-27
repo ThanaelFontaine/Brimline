@@ -1,6 +1,6 @@
 import Foundation
 
-/// The providers Brimline reads. Claude only for now.
+/// The providers Brimline has a reader for: Claude, and Gemini (a sentence only, nothing is read).
 ///
 /// Having a reader here does not mean it runs: every provider is off until the user turns it on
 /// (`BrimlineSettings.enabledProviders`, Claude on by default), and `discover` and the service
@@ -12,7 +12,7 @@ public enum Providers {
     /// The readers, with the Keychain and the network replaced (tests).
     public static func make(credentials: any CredentialReading = SecurityToolCredentialReader(),
                             http: any HTTPClient = URLSessionHTTPClient()) -> [any ProviderReader] {
-        [ClaudeReader(credentials: credentials, http: http)]
+        [ClaudeReader(credentials: credentials, http: http), GeminiReader()]
     }
 
     /// Whether Brimline has a reader for this provider.
