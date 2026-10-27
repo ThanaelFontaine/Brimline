@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brimline · icône et logo, deuxième tour</title>
+<style>
+:root{color-scheme:light dark;--bg:#F5F6F7;--surface:#FFFFFF;--text:#15191D;--text2:#56606A;--border:#D3D8DD;--accent:#0B6E7A;--font:-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#111315;--surface:#1B1E21;--text:#ECEFF2;--text2:#9BA5AF;--border:#30353A;--accent:#5CC8D0}}
+:root[data-theme=dark]{--bg:#111315;--surface:#1B1E21;--text:#ECEFF2;--text2:#9BA5AF;--border:#30353A;--accent:#5CC8D0}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 var(--font);-webkit-font-smoothing:antialiased}
+main{max-width:1240px;margin:0 auto;padding:48px 32px 96px}
+h1{font-size:clamp(30px,4.6vw,46px);line-height:1.1;letter-spacing:-.02em;margin:0 0 12px}
+h2{font-size:28px;letter-spacing:-.01em;margin:72px 0 6px;line-height:1.2}
+.h3{font-size:17px;margin:32px 0 6px}
+h3{margin:18px 0 6px;font-size:19px}h4{margin:12px 0 2px;font-size:14px}
+p{margin:0 0 8px}.lead{font-size:18px;max-width:780px}.sub,.muted{color:var(--text2);font-size:14px;max-width:820px}
+a{color:var(--accent)}
+.controls{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;padding:10px 32px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);font-size:14px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}.seg button{font:inherit;color:var(--text);background:transparent;border:0;padding:5px 12px;cursor:pointer}.seg button[aria-pressed=true]{background:var(--accent);color:var(--bg)}
+.controls label{display:inline-flex;gap:10px;align-items:center}.controls input{accent-color:var(--accent);width:160px}
+.controls nav{display:flex;gap:14px;margin-left:auto}.controls nav a{text-decoration:none;font-weight:600}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:20px 0}
+.box.reco-box{border-left:4px solid var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid2 .box{margin:0}
+.box ul{margin:6px 0 0;padding-left:20px;color:var(--text2);font-size:14px}
+.refs{display:flex;gap:18px;align-items:center;margin:8px 0 4px}.refs figure{margin:0;text-align:center;font-size:12px;color:var(--text2)}.refs svg{width:72px;height:72px;display:block;margin:0 auto 4px}
+.pistes{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:18px}
+.piste{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px}
+.piste.reco{border:2px solid var(--accent)}
+.badge{position:absolute;top:14px;right:14px;margin:0;font-size:12px;font-weight:600;color:var(--accent);border:1.5px solid var(--accent);border-radius:99px;padding:2px 10px}
+.inline-badge{position:static;vertical-align:middle;margin-left:8px}
+.hero-icon{display:block;width:216px;height:216px;margin:0 auto}
+.lockups{display:grid;gap:10px;margin:16px 0 8px}
+.band{border-radius:10px;padding:16px 20px;display:flex}.band.light{background:#F5F6F7;color:#15191D;border:1px solid #D3D8DD;--mk:#0B6E7A}.band.dark{background:#111315;color:#ECEFF2;--mk:#5CC8D0}
+.lockup{display:inline-flex;align-items:center;gap:12px;font-weight:600;font-size:34px;letter-spacing:-.02em;line-height:1}
+.lockup .sym{width:48px;height:48px;margin:-4px 0;color:var(--mk)}
+.word{display:inline-flex;align-items:baseline;white-space:nowrap}
+.l-mark{height:.76em;width:calc(.76em * 20.5 / 58.5);margin:0 .03em 0 .04em;color:var(--mk);align-self:baseline;transform:translateY(.02em)}
+.more{font-size:14px;font-weight:600;text-decoration:none}
+.situ{border-top:1px solid var(--border);margin-top:72px}.situ h2{margin-top:40px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:10px 0}
+/* Barre des menus */
+.mb{border-radius:10px;overflow:hidden;height:92px;position:relative}
+.mb.light{background:linear-gradient(135deg,#C9D6E3,#E9D9CF)}.mb.dark{background:linear-gradient(135deg,#1C2433,#2F2433)}
+.mb-bar{height:24px;display:flex;justify-content:space-between;align-items:center;padding:0 10px;font:13px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;gap:12px}
+.mb.light .mb-bar{background:rgba(246,246,246,.72);color:#000}.mb.dark .mb-bar{background:rgba(22,22,24,.62);color:#fff}
+.mb-menus,.mb-right{display:flex;gap:14px;align-items:center;white-space:nowrap}.mb-item{display:inline-flex;gap:4px;align-items:center}
+.g18{width:18px;height:18px;display:block}
+.ph{display:inline-block;opacity:.85}.ph.wifi{width:15px;height:11px;border-radius:15px 15px 0 0/12px 12px 0 0;border:2px solid currentColor;border-bottom:0;clip-path:polygon(0 0,100% 0,50% 100%)}.ph.batt{width:22px;height:10px;border:1.5px solid currentColor;border-radius:3px;position:relative}.ph.batt::after{content:"";position:absolute;inset:1.5px 6px 1.5px 1.5px;background:currentColor;border-radius:1px}
+.num{font-variant-numeric:tabular-nums}
+.states{display:flex;justify-content:space-around;gap:6px;border-radius:10px;padding:14px 8px}
+.states.light{background:#ECEDEF;color:#000}.states.dark{background:#232427;color:#fff}
+.states figure{margin:0;text-align:center}.states figcaption{font-size:12px;opacity:.7;margin-top:6px}.g54{width:54px;height:54px;display:block}
+/* Dock */
+.desk{border-radius:10px;height:150px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px}
+.desk.light{background:linear-gradient(160deg,#B9CCE0,#E6D3C6)}.desk.dark{background:linear-gradient(160deg,#141C2B,#2A1F2E)}
+.dock{display:flex;align-items:flex-end;gap:7px;padding:6px 8px;border-radius:20px}
+.desk.light .dock{background:rgba(255,255,255,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.55)}.desk.dark .dock{background:rgba(40,40,46,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.app{width:52px;height:52px;border-radius:12px;display:block;margin:6px}
+.n1{background:linear-gradient(#5AA9F5,#2C6FE0)}.n2{background:linear-gradient(#FDFDFD,#E3E3E3)}.n3{background:linear-gradient(#5DD36C,#2EA548)}.n4{background:linear-gradient(#FFB54A,#F07B22)}.n5{background:linear-gradient(#3A3A3C,#1C1C1E)}.trash{background:linear-gradient(#D9DCE0,#AEB3BA);border-radius:10px}
+.sep{width:1px;align-self:stretch;margin:8px 2px;background:rgba(127,127,127,.4)}
+.dock-item{position:relative;display:flex;flex-direction:column;align-items:center}.dock-icon{width:64px;height:64px;display:block}
+.dot{width:4px;height:4px;border-radius:50%;background:currentColor;margin-top:1px}.desk.light .dot{color:#222}.desk.dark .dot{color:#ddd}
+.tip{position:absolute;top:-30px;font:12px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;padding:5px 9px;border-radius:6px;white-space:nowrap}.desk.light .tip{background:rgba(240,240,240,.92);color:#111}.desk.dark .tip{background:rgba(50,50,54,.92);color:#eee}
+/* Onglets */
+.tabbar{display:flex;gap:2px;padding:8px 8px 0;border-radius:10px 10px 0 0;font:12px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;overflow:hidden}
+.tabbar.light{background:#DEE1E6;color:#1F1F1F}.tabbar.dark{background:#1F2023;color:#E3E3E3}
+.tab{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:9px 9px 0 0;min-width:0;flex:0 1 300px}.tab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabbar.light .tab:not(.off){background:#FFFFFF}.tabbar.dark .tab:not(.off){background:#35363A}.tab.off{opacity:.7;flex:0 1 150px}
+.fav{width:16px;height:16px;flex:none;display:block}.fav-off{width:16px;height:16px;border-radius:4px;background:rgba(127,127,127,.4);flex:none}.x{margin-left:auto;font-style:normal;opacity:.6}
+.pixels{display:flex;flex-wrap:wrap;gap:24px;margin:16px 0}.pixels figure{margin:0;font-size:12px;color:var(--text2)}
+.px{width:64px;height:64px;image-rendering:pixelated;display:block;border:1px solid var(--border);border-radius:6px;background:repeating-conic-gradient(#e6e6e6 0 25%,#fff 0 50%) 0 0/8px 8px}
+.px.dark-px{width:72px;height:72px;background:#2A2B2E}
+/* Site */
+.site-frame{border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative}
+.site-frame.desktop{aspect-ratio:1440/470}.site-frame.desktop .site{transform:scale(var(--k,.4));transform-origin:0 0}
+.site-frame.mobile{width:281px;height:374px;justify-self:center}.site-frame.mobile .site{transform:scale(.72);transform-origin:0 0}
+.site{height:600px;font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;--mk:#0B6E7A}.site.light{background:#F5F6F7;color:#15191D}.site.dark{background:#111315;color:#ECEFF2;--mk:#5CC8D0}
+.site .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+.topbar{border-bottom:1px solid #D3D8DD}.site.dark .topbar{border-color:#30353A}
+.topbar .wrap{display:flex;justify-content:space-between;align-items:center;height:64px}
+.brand{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:19px;letter-spacing:-.01em;color:inherit}
+.brand .sym22{width:28px;height:28px;margin:-2px 0;color:var(--mk)}.brand.inline{font-size:21px}
+.topbar nav{display:flex;gap:22px;font-size:15px}.topbar nav a{color:inherit;opacity:.8}.lang{font-weight:600}
+.hero{padding-top:72px}.hero h1{font-size:60px;line-height:1.08;letter-spacing:-.025em;max-width:860px;margin-bottom:20px}
+.hero .lead{font-size:19px;max-width:640px;color:#56606A}.site.dark .hero .lead{color:#9BA5AF}
+.cta{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}.btn{display:inline-block;padding:12px 20px;border-radius:8px;font-size:16px;font-weight:600}
+.site.light .btn.primary{background:#0B6E7A;color:#fff}.site.dark .btn.primary{background:#5CC8D0;color:#111315}.btn.ghost{border:1px solid currentColor;color:inherit;opacity:.85}.site a{text-decoration:none}
+.site-frame.mobile .topbar .wrap{height:56px;padding:0 18px}.site-frame.mobile .topbar nav{gap:16px}
+.site-frame.mobile .hero{padding:36px 18px 0}.site-frame.mobile .hero h1{font-size:34px}.site-frame.mobile .hero .lead{font-size:17px}
+.files{font:13px/1.6 ui-monospace,'SF Mono',Menlo,monospace;color:var(--text2)}
+table{border-collapse:collapse;font-size:14px;width:100%}td,th{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top}th{color:var(--text2);font-weight:600}
+@media (max-width:900px){.pistes,.grid2,.pair{grid-template-columns:1fr}main{padding:28px 18px 64px}.controls{padding:10px 18px}.controls nav{margin-left:0}.hide-s{display:none}}
+</style>
+</head>
+<body>
+<div class="controls">
+  <span class="seg" role="group" aria-label="Thème de la planche"><button data-set-theme="auto" aria-pressed="true">Système</button><button data-set-theme="light" aria-pressed="false">Clair</button><button data-set-theme="dark" aria-pressed="false">Sombre</button></span>
+  <label>Niveau du glyphe <input id="niveau" type="range" min="0" max="100" value="72"> <b id="niveau-val" class="num">72 %</b></label>
+  <nav><a href="#piste-a">A · Flottaison</a><a href="#piste-b">B · Seuil</a><a href="#piste-c">C · Le l</a></nav>
+</div>
+<main>
+<h1>Brimline · icône et logo, deuxième tour</h1>
+<p class="lead">Trois pistes nouvelles, toutes bâties sur une colonne haute : la jauge monte vers sa limite. Chacune en icône d'app, en glyphe de la barre des menus, en favicon et en logo, montrée en situation, en clair et en sombre.</p>
+<p class="sub">QUOTA-34 · THA-1412 · planche du 27/10/2026 · le premier tour (Ras, Le b, Cadran) est abandonné en entier.</p>
+
+<div class="grid2">
+  <div class="box"><h4>Ce qui change depuis le premier tour</h4><ul>
+    <li>La barre est haute : une colonne deux fois plus haute que large dans chaque piste, au lieu d'une cuve trapue.</li>
+    <li>Un seul aplat de couleur pour tout le symbole, sur une encre pétrole profonde : plus de dégradé dans la marque, plus de reflet, plus de verre de laboratoire.</li>
+    <li>Une seule épaisseur de trait, des formes géométriques simples, une idée par symbole.</li>
+  </ul></div>
+  <div class="box"><h4>Ce qui reste du premier tour</h4><ul>
+    <li>Lisible à 16 px : une version de l'icône aux traits épaissis pour 16 et 32 px.</li>
+    <li>Aucune confusion avec la batterie de macOS : la jauge est verticale, la batterie horizontale.</li>
+    <li>Glyphe gabarit sans couleur dans la barre des menus ; jetons de couleur de l'app inchangés.</li>
+  </ul></div>
+</div>
+
+<div class="box"><h4>Les références</h4>
+<div class="refs"><figure><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0A0F22"/><g transform="translate(8 6) scale(.75)"><path d="M12 50V35a20 20 0 0 1 40 0V50" stroke="#F5C66B" stroke-width="4.5" fill="none" stroke-linecap="round"/><path d="M32 12C33.5 23 36.5 25.6 47 27C36.5 28.4 33.5 31 32 42C30.5 31 27.5 28.4 17 27C27.5 25.6 30.5 23 32 12Z" fill="#F5C66B"/></g></svg>Firméa</figure>
+<p class="sub" style="margin:0">Firméa tient sa beauté de peu de choses : une seule couleur chaude sur un fond profond, une seule épaisseur de trait aux bouts arrondis, deux formes (une arche, une étoile) et beaucoup d'air autour. Le symbole occupe le centre de la tuile, et le mot, en police système semi-grasse, reste sobre à côté. Vorssaint, le projet d'origine de Firméa, va dans le même sens : une seule silhouette noire, pleine, sur une tuile blanche. Brimline en reprend la méthode (un aplat, un trait, une idée), pas le dessin.</p></div></div>
+
+<div class="box reco-box"><h4>Recommandation : piste A · Flottaison.</h4>
+<p>C'est la seule des trois qui soit un emblème : une colonne et sa ligne de charge, comme la marque de Plimsoll sur la coque des cargos, la ligne jusqu'où l'on peut charger. Elle dit le nom (le bord, la ligne), elle a une histoire qu'on peut raconter sur le site, et elle se reconnaît de loin dans le Dock.</p>
+<p class="muted">B est la plus lisible en très petit, C la plus liée au mot. Si la marque doit avant tout se lire comme un nom, C ; si elle doit se faire oublier dans la barre des menus, B.</p></div>
+
+<h2>Les trois pistes, côte à côte</h2>
+<p class="sub">Icône d'app (grille macOS 1024) et logo horizontal, en clair et en sombre. Le logotype est en police système semi-grasse, comme le site.</p>
+<section class="pistes"><article class="piste reco" id="carte-a">
+  <p class="badge">Recommandée</p>
+  <svg class="hero-icon" viewBox="0 0 1024 1024" role="img" aria-label="Icône d'app, piste A · Flottaison">
+<defs>
+<linearGradient id="g56" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h58" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s57" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s57)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g56)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h58)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="#7ADFE4" stroke-width="4.5"/><path d="M9 21H55" stroke="#7ADFE4" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c59"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c59)" fill="#7ADFE4" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></g>
+</svg>
+  <h3>A · Flottaison</h3>
+  <p>Une colonne haute, traversée par sa ligne de charge, comme la marque de Plimsoll peinte sur la coque des navires : la ligne jusqu'où l'on peut charger, et pas plus. Le liquide monte vers elle.</p>
+  <h4>Pour</h4><p class="muted">Un vrai emblème, avec une histoire juste (la ligne de charge des cargos) : il se retient et se reconnaît de loin. Colonne haute, ligne franche, une seule épaisseur de trait, comme Firméa.</p>
+  <h4>Contre</h4><p class="muted">La ligne qui sort de la colonne élargit le glyphe : dans la barre des menus, la course du liquide est un peu plus courte (8,5 pt).</p>
+  <div class="lockups"><div class="band light"><span class="lockup"><svg class="sym" viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M9 21H55" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c60"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c60)" fill="currentColor" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></svg><span class="word">Brimline</span></span></div><div class="band dark"><span class="lockup"><svg class="sym" viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M9 21H55" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c61"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c61)" fill="currentColor" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></svg><span class="word">Brimline</span></span></div></div>
+  <p><a class="more" href="#piste-a">Voir en situation ↓</a></p>
+</article>
+<article class="piste" id="carte-b">
+  
+  <svg class="hero-icon" viewBox="0 0 1024 1024" role="img" aria-label="Icône d'app, piste B · Seuil">
+<defs>
+<linearGradient id="g62" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h64" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s63" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s63)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g62)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h64)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><path d="M17 10H47" stroke="#7ADFE4" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="#7ADFE4"/></g>
+</svg>
+  <h3>B · Seuil</h3>
+  <p>Deux formes et rien d'autre : une colonne pleine, haute, et au-dessus d'elle le trait qu'elle ne doit pas toucher. L'écart entre les deux, c'est ce qui reste.</p>
+  <h4>Pour</h4><p class="muted">La plus simple et la plus forte en petit : deux aplats, lisibles à 16 px sans effort. La course est la plus haute des trois dans la barre des menus (12,5 pt).</p>
+  <h4>Contre</h4><p class="muted">Très épurée : sa force tient aux proportions, à garder telles quelles (écart fixe sous le trait, colonne jamais collée).</p>
+  <div class="lockups"><div class="band light"><span class="lockup"><svg class="sym" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 10H47" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="currentColor"/></svg><span class="word">Brimline</span></span></div><div class="band dark"><span class="lockup"><svg class="sym" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 10H47" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="currentColor"/></svg><span class="word">Brimline</span></span></div></div>
+  <p><a class="more" href="#piste-b">Voir en situation ↓</a></p>
+</article>
+<article class="piste" id="carte-c">
+  
+  <svg class="hero-icon" viewBox="0 0 1024 1024" role="img" aria-label="Icône d'app, piste C · Le l">
+<defs>
+<linearGradient id="g65" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h67" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s66" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s66)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g65)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h67)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><rect x="21" y="6" width="22" height="52" rx="11" fill="none" stroke="#7ADFE4" stroke-width="4.5"/><clipPath id="c68"><rect x="25.5" y="27.080000000000002" width="13" height="26.419999999999998"/></clipPath><path clip-path="url(#c68)" fill="#7ADFE4" d="M26.5 27.07V47a5.5 5.5 0 0 0 11 0V27.07Z"/></g>
+</svg>
+  <h3>C · Le l</h3>
+  <p>La colonne devient le « l » du nom : Brim·l·ine. Une éprouvette haute et étroite, dont le haut est le bord (le brim), qui se remplit. Le symbole et le mot ne font qu'un.</p>
+  <h4>Pour</h4><p class="muted">Le lien le plus fort entre le nom et le symbole : le logo se lit comme un mot, et la colonne seule suffit en icône. Course haute dans la barre des menus (12 pt).</p>
+  <h4>Contre</h4><p class="muted">Le trait de limite n'est plus dessiné : c'est le bord de la colonne qui le porte. Le logotype demande une police vectorisée pour le figer (lot d'intégration).</p>
+  <div class="lockups"><div class="band light"><span class="lockup inline"><span class="word" aria-label="Brimline">Brim<svg class="l-mark" viewBox="21.75 2.75 20.5 58.5" aria-hidden="true"><rect x="25" y="6" width="14" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="6.5"/><clipPath id="c69"><rect x="29" y="26.96" width="6" height="27.04"/></clipPath><path clip-path="url(#c69)" fill="currentColor" d="M30 26.95V51a2 2 0 0 0 4 0V26.95Z"/></svg>ine</span></span></div><div class="band dark"><span class="lockup inline"><span class="word" aria-label="Brimline">Brim<svg class="l-mark" viewBox="21.75 2.75 20.5 58.5" aria-hidden="true"><rect x="25" y="6" width="14" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="6.5"/><clipPath id="c70"><rect x="29" y="26.96" width="6" height="27.04"/></clipPath><path clip-path="url(#c70)" fill="currentColor" d="M30 26.95V51a2 2 0 0 0 4 0V26.95Z"/></svg>ine</span></span></div></div>
+  <p><a class="more" href="#piste-c">Voir en situation ↓</a></p>
+</article></section>
+
+<section class="situ" id="piste-a">
+<h2>A · Flottaison <span class="badge inline-badge">Recommandée</span></h2>
+<p class="sub">Une colonne haute, traversée par sa ligne de charge, comme la marque de Plimsoll peinte sur la coque des navires : la ligne jusqu'où l'on peut charger, et pas plus. Le liquide monte vers elle.</p>
+
+<h3 class="h3">Barre des menus</h3>
+<p class="sub">Glyphe gabarit 18 pt, noir et transparence, teinté par macOS. Taille réelle, avec le pourcentage. Course du liquide : 8,5 pt (glyphe actuel : 11 pt). Le curseur en haut de page fait monter le niveau.</p>
+<div class="pair"><div class="mb light"><div class="mb-bar">
+  <span class="mb-menus"><b>Finder</b><span>Fichier</span><span>Édition</span><span class="hide-s">Présentation</span></span>
+  <span class="mb-right"><i class="ph wifi"></i><i class="ph batt"></i><span class="mb-item"><svg class="g18 live" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c71"><rect class="lvl" data-bottom="15" data-top="6.5" x="6" y="8.879999999999999" width="6" height="7.120000000000001"/></clipPath><path clip-path="url(#c71)" fill="currentColor" d="M7 6.5V13a2 2 0 0 0 4 0V6.5Z"/></svg><span class="num lvl-num">72 %</span></span><span class="hide-s">lun. 27 oct.</span><span class="num">09:41</span></span>
+</div></div><div class="mb dark"><div class="mb-bar">
+  <span class="mb-menus"><b>Finder</b><span>Fichier</span><span>Édition</span><span class="hide-s">Présentation</span></span>
+  <span class="mb-right"><i class="ph wifi"></i><i class="ph batt"></i><span class="mb-item"><svg class="g18 live" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c72"><rect class="lvl" data-bottom="15" data-top="6.5" x="6" y="8.879999999999999" width="6" height="7.120000000000001"/></clipPath><path clip-path="url(#c72)" fill="currentColor" d="M7 6.5V13a2 2 0 0 0 4 0V6.5Z"/></svg><span class="num lvl-num">72 %</span></span><span class="hide-s">lun. 27 oct.</span><span class="num">09:41</span></span>
+</div></div></div>
+<div class="pair"><div class="states light"><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><figcaption>0 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c73"><rect x="6" y="12.45" width="6" height="3.5500000000000007"/></clipPath><path clip-path="url(#c73)" fill="currentColor" d="M7 12.44V13a2 2 0 0 0 4 0V12.44Z"/></svg><figcaption>30 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c74"><rect x="6" y="8.879999999999999" width="6" height="7.120000000000001"/></clipPath><path clip-path="url(#c74)" fill="currentColor" d="M7 8.87V13a2 2 0 0 0 4 0V8.87Z"/></svg><figcaption>72 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c75"><rect x="6" y="6.925000000000001" width="6" height="9.075"/></clipPath><path clip-path="url(#c75)" fill="currentColor" d="M7 6.915000000000001V13a2 2 0 0 0 4 0V6.915000000000001Z"/></svg><figcaption>95 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c76"><rect x="6" y="6.5" width="6" height="9.5"/></clipPath><path clip-path="url(#c76)" fill="currentColor" d="M7 6.49V13a2 2 0 0 0 4 0V6.49Z"/></svg><figcaption>100 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true" style="opacity:.45"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c77"><rect x="6" y="12.11" width="6" height="3.8900000000000006"/></clipPath><path clip-path="url(#c77)" fill="currentColor" d="M7 12.1V13a2 2 0 0 0 4 0V12.1Z"/></svg><figcaption>expiré</figcaption></figure></div><div class="states dark"><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><figcaption>0 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c78"><rect x="6" y="12.45" width="6" height="3.5500000000000007"/></clipPath><path clip-path="url(#c78)" fill="currentColor" d="M7 12.44V13a2 2 0 0 0 4 0V12.44Z"/></svg><figcaption>30 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c79"><rect x="6" y="8.879999999999999" width="6" height="7.120000000000001"/></clipPath><path clip-path="url(#c79)" fill="currentColor" d="M7 8.87V13a2 2 0 0 0 4 0V8.87Z"/></svg><figcaption>72 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c80"><rect x="6" y="6.925000000000001" width="6" height="9.075"/></clipPath><path clip-path="url(#c80)" fill="currentColor" d="M7 6.915000000000001V13a2 2 0 0 0 4 0V6.915000000000001Z"/></svg><figcaption>95 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c81"><rect x="6" y="6.5" width="6" height="9.5"/></clipPath><path clip-path="url(#c81)" fill="currentColor" d="M7 6.49V13a2 2 0 0 0 4 0V6.49Z"/></svg><figcaption>100 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true" style="opacity:.45"><rect x="5.25" y="1.25" width="7.5" height="15.5" rx="3.75" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M1.75 4.75H16.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><clipPath id="c82"><rect x="6" y="12.11" width="6" height="3.8900000000000006"/></clipPath><path clip-path="url(#c82)" fill="currentColor" d="M7 12.1V13a2 2 0 0 0 4 0V12.1Z"/></svg><figcaption>expiré</figcaption></figure></div></div>
+
+<h3 class="h3">Dock</h3>
+<div class="pair"><div class="desk light"><div class="dock">
+  <i class="app n1"></i><i class="app n2"></i><i class="app n3"></i>
+  <span class="dock-item"><span class="tip">Brimline</span><svg class="dock-icon" viewBox="0 0 1024 1024" aria-label="Icône A · Flottaison">
+<defs>
+<linearGradient id="g83" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h85" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s84" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s84)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g83)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h85)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="#7ADFE4" stroke-width="4.5"/><path d="M9 21H55" stroke="#7ADFE4" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c86"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c86)" fill="#7ADFE4" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></g>
+</svg><b class="dot"></b></span>
+  <i class="app n4"></i><i class="app n5"></i>
+  <span class="sep"></span><i class="app trash"></i>
+</div></div><div class="desk dark"><div class="dock">
+  <i class="app n1"></i><i class="app n2"></i><i class="app n3"></i>
+  <span class="dock-item"><span class="tip">Brimline</span><svg class="dock-icon" viewBox="0 0 1024 1024" aria-label="Icône A · Flottaison">
+<defs>
+<linearGradient id="g87" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h89" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s88" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s88)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g87)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h89)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="#7ADFE4" stroke-width="4.5"/><path d="M9 21H55" stroke="#7ADFE4" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c90"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c90)" fill="#7ADFE4" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></g>
+</svg><b class="dot"></b></span>
+  <i class="app n4"></i><i class="app n5"></i>
+  <span class="sep"></span><i class="app trash"></i>
+</div></div></div>
+
+<h3 class="h3">Onglet du navigateur et petites tailles</h3>
+<div class="pair"><div class="tabbar light"><div class="tab"><svg class="fav" viewBox="0 0 64 64" aria-hidden="true">
+<defs><linearGradient id="g91" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="url(#g91)"/>
+<g transform="translate(-3.2 -3.2) scale(1.1)"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="#7ADFE4" stroke-width="7.5"/><path d="M9 21H55" stroke="#7ADFE4" stroke-width="7.5" stroke-linecap="round"/><clipPath id="c92"><rect x="25.5" y="34.05" width="13" height="16.450000000000003"/></clipPath><path clip-path="url(#c92)" fill="#7ADFE4" d="M26.5 34.04V44a5.5 5.5 0 0 0 11 0V34.04Z"/></g>
+</svg><span>Brimline : chaque limite d'abonnement IA, compte par compte</span><i class="x">×</i></div><div class="tab off"><i class="fav-off"></i><span>Documentation</span></div></div><div class="tabbar dark"><div class="tab"><svg class="fav" viewBox="0 0 64 64" aria-hidden="true">
+<defs><linearGradient id="g93" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="url(#g93)"/>
+<g transform="translate(-3.2 -3.2) scale(1.1)"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="#7ADFE4" stroke-width="7.5"/><path d="M9 21H55" stroke="#7ADFE4" stroke-width="7.5" stroke-linecap="round"/><clipPath id="c94"><rect x="25.5" y="34.05" width="13" height="16.450000000000003"/></clipPath><path clip-path="url(#c94)" fill="#7ADFE4" d="M26.5 34.04V44a5.5 5.5 0 0 0 11 0V34.04Z"/></g>
+</svg><span>Brimline : chaque limite d'abonnement IA, compte par compte</span><i class="x">×</i></div><div class="tab off"><i class="fav-off"></i><span>Documentation</span></div></div></div>
+<div class="pixels">
+  <figure><canvas class="px" data-src="small-a" data-size="16"></canvas><figcaption>Icône 16 px, pixels réels ×4</figcaption></figure>
+  <figure><canvas class="px" data-src="small-a" data-size="32"></canvas><figcaption>Icône 32 px, ×2</figcaption></figure>
+  <figure><canvas class="px" data-src="fav-a" data-size="16"></canvas><figcaption>Favicon 16 px, ×4</figcaption></figure>
+  <figure><canvas class="px dark-px" data-src="glyph-a" data-size="18" data-tint="#FFFFFF"></canvas><figcaption>Barre des menus 18 px (1x), ×4</figcaption></figure>
+</div>
+
+<h3 class="h3">En-tête du site</h3>
+<p class="sub">brimline.thanaelfontaine.eu, textes réels de l'accueil. Bureau 1440 px (réduit) et téléphone 390 px, en clair et en sombre.</p>
+<div class="pair"><div class="site-frame desktop"><div class="site light" style="width:1440px">
+  <header class="topbar"><div class="wrap"><a class="brand"><svg class="sym22" viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M9 21H55" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c95"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c95)" fill="currentColor" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></svg><span class="word">Brimline</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a>GitHub</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div><div class="site-frame desktop"><div class="site dark" style="width:1440px">
+  <header class="topbar"><div class="wrap"><a class="brand"><svg class="sym22" viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M9 21H55" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c96"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c96)" fill="currentColor" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></svg><span class="word">Brimline</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a>GitHub</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div></div>
+<div class="pair mobiles"><div class="site-frame mobile"><div class="site light" style="width:390px">
+  <header class="topbar"><div class="wrap"><a class="brand"><svg class="sym22" viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M9 21H55" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c97"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c97)" fill="currentColor" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></svg><span class="word">Brimline</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div><div class="site-frame mobile"><div class="site dark" style="width:390px">
+  <header class="topbar"><div class="wrap"><a class="brand"><svg class="sym22" viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M9 21H55" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c98"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c98)" fill="currentColor" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></svg><span class="word">Brimline</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div></div>
+</section>
+<section class="situ" id="piste-b">
+<h2>B · Seuil</h2>
+<p class="sub">Deux formes et rien d'autre : une colonne pleine, haute, et au-dessus d'elle le trait qu'elle ne doit pas toucher. L'écart entre les deux, c'est ce qui reste.</p>
+
+<h3 class="h3">Barre des menus</h3>
+<p class="sub">Glyphe gabarit 18 pt, noir et transparence, teinté par macOS. Taille réelle, avec le pourcentage. Course du liquide : 12,5 pt (glyphe actuel : 11 pt). Le curseur en haut de page fait monter le niveau.</p>
+<div class="pair"><div class="mb light"><div class="mb-bar">
+  <span class="mb-menus"><b>Finder</b><span>Fichier</span><span>Édition</span><span class="hide-s">Présentation</span></span>
+  <span class="mb-right"><i class="ph wifi"></i><i class="ph batt"></i><span class="mb-item"><svg class="g18 live" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c99"><rect class="lvl" data-bottom="17" data-top="4.5" x="4.5" y="8" width="9" height="10"/></clipPath><path clip-path="url(#c99)" fill="currentColor" d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z"/></svg><span class="num lvl-num">72 %</span></span><span class="hide-s">lun. 27 oct.</span><span class="num">09:41</span></span>
+</div></div><div class="mb dark"><div class="mb-bar">
+  <span class="mb-menus"><b>Finder</b><span>Fichier</span><span>Édition</span><span class="hide-s">Présentation</span></span>
+  <span class="mb-right"><i class="ph wifi"></i><i class="ph batt"></i><span class="mb-item"><svg class="g18 live" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c100"><rect class="lvl" data-bottom="17" data-top="4.5" x="4.5" y="8" width="9" height="10"/></clipPath><path clip-path="url(#c100)" fill="currentColor" d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z"/></svg><span class="num lvl-num">72 %</span></span><span class="hide-s">lun. 27 oct.</span><span class="num">09:41</span></span>
+</div></div></div>
+<div class="pair"><div class="states light"><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/></svg><figcaption>0 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c101"><rect x="4.5" y="13.25" width="9" height="4.75"/></clipPath><path clip-path="url(#c101)" fill="currentColor" d="M5.5 13.24V13.5a3.5 3.5 0 0 0 7 0V13.24Z"/></svg><figcaption>30 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c102"><rect x="4.5" y="8" width="9" height="10"/></clipPath><path clip-path="url(#c102)" fill="currentColor" d="M5.5 7.99V13.5a3.5 3.5 0 0 0 7 0V7.99Z"/></svg><figcaption>72 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c103"><rect x="4.5" y="5.125" width="9" height="12.875"/></clipPath><path clip-path="url(#c103)" fill="currentColor" d="M5.5 5.115V13.5a3.5 3.5 0 0 0 7 0V5.115Z"/></svg><figcaption>95 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c104"><rect x="4.5" y="4.5" width="9" height="13.5"/></clipPath><path clip-path="url(#c104)" fill="currentColor" d="M5.5 4.49V13.5a3.5 3.5 0 0 0 7 0V4.49Z"/></svg><figcaption>100 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true" style="opacity:.45"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c105"><rect x="4.5" y="12.75" width="9" height="5.25"/></clipPath><path clip-path="url(#c105)" fill="currentColor" d="M5.5 12.74V13.5a3.5 3.5 0 0 0 7 0V12.74Z"/></svg><figcaption>expiré</figcaption></figure></div><div class="states dark"><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/></svg><figcaption>0 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c106"><rect x="4.5" y="13.25" width="9" height="4.75"/></clipPath><path clip-path="url(#c106)" fill="currentColor" d="M5.5 13.24V13.5a3.5 3.5 0 0 0 7 0V13.24Z"/></svg><figcaption>30 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c107"><rect x="4.5" y="8" width="9" height="10"/></clipPath><path clip-path="url(#c107)" fill="currentColor" d="M5.5 7.99V13.5a3.5 3.5 0 0 0 7 0V7.99Z"/></svg><figcaption>72 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c108"><rect x="4.5" y="5.125" width="9" height="12.875"/></clipPath><path clip-path="url(#c108)" fill="currentColor" d="M5.5 5.115V13.5a3.5 3.5 0 0 0 7 0V5.115Z"/></svg><figcaption>95 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c109"><rect x="4.5" y="4.5" width="9" height="13.5"/></clipPath><path clip-path="url(#c109)" fill="currentColor" d="M5.5 4.49V13.5a3.5 3.5 0 0 0 7 0V4.49Z"/></svg><figcaption>100 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true" style="opacity:.45"><path d="M2.75 1.75H15.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5.5 4.5V13.5a3.5 3.5 0 0 0 7 0V4.5Z" fill="currentColor" opacity=".25"/><clipPath id="c110"><rect x="4.5" y="12.75" width="9" height="5.25"/></clipPath><path clip-path="url(#c110)" fill="currentColor" d="M5.5 12.74V13.5a3.5 3.5 0 0 0 7 0V12.74Z"/></svg><figcaption>expiré</figcaption></figure></div></div>
+
+<h3 class="h3">Dock</h3>
+<div class="pair"><div class="desk light"><div class="dock">
+  <i class="app n1"></i><i class="app n2"></i><i class="app n3"></i>
+  <span class="dock-item"><span class="tip">Brimline</span><svg class="dock-icon" viewBox="0 0 1024 1024" aria-label="Icône B · Seuil">
+<defs>
+<linearGradient id="g111" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h113" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s112" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s112)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g111)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h113)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><path d="M17 10H47" stroke="#7ADFE4" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="#7ADFE4"/></g>
+</svg><b class="dot"></b></span>
+  <i class="app n4"></i><i class="app n5"></i>
+  <span class="sep"></span><i class="app trash"></i>
+</div></div><div class="desk dark"><div class="dock">
+  <i class="app n1"></i><i class="app n2"></i><i class="app n3"></i>
+  <span class="dock-item"><span class="tip">Brimline</span><svg class="dock-icon" viewBox="0 0 1024 1024" aria-label="Icône B · Seuil">
+<defs>
+<linearGradient id="g114" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h116" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s115" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s115)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g114)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h116)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><path d="M17 10H47" stroke="#7ADFE4" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="#7ADFE4"/></g>
+</svg><b class="dot"></b></span>
+  <i class="app n4"></i><i class="app n5"></i>
+  <span class="sep"></span><i class="app trash"></i>
+</div></div></div>
+
+<h3 class="h3">Onglet du navigateur et petites tailles</h3>
+<div class="pair"><div class="tabbar light"><div class="tab"><svg class="fav" viewBox="0 0 64 64" aria-hidden="true">
+<defs><linearGradient id="g117" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="url(#g117)"/>
+<g transform="translate(-3.2 -3.2) scale(1.1)"><path d="M17 10H47" stroke="#7ADFE4" stroke-width="7.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="#7ADFE4"/></g>
+</svg><span>Brimline : chaque limite d'abonnement IA, compte par compte</span><i class="x">×</i></div><div class="tab off"><i class="fav-off"></i><span>Documentation</span></div></div><div class="tabbar dark"><div class="tab"><svg class="fav" viewBox="0 0 64 64" aria-hidden="true">
+<defs><linearGradient id="g118" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="url(#g118)"/>
+<g transform="translate(-3.2 -3.2) scale(1.1)"><path d="M17 10H47" stroke="#7ADFE4" stroke-width="7.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="#7ADFE4"/></g>
+</svg><span>Brimline : chaque limite d'abonnement IA, compte par compte</span><i class="x">×</i></div><div class="tab off"><i class="fav-off"></i><span>Documentation</span></div></div></div>
+<div class="pixels">
+  <figure><canvas class="px" data-src="small-b" data-size="16"></canvas><figcaption>Icône 16 px, pixels réels ×4</figcaption></figure>
+  <figure><canvas class="px" data-src="small-b" data-size="32"></canvas><figcaption>Icône 32 px, ×2</figcaption></figure>
+  <figure><canvas class="px" data-src="fav-b" data-size="16"></canvas><figcaption>Favicon 16 px, ×4</figcaption></figure>
+  <figure><canvas class="px dark-px" data-src="glyph-b" data-size="18" data-tint="#FFFFFF"></canvas><figcaption>Barre des menus 18 px (1x), ×4</figcaption></figure>
+</div>
+
+<h3 class="h3">En-tête du site</h3>
+<p class="sub">brimline.thanaelfontaine.eu, textes réels de l'accueil. Bureau 1440 px (réduit) et téléphone 390 px, en clair et en sombre.</p>
+<div class="pair"><div class="site-frame desktop"><div class="site light" style="width:1440px">
+  <header class="topbar"><div class="wrap"><a class="brand"><svg class="sym22" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 10H47" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="currentColor"/></svg><span class="word">Brimline</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a>GitHub</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div><div class="site-frame desktop"><div class="site dark" style="width:1440px">
+  <header class="topbar"><div class="wrap"><a class="brand"><svg class="sym22" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 10H47" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="currentColor"/></svg><span class="word">Brimline</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a>GitHub</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div></div>
+<div class="pair mobiles"><div class="site-frame mobile"><div class="site light" style="width:390px">
+  <header class="topbar"><div class="wrap"><a class="brand"><svg class="sym22" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 10H47" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="currentColor"/></svg><span class="word">Brimline</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div><div class="site-frame mobile"><div class="site dark" style="width:390px">
+  <header class="topbar"><div class="wrap"><a class="brand"><svg class="sym22" viewBox="0 0 64 64" aria-hidden="true"><path d="M17 10H47" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/><path d="M22 46a10 10 0 0 0 20 0V29.64a2.5 2.5 0 0 0 -2.5 -2.5H24.5a2.5 2.5 0 0 0 -2.5 2.5Z" fill="currentColor"/></svg><span class="word">Brimline</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div></div>
+</section>
+<section class="situ" id="piste-c">
+<h2>C · Le l</h2>
+<p class="sub">La colonne devient le « l » du nom : Brim·l·ine. Une éprouvette haute et étroite, dont le haut est le bord (le brim), qui se remplit. Le symbole et le mot ne font qu'un.</p>
+
+<h3 class="h3">Barre des menus</h3>
+<p class="sub">Glyphe gabarit 18 pt, noir et transparence, teinté par macOS. Taille réelle, avec le pourcentage. Course du liquide : 12 pt (glyphe actuel : 11 pt). Le curseur en haut de page fait monter le niveau.</p>
+<div class="pair"><div class="mb light"><div class="mb-bar">
+  <span class="mb-menus"><b>Finder</b><span>Fichier</span><span>Édition</span><span class="hide-s">Présentation</span></span>
+  <span class="mb-right"><i class="ph wifi"></i><i class="ph batt"></i><span class="mb-item"><svg class="g18 live" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c119"><rect class="lvl" data-bottom="15" data-top="3" x="5.5" y="6.359999999999999" width="7" height="9.64"/></clipPath><path clip-path="url(#c119)" fill="currentColor" d="M6.5 3V12.5a2.5 2.5 0 0 0 5 0V3Z"/></svg><span class="num lvl-num">72 %</span></span><span class="hide-s">lun. 27 oct.</span><span class="num">09:41</span></span>
+</div></div><div class="mb dark"><div class="mb-bar">
+  <span class="mb-menus"><b>Finder</b><span>Fichier</span><span>Édition</span><span class="hide-s">Présentation</span></span>
+  <span class="mb-right"><i class="ph wifi"></i><i class="ph batt"></i><span class="mb-item"><svg class="g18 live" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c120"><rect class="lvl" data-bottom="15" data-top="3" x="5.5" y="6.359999999999999" width="7" height="9.64"/></clipPath><path clip-path="url(#c120)" fill="currentColor" d="M6.5 3V12.5a2.5 2.5 0 0 0 5 0V3Z"/></svg><span class="num lvl-num">72 %</span></span><span class="hide-s">lun. 27 oct.</span><span class="num">09:41</span></span>
+</div></div></div>
+<div class="pair"><div class="states light"><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><figcaption>0 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c121"><rect x="5.5" y="11.4" width="7" height="4.6"/></clipPath><path clip-path="url(#c121)" fill="currentColor" d="M6.5 11.39V12.5a2.5 2.5 0 0 0 5 0V11.39Z"/></svg><figcaption>30 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c122"><rect x="5.5" y="6.359999999999999" width="7" height="9.64"/></clipPath><path clip-path="url(#c122)" fill="currentColor" d="M6.5 6.35V12.5a2.5 2.5 0 0 0 5 0V6.35Z"/></svg><figcaption>72 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c123"><rect x="5.5" y="3.6000000000000014" width="7" height="12.399999999999999"/></clipPath><path clip-path="url(#c123)" fill="currentColor" d="M6.5 3.5900000000000016V12.5a2.5 2.5 0 0 0 5 0V3.5900000000000016Z"/></svg><figcaption>95 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c124"><rect x="5.5" y="3" width="7" height="13"/></clipPath><path clip-path="url(#c124)" fill="currentColor" d="M6.5 2.99V12.5a2.5 2.5 0 0 0 5 0V2.99Z"/></svg><figcaption>100 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true" style="opacity:.45"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c125"><rect x="5.5" y="10.92" width="7" height="5.08"/></clipPath><path clip-path="url(#c125)" fill="currentColor" d="M6.5 10.91V12.5a2.5 2.5 0 0 0 5 0V10.91Z"/></svg><figcaption>expiré</figcaption></figure></div><div class="states dark"><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><figcaption>0 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c126"><rect x="5.5" y="11.4" width="7" height="4.6"/></clipPath><path clip-path="url(#c126)" fill="currentColor" d="M6.5 11.39V12.5a2.5 2.5 0 0 0 5 0V11.39Z"/></svg><figcaption>30 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c127"><rect x="5.5" y="6.359999999999999" width="7" height="9.64"/></clipPath><path clip-path="url(#c127)" fill="currentColor" d="M6.5 6.35V12.5a2.5 2.5 0 0 0 5 0V6.35Z"/></svg><figcaption>72 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c128"><rect x="5.5" y="3.6000000000000014" width="7" height="12.399999999999999"/></clipPath><path clip-path="url(#c128)" fill="currentColor" d="M6.5 3.5900000000000016V12.5a2.5 2.5 0 0 0 5 0V3.5900000000000016Z"/></svg><figcaption>95 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c129"><rect x="5.5" y="3" width="7" height="13"/></clipPath><path clip-path="url(#c129)" fill="currentColor" d="M6.5 2.99V12.5a2.5 2.5 0 0 0 5 0V2.99Z"/></svg><figcaption>100 %</figcaption></figure><figure><svg class="g54" viewBox="0 0 18 18" fill="none" aria-hidden="true" style="opacity:.45"><rect x="4.75" y="1.25" width="8.5" height="15.5" rx="4.25" fill="none" stroke="currentColor" stroke-width="1.5"/><clipPath id="c130"><rect x="5.5" y="10.92" width="7" height="5.08"/></clipPath><path clip-path="url(#c130)" fill="currentColor" d="M6.5 10.91V12.5a2.5 2.5 0 0 0 5 0V10.91Z"/></svg><figcaption>expiré</figcaption></figure></div></div>
+
+<h3 class="h3">Dock</h3>
+<div class="pair"><div class="desk light"><div class="dock">
+  <i class="app n1"></i><i class="app n2"></i><i class="app n3"></i>
+  <span class="dock-item"><span class="tip">Brimline</span><svg class="dock-icon" viewBox="0 0 1024 1024" aria-label="Icône C · Le l">
+<defs>
+<linearGradient id="g131" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h133" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s132" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s132)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g131)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h133)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><rect x="21" y="6" width="22" height="52" rx="11" fill="none" stroke="#7ADFE4" stroke-width="4.5"/><clipPath id="c134"><rect x="25.5" y="27.080000000000002" width="13" height="26.419999999999998"/></clipPath><path clip-path="url(#c134)" fill="#7ADFE4" d="M26.5 27.07V47a5.5 5.5 0 0 0 11 0V27.07Z"/></g>
+</svg><b class="dot"></b></span>
+  <i class="app n4"></i><i class="app n5"></i>
+  <span class="sep"></span><i class="app trash"></i>
+</div></div><div class="desk dark"><div class="dock">
+  <i class="app n1"></i><i class="app n2"></i><i class="app n3"></i>
+  <span class="dock-item"><span class="tip">Brimline</span><svg class="dock-icon" viewBox="0 0 1024 1024" aria-label="Icône C · Le l">
+<defs>
+<linearGradient id="g135" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient>
+<radialGradient id="h137" cx=".5" cy=".0" r=".9"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".10"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="s136" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur in="SourceAlpha" stdDeviation="14"/><feOffset dy="12"/><feComponentTransfer><feFuncA type="linear" slope=".32"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g filter="url(#s136)">
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#g135)"/>
+<rect x="100" y="100" width="824" height="824" rx="185.4" fill="url(#h137)"/>
+<rect x="101" y="101" width="822" height="822" rx="184.4" fill="none" stroke="#FFFFFF" stroke-opacity=".10" stroke-width="2"/>
+</g>
+<g transform="translate(100 100) scale(12.875)"><rect x="21" y="6" width="22" height="52" rx="11" fill="none" stroke="#7ADFE4" stroke-width="4.5"/><clipPath id="c138"><rect x="25.5" y="27.080000000000002" width="13" height="26.419999999999998"/></clipPath><path clip-path="url(#c138)" fill="#7ADFE4" d="M26.5 27.07V47a5.5 5.5 0 0 0 11 0V27.07Z"/></g>
+</svg><b class="dot"></b></span>
+  <i class="app n4"></i><i class="app n5"></i>
+  <span class="sep"></span><i class="app trash"></i>
+</div></div></div>
+
+<h3 class="h3">Onglet du navigateur et petites tailles</h3>
+<div class="pair"><div class="tabbar light"><div class="tab"><svg class="fav" viewBox="0 0 64 64" aria-hidden="true">
+<defs><linearGradient id="g139" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="url(#g139)"/>
+<g transform="translate(-3.2 -3.2) scale(1.1)"><rect x="21" y="6" width="22" height="52" rx="11" fill="none" stroke="#7ADFE4" stroke-width="7.5"/><clipPath id="c140"><rect x="27" y="27.44" width="10" height="24.56"/></clipPath><path clip-path="url(#c140)" fill="#7ADFE4" d="M28 27.43V47a4 4 0 0 0 8 0V27.43Z"/></g>
+</svg><span>Brimline : chaque limite d'abonnement IA, compte par compte</span><i class="x">×</i></div><div class="tab off"><i class="fav-off"></i><span>Documentation</span></div></div><div class="tabbar dark"><div class="tab"><svg class="fav" viewBox="0 0 64 64" aria-hidden="true">
+<defs><linearGradient id="g141" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0F2F3B"/><stop offset="1" stop-color="#061319"/></linearGradient></defs>
+<rect width="64" height="64" rx="14" fill="url(#g141)"/>
+<g transform="translate(-3.2 -3.2) scale(1.1)"><rect x="21" y="6" width="22" height="52" rx="11" fill="none" stroke="#7ADFE4" stroke-width="7.5"/><clipPath id="c142"><rect x="27" y="27.44" width="10" height="24.56"/></clipPath><path clip-path="url(#c142)" fill="#7ADFE4" d="M28 27.43V47a4 4 0 0 0 8 0V27.43Z"/></g>
+</svg><span>Brimline : chaque limite d'abonnement IA, compte par compte</span><i class="x">×</i></div><div class="tab off"><i class="fav-off"></i><span>Documentation</span></div></div></div>
+<div class="pixels">
+  <figure><canvas class="px" data-src="small-c" data-size="16"></canvas><figcaption>Icône 16 px, pixels réels ×4</figcaption></figure>
+  <figure><canvas class="px" data-src="small-c" data-size="32"></canvas><figcaption>Icône 32 px, ×2</figcaption></figure>
+  <figure><canvas class="px" data-src="fav-c" data-size="16"></canvas><figcaption>Favicon 16 px, ×4</figcaption></figure>
+  <figure><canvas class="px dark-px" data-src="glyph-c" data-size="18" data-tint="#FFFFFF"></canvas><figcaption>Barre des menus 18 px (1x), ×4</figcaption></figure>
+</div>
+
+<h3 class="h3">En-tête du site</h3>
+<p class="sub">brimline.thanaelfontaine.eu, textes réels de l'accueil. Bureau 1440 px (réduit) et téléphone 390 px, en clair et en sombre.</p>
+<div class="pair"><div class="site-frame desktop"><div class="site light" style="width:1440px">
+  <header class="topbar"><div class="wrap"><a class="brand inline"><span class="word" aria-label="Brimline">Brim<svg class="l-mark" viewBox="21.75 2.75 20.5 58.5" aria-hidden="true"><rect x="25" y="6" width="14" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="6.5"/><clipPath id="c143"><rect x="29" y="26.96" width="6" height="27.04"/></clipPath><path clip-path="url(#c143)" fill="currentColor" d="M30 26.95V51a2 2 0 0 0 4 0V26.95Z"/></svg>ine</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a>GitHub</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div><div class="site-frame desktop"><div class="site dark" style="width:1440px">
+  <header class="topbar"><div class="wrap"><a class="brand inline"><span class="word" aria-label="Brimline">Brim<svg class="l-mark" viewBox="21.75 2.75 20.5 58.5" aria-hidden="true"><rect x="25" y="6" width="14" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="6.5"/><clipPath id="c144"><rect x="29" y="26.96" width="6" height="27.04"/></clipPath><path clip-path="url(#c144)" fill="currentColor" d="M30 26.95V51a2 2 0 0 0 4 0V26.95Z"/></svg>ine</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a>GitHub</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div></div>
+<div class="pair mobiles"><div class="site-frame mobile"><div class="site light" style="width:390px">
+  <header class="topbar"><div class="wrap"><a class="brand inline"><span class="word" aria-label="Brimline">Brim<svg class="l-mark" viewBox="21.75 2.75 20.5 58.5" aria-hidden="true"><rect x="25" y="6" width="14" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="6.5"/><clipPath id="c145"><rect x="29" y="26.96" width="6" height="27.04"/></clipPath><path clip-path="url(#c145)" fill="currentColor" d="M30 26.95V51a2 2 0 0 0 4 0V26.95Z"/></svg>ine</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div><div class="site-frame mobile"><div class="site dark" style="width:390px">
+  <header class="topbar"><div class="wrap"><a class="brand inline"><span class="word" aria-label="Brimline">Brim<svg class="l-mark" viewBox="21.75 2.75 20.5 58.5" aria-hidden="true"><rect x="25" y="6" width="14" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="6.5"/><clipPath id="c146"><rect x="29" y="26.96" width="6" height="27.04"/></clipPath><path clip-path="url(#c146)" fill="currentColor" d="M30 26.95V51a2 2 0 0 0 4 0V26.95Z"/></svg>ine</span></a>
+  <nav><a>Docs</a><a>FAQ</a><a class="lang">EN</a></nav></div></header>
+  <div class="wrap hero"><h1>Voyez ce qu'il vous reste de chaque abonnement IA, compte par compte.</h1>
+  <p class="lead">Brimline met côte à côte, dans la barre des menus de votre Mac, les limites de tous vos comptes Claude, chacun sous son adresse. Vos agents lisent les mêmes chiffres.</p>
+  <p class="cta"><a class="btn primary">Installer depuis la source</a><a class="btn ghost">Lire la documentation</a></p></div>
+</div></div></div>
+</section>
+
+<h2>Fichiers</h2>
+<table><tr><th>Fichier</th><th>Rôle</th></tr>
+<tr><td class="files">app-icon.svg</td><td>Icône d'app, grille macOS 1024 (tuile de 824 à 100 du bord, rayon 185,4, ombre), pour 64 px et plus.</td></tr>
+<tr><td class="files">app-icon-small.svg</td><td>Version pour 16 et 32 px : traits épaissis (7 au lieu de 4,5 sur 64), marque un peu agrandie, sans ombre ni reflet.</td></tr>
+<tr><td class="files">menubar-template.svg</td><td>Glyphe gabarit 18 pt, noir et transparence, niveau 60 %.</td></tr>
+<tr><td class="files">symbole.svg, logo-clair.svg, logo-sombre.svg</td><td>Symbole en accent (clair ou sombre selon le thème) et logo horizontal.</td></tr>
+<tr><td class="files">favicon.svg</td><td>La tuile et le symbole, traits épais pour 16 px.</td></tr>
+<tr><td class="files">png/</td><td>Rendus : icône 1024, 512, 64, 32, 16 ; favicon 32 et 16 ; glyphe 18 et 36.</td></tr></table>
+<p class="sub" style="margin-top:12px">Couleurs : l'accent et le texte viennent des jetons de <span class="files">design/tokens.json</span>, inchangés. Seule l'encre pétrole de la tuile (#0F2F3B à #061319) et l'aqua du symbole sur la tuile (#7ADFE4) sont nouvelles, réservées à l'icône et au favicon. Logotype non vectorisé (licence de SF Pro) : le lot d'intégration choisit une police sous licence libre pour figer le mot, surtout pour la piste C.</p>
+</main>
+<script>
+const SRC={"small-a":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJnMzciIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMwRjJGM0IiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwNjEzMTkiLz48L2xpbmVhckdyYWRpZW50Pgo8cmFkaWFsR3JhZGllbnQgaWQ9ImgzOSIgY3g9Ii41IiBjeT0iLjAiIHI9Ii45Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGRkZGRkYiIHN0b3Atb3BhY2l0eT0iLjEwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkZGRkZGIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PgoKPC9kZWZzPgo8Zz4KPHJlY3QgeD0iMTAwIiB5PSIxMDAiIHdpZHRoPSI4MjQiIGhlaWdodD0iODI0IiByeD0iMTg1LjQiIGZpbGw9InVybCgjZzM3KSIvPgoKPC9nPgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg1Ny42MDAwMDAwMDAwMDAwMiA1Ny42MDAwMDAwMDAwMDAwMikgc2NhbGUoMTQuMikiPjxyZWN0IHg9IjIwIiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iNDgiIHJ4PSIxMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN0FERkU0IiBzdHJva2Utd2lkdGg9IjciLz48cGF0aCBkPSJNOSAyMUg1NSIgc3Ryb2tlPSIjN0FERkU0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjbGlwUGF0aCBpZD0iYzQwIj48cmVjdCB4PSIyNS4zMzMzMzMzMzMzMzMzMzIiIHk9IjM0LjA1IiB3aWR0aD0iMTMuMzMzMzMzMzMzMzMzMzM0IiBoZWlnaHQ9IjE2LjYxNjY2NjY2NjY2NjY2NyIvPjwvY2xpcFBhdGg+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2M0MCkiIGZpbGw9IiM3QURGRTQiIGQ9Ik0yNi4zMzMzMzMzMzMzMzMzMzIgMzQuMDRWNDRhNS42NjY2NjY2NjY2NjY2NjcgNS42NjY2NjY2NjY2NjY2NjcgMCAwIDAgMTEuMzMzMzMzMzMzMzMzMzM0IDBWMzQuMDRaIi8+PC9nPgo8L3N2Zz4=","fav-a":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnNDEiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMwRjJGM0IiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwNjEzMTkiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9InVybCgjZzQxKSIvPgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMy4yIC0zLjIpIHNjYWxlKDEuMSkiPjxyZWN0IHg9IjIwIiB5PSI4IiB3aWR0aD0iMjQiIGhlaWdodD0iNDgiIHJ4PSIxMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN0FERkU0IiBzdHJva2Utd2lkdGg9IjcuNSIvPjxwYXRoIGQ9Ik05IDIxSDU1IiBzdHJva2U9IiM3QURGRTQiIHN0cm9rZS13aWR0aD0iNy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48Y2xpcFBhdGggaWQ9ImM0MiI+PHJlY3QgeD0iMjUuNSIgeT0iMzQuMDUiIHdpZHRoPSIxMyIgaGVpZ2h0PSIxNi40NTAwMDAwMDAwMDAwMDMiLz48L2NsaXBQYXRoPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNjNDIpIiBmaWxsPSIjN0FERkU0IiBkPSJNMjYuNSAzNC4wNFY0NGE1LjUgNS41IDAgMCAwIDExIDBWMzQuMDRaIi8+PC9nPgo8L3N2Zz4=","glyph-a":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiBmaWxsPSJub25lIiBjb2xvcj0iI0ZGRkZGRiIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJCcmltbGluZSI+PHJlY3QgeD0iNS4yNSIgeT0iMS4yNSIgd2lkdGg9IjcuNSIgaGVpZ2h0PSIxNS41IiByeD0iMy43NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjEuNSIvPjxwYXRoIGQ9Ik0xLjc1IDQuNzVIMTYuMjUiIHN0cm9rZT0iI0ZGRkZGRiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjbGlwUGF0aCBpZD0iYzQzIj48cmVjdCB4PSI2IiB5PSI4Ljg3OTk5OTk5OTk5OTk5OSIgd2lkdGg9IjYiIGhlaWdodD0iNy4xMjAwMDAwMDAwMDAwMDEiLz48L2NsaXBQYXRoPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNjNDMpIiBmaWxsPSIjRkZGRkZGIiBkPSJNNyA4Ljg3VjEzYTIgMiAwIDAgMCA0IDBWOC44N1oiLz48L3N2Zz4=","small-b":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJnNDQiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMwRjJGM0IiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwNjEzMTkiLz48L2xpbmVhckdyYWRpZW50Pgo8cmFkaWFsR3JhZGllbnQgaWQ9Img0NiIgY3g9Ii41IiBjeT0iLjAiIHI9Ii45Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGRkZGRkYiIHN0b3Atb3BhY2l0eT0iLjEwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkZGRkZGIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PgoKPC9kZWZzPgo8Zz4KPHJlY3QgeD0iMTAwIiB5PSIxMDAiIHdpZHRoPSI4MjQiIGhlaWdodD0iODI0IiByeD0iMTg1LjQiIGZpbGw9InVybCgjZzQ0KSIvPgoKPC9nPgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg1Ny42MDAwMDAwMDAwMDAwMiA1Ny42MDAwMDAwMDAwMDAwMikgc2NhbGUoMTQuMikiPjxwYXRoIGQ9Ik0xNyAxMEg0NyIgc3Ryb2tlPSIjN0FERkU0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0yMiA0NmExMCAxMCAwIDAgMCAyMCAwVjI5LjY0YTIuNSAyLjUgMCAwIDAgLTIuNSAtMi41SDI0LjVhMi41IDIuNSAwIDAgMCAtMi41IDIuNVoiIGZpbGw9IiM3QURGRTQiLz48L2c+Cjwvc3ZnPg==","fav-b":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnNDciIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMwRjJGM0IiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwNjEzMTkiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9InVybCgjZzQ3KSIvPgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMy4yIC0zLjIpIHNjYWxlKDEuMSkiPjxwYXRoIGQ9Ik0xNyAxMEg0NyIgc3Ryb2tlPSIjN0FERkU0IiBzdHJva2Utd2lkdGg9IjcuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTIyIDQ2YTEwIDEwIDAgMCAwIDIwIDBWMjkuNjRhMi41IDIuNSAwIDAgMCAtMi41IC0yLjVIMjQuNWEyLjUgMi41IDAgMCAwIC0yLjUgMi41WiIgZmlsbD0iIzdBREZFNCIvPjwvZz4KPC9zdmc+","glyph-b":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiBmaWxsPSJub25lIiBjb2xvcj0iI0ZGRkZGRiIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJCcmltbGluZSI+PHBhdGggZD0iTTIuNzUgMS43NUgxNS4yNSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTUuNSA0LjVWMTMuNWEzLjUgMy41IDAgMCAwIDcgMFY0LjVaIiBmaWxsPSIjRkZGRkZGIiBvcGFjaXR5PSIuMjUiLz48Y2xpcFBhdGggaWQ9ImM0OCI+PHJlY3QgeD0iNC41IiB5PSI4IiB3aWR0aD0iOSIgaGVpZ2h0PSIxMCIvPjwvY2xpcFBhdGg+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2M0OCkiIGZpbGw9IiNGRkZGRkYiIGQ9Ik01LjUgNy45OVYxMy41YTMuNSAzLjUgMCAwIDAgNyAwVjcuOTlaIi8+PC9zdmc+","small-c":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDI0IDEwMjQiIHdpZHRoPSIxMDI0IiBoZWlnaHQ9IjEwMjQiPgo8ZGVmcz4KPGxpbmVhckdyYWRpZW50IGlkPSJnNDkiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMwRjJGM0IiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwNjEzMTkiLz48L2xpbmVhckdyYWRpZW50Pgo8cmFkaWFsR3JhZGllbnQgaWQ9Img1MSIgY3g9Ii41IiBjeT0iLjAiIHI9Ii45Ij48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGRkZGRkYiIHN0b3Atb3BhY2l0eT0iLjEwIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjRkZGRkZGIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50PgoKPC9kZWZzPgo8Zz4KPHJlY3QgeD0iMTAwIiB5PSIxMDAiIHdpZHRoPSI4MjQiIGhlaWdodD0iODI0IiByeD0iMTg1LjQiIGZpbGw9InVybCgjZzQ5KSIvPgoKPC9nPgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg1Ny42MDAwMDAwMDAwMDAwMiA1Ny42MDAwMDAwMDAwMDAwMikgc2NhbGUoMTQuMikiPjxyZWN0IHg9IjIxIiB5PSI2IiB3aWR0aD0iMjIiIGhlaWdodD0iNTIiIHJ4PSIxMSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN0FERkU0IiBzdHJva2Utd2lkdGg9IjciLz48Y2xpcFBhdGggaWQ9ImM1MiI+PHJlY3QgeD0iMjYuNzUiIHk9IjI3LjM4IiB3aWR0aD0iMTAuNSIgaGVpZ2h0PSIyNC44NyIvPjwvY2xpcFBhdGg+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2M1MikiIGZpbGw9IiM3QURGRTQiIGQ9Ik0yNy43NSAyNy4zNjk5OTk5OTk5OTk5OTdWNDdhNC4yNSA0LjI1IDAgMCAwIDguNSAwVjI3LjM2OTk5OTk5OTk5OTk5N1oiLz48L2c+Cjwvc3ZnPg==","fav-c":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0Ij4KPGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnNTMiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMwRjJGM0IiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMwNjEzMTkiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9InVybCgjZzUzKSIvPgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMy4yIC0zLjIpIHNjYWxlKDEuMSkiPjxyZWN0IHg9IjIxIiB5PSI2IiB3aWR0aD0iMjIiIGhlaWdodD0iNTIiIHJ4PSIxMSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN0FERkU0IiBzdHJva2Utd2lkdGg9IjcuNSIvPjxjbGlwUGF0aCBpZD0iYzU0Ij48cmVjdCB4PSIyNyIgeT0iMjcuNDQiIHdpZHRoPSIxMCIgaGVpZ2h0PSIyNC41NiIvPjwvY2xpcFBhdGg+PHBhdGggY2xpcC1wYXRoPSJ1cmwoI2M1NCkiIGZpbGw9IiM3QURGRTQiIGQ9Ik0yOCAyNy40M1Y0N2E0IDQgMCAwIDAgOCAwVjI3LjQzWiIvPjwvZz4KPC9zdmc+","glyph-c":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiBmaWxsPSJub25lIiBjb2xvcj0iI0ZGRkZGRiIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJCcmltbGluZSI+PHJlY3QgeD0iNC43NSIgeT0iMS4yNSIgd2lkdGg9IjguNSIgaGVpZ2h0PSIxNS41IiByeD0iNC4yNSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjEuNSIvPjxjbGlwUGF0aCBpZD0iYzU1Ij48cmVjdCB4PSI1LjUiIHk9IjYuMzU5OTk5OTk5OTk5OTk5IiB3aWR0aD0iNyIgaGVpZ2h0PSI5LjY0Ii8+PC9jbGlwUGF0aD48cGF0aCBjbGlwLXBhdGg9InVybCgjYzU1KSIgZmlsbD0iI0ZGRkZGRiIgZD0iTTYuNSA2LjM1VjEyLjVhMi41IDIuNSAwIDAgMCA1IDBWNi4zNVoiLz48L3N2Zz4="};
+const root=document.documentElement;
+document.querySelectorAll('[data-set-theme]').forEach(b=>b.addEventListener('click',()=>{const t=b.dataset.setTheme;if(t==='auto')root.removeAttribute('data-theme');else root.dataset.theme=t;document.querySelectorAll('[data-set-theme]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+const lvl=document.getElementById('niveau'),out=document.getElementById('niveau-val');
+function setLevel(v){const f=v/100;out.textContent=v+' %';document.querySelectorAll('.lvl-num').forEach(n=>n.textContent=v+' %');
+document.querySelectorAll('svg.live rect.lvl').forEach(r=>{const b=+r.dataset.bottom,t=+r.dataset.top;let h=f*(b-t);if(f>0&&h<1)h=1;r.setAttribute('y',b-h);r.setAttribute('height',h+1);});}
+lvl.addEventListener('input',()=>setLevel(+lvl.value));setLevel(+lvl.value);
+document.querySelectorAll('canvas.px').forEach(c=>{const n=+c.dataset.size;c.width=n;c.height=n;const im=new Image();im.onload=()=>{const x=c.getContext('2d');x.imageSmoothingEnabled=true;x.drawImage(im,0,0,n,n);};im.src=SRC[c.dataset.src];});
+function fit(){document.querySelectorAll('.site-frame.desktop').forEach(f=>f.style.setProperty('--k',f.clientWidth/1440));}
+addEventListener('resize',fit);fit();
+</script>
+</body>
+</html>

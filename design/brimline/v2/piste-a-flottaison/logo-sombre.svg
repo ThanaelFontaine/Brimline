@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 64" width="270" height="64" role="img" aria-label="Brimline">
+<g transform="translate(0 4) scale(0.875)"><rect x="20" y="8" width="24" height="48" rx="12" fill="none" stroke="#5CC8D0" stroke-width="4.5"/><path d="M9 21H55" stroke="#5CC8D0" stroke-width="4.5" stroke-linecap="round"/><clipPath id="c14"><rect x="24.5" y="34.05" width="15" height="17.450000000000003"/></clipPath><path clip-path="url(#c14)" fill="#5CC8D0" d="M25.5 34.04V44a6.5 6.5 0 0 0 13 0V34.04Z"/></g>
+<text x="66" y="46" font-family="-apple-system, BlinkMacSystemFont, &apos;SF Pro Display&apos;, &apos;Helvetica Neue&apos;, Helvetica, Arial, sans-serif" font-size="40" font-weight="600" fill="#ECEFF2" letter-spacing="-0.6">Brimline</text>
+</svg>
