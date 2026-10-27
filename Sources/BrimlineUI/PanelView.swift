@@ -204,6 +204,7 @@ struct AccountCard: View {
         let strings = model.strings
         switch usage.status {
         case .ok:
+            if let note = usage.note { return strings.noteMessage(note) }
             if let age = usage.age(at: model.now), age > model.staleAfter {
                 return strings.dataAge(model.time.age(age))
             }
@@ -221,7 +222,7 @@ struct AccountCard: View {
 
     var noteSymbol: String {
         switch usage.status {
-        case .ok: return "clock"
+        case .ok: return usage.note == nil ? "clock" : "info.circle"
         case .unavailable: return "icloud.slash"
         case .expired, .reconnect: return "person.crop.circle.badge.exclamationmark"
         case .signedOut: return "person.crop.circle.badge.questionmark"

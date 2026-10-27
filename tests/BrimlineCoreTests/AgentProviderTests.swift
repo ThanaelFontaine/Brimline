@@ -85,12 +85,12 @@ struct AgentProviderTests {
         var settings = BrimlineSettings()
         settings.enabledProviders = ["claude"]
         let empty = UsageSnapshot(generatedAt: Self.now, accounts: [Self.snapshot.accounts[0]])
-        let result = try data(try call(server(empty, settings: settings), "get_usage", #"{"provider":"cursor"}"#))
+        let result = try data(try call(server(empty, settings: settings), "get_usage", #"{"provider":"grok"}"#))
         #expect((result["accounts"] as? [Any])?.isEmpty == true)
         let note = result["note"] as? String
-        // No reader for Cursor in this version: the note must not promise a switch that is refused.
-        #expect(note?.contains("does not read cursor yet") == true)
-        #expect(note?.contains("providers enable") == false)
+        // Grok has a reader: the note points at the switch.
+        #expect(note?.contains("grok is off in Brimline") == true)
+        #expect(note?.contains("providers enable grok") == true)
     }
 
     @Test("get_usage for Claude turned off points to the switch")
@@ -144,8 +144,10 @@ struct AgentProviderTests {
         // Gemini has a reader (a sentence only): off, it points at the switch.
         let off = try data(try call(server(settings: settings), "best_account", #"{"provider":"gemini"}"#))
         #expect((off["note"] as? String)?.contains("gemini is off in Brimline") == true)
-        // Grok has no reader yet: no switch to point at.
-        #expect(MCPServer.emptyNote(.grok, settings: settings).contains("does not read grok yet"))
+        // A provider with no reader cannot be switched on: no switch to point at.
+        let none = MCPServer.emptyNote(.grok, settings: settings, readers: [])
+        #expect(none.contains("does not read grok yet"))
+        #expect(!none.contains("providers enable"))
     }
 
     @Test("The tools list names the providers and the windows")

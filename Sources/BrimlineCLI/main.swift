@@ -260,7 +260,7 @@ case "status":
         for u in visible {
             let title = settings.label(for: u.account.id) ?? u.account.email ?? u.account.folderName
             print(u.account.provider == .claude ? title : "\(u.account.provider.displayName) · \(title)")
-            if let message = strings.message(for: u), u.status != .ok {
+            if let message = strings.message(for: u), u.status != .ok || u.note != nil {
                 print("  \(message)")
             }
             var rows: [(String, String, String)] = []
