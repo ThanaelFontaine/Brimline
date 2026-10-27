@@ -120,12 +120,25 @@ struct AccountsTab: View {
                 .padding(.top, SGTheme.Space.xs)
             }
 
-            Section(s.otherProviders) {
-                ForEach([Provider.chatgpt, .gemini, .grok], id: \.self) { provider in
-                    LabeledContent(provider.displayName) {
-                        Text(s.comingSoon).foregroundStyle(.secondary)
+            Section {
+                ForEach(Provider.allCases, id: \.self) { provider in
+                    if Providers.isSupported(provider) {
+                        Toggle(provider.displayName, isOn: Binding(
+                            get: { model.settings.isEnabled(provider) },
+                            set: { model.setProvider(provider, enabled: $0) }
+                        ))
+                        .toggleStyle(.switch)
+                    } else {
+                        LabeledContent(provider.displayName) {
+                            Text(s.comingSoon).foregroundStyle(.secondary)
+                        }
                     }
                 }
+            } header: {
+                Text(s.providersTitle)
+            } footer: {
+                Text(s.providersHelp)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .formStyle(.grouped)
@@ -162,18 +175,18 @@ struct AccountSettingsRow: View {
                         .lineLimit(3)
                         .truncationMode(.middle)
                         .fixedSize(horizontal: false, vertical: true)
-                        .help(account.email ?? account.configDir)
+                        .help(account.email ?? account.source)
                     Text(details(for: account))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(model.displayPath(account.configDir))
+                    Text(model.displayPath(account.source))
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .textSelection(.enabled)
-                        .help(account.configDir)
+                        .help(account.source)
                 }
                 Spacer(minLength: SGTheme.Space.s)
                 HStack(spacing: SGTheme.Space.s) {
@@ -199,9 +212,15 @@ struct AccountSettingsRow: View {
                     .textFieldStyle(.roundedBorder)
                     .labelsHidden()
                 if account.addedByHand {
-                    Button(s.removeFolder) { model.removeFolder(account.configDir) }
+                    Button(s.removeFolder) { model.removeFolder(account.source) }
                 }
             }
+            Toggle(s.doNotRead, isOn: Binding(
+                get: { model.settings.isUnread(account.id) },
+                set: { model.setUnread($0, accountID: account.id) }
+            ))
+            .font(.system(size: 12))
+            .help(s.doNotReadHelp)
         }
         .padding(.vertical, SGTheme.Space.xs)
     }

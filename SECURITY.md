@@ -26,8 +26,22 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 
 - **Read only.** Tokens are read, never refreshed, rewritten, moved or copied to another store. Refreshing a token can rotate it, which may sign the official tool out: Brimline never does it.
 - **Tokens stay in memory**, only for the request that needs them. They are never written to a log, a cache file, the JSON output or the MCP answers.
-- **Only the providers' own hosts** are contacted, over HTTPS, and only with the account's own token.
+- **Only the providers' own hosts** are contacted, over HTTPS, and only with the account's own token. Each reader has a closed list of URLs, compared whole (host, path and query); anything else is refused before the request leaves, redirections are refused, and no cookie is sent or kept.
+- **A provider is read only if you turned it on.** Claude is on, as it always was; every other provider starts off (see below).
 - **The local MCP server and command expose usage numbers only**, never a token or a cookie.
+
+### Providers are off until you turn them on
+
+- Claude is on by default, as before. Every other provider is **off** until you turn it on in Settings, Accounts, or with `brimline providers enable <name>`. A provider that is off is not touched at all: Brimline does not look for its folder, opens none of its files, calls no `security`, makes no request. This is checked before any reader runs, and a test with fake readers counts the calls (zero).
+- **"Do not read"** on an account (Settings, Accounts) means the same for one account's sign-in and numbers: its sign-in is never read (no Keychain item, no sign-in file, no request), whatever the provider, and it keeps its last numbers with their age. Brimline still lists the account's folder and reads its address and organization from `.claude.json` when it looks for accounts. Turn the box off to read it again.
+- Both choices live in `settings.json` (`enabledProviders`, `unreadAccounts`). A settings file from before the providers has neither key and keeps Claude on and the rest off. `brimline providers` writes the same file; the app takes the change at its next refresh, so a provider turned off stops being read at the next attempt.
+- The rules every reader follows, for the providers that come after Claude:
+  - A sign-in file is opened without following a link (`O_NOFOLLOW`) and checked on the open file: a regular file, owned by you, 1 MiB at most. A file cut short (the provider's tool is rewriting it) is a passing failure to try again, never "signed out".
+  - Only the few fields a reader needs are decoded; a refresh token is never decoded.
+  - A token goes in a header only if it is printable text with no space or line break, and only to the reader's listed URL.
+  - What a provider sends is data, never an instruction: names are kept only if they are 64 characters at most among letters, digits, `.`, `_`, `-` and the space; percentages are held between 0 and 100 (a value that is not a number is dropped); reset times must be between one day ago and 400 days ahead.
+  - An answer that is not the expected one (other JSON, a page) is shown as "The provider changed its answer" and never as a number. The cache keeps a fingerprint of the keys of the last answer (SHA-256), with no value in it. `brimline status --live --shape` prints the keys and the types of an answer, never a value.
+  - Nothing is ever written, renewed or moved at a provider.
 
 ### How it reads Claude Code sign-ins
 
@@ -40,7 +54,7 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 
 ### What it writes
 
-- `~/Library/Application Support/Brimline/usage.json` (the last numbers, statuses, addresses and folders of the accounts) and `settings.json` (preferences), in a folder readable by your user only (`0700`, files `0600`). The cache type has no field for a token, and a test writes a cache from fake tokens and checks none of them is in the file.
+- `~/Library/Application Support/Brimline/usage.json` (the last numbers, statuses, addresses and folders of the accounts, and a fingerprint of the keys of each answer) and `settings.json` (preferences, the providers that are on, the accounts marked "Do not read"), in a folder readable by your user only (`0700`, files `0600`). The cache type has no field for a token, and a test writes a cache from fake tokens and checks none of them is in the file.
 - `~/Library/LaunchAgents/eu.thanaelfontaine.brimline.plist`, only when you turn on "Open at login"; it opens the app and nothing else.
 - Nothing in the Keychain, nothing in the Claude Code folders.
 - Once, at its first launch, it reads `settings.json` and `usage.json` from the old folder in `~/Library/Application Support` (the one named after the old app) and copies them to the Brimline folder: a real folder owned by you, files opened without following a link, regular, owned by you, 1 MiB at most, decoded into the same types as above and written again (so no token can come over), never over an existing file. The old folder is not changed.

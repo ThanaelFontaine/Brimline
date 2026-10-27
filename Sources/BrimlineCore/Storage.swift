@@ -111,10 +111,22 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
     public var labels: [String: String] = [:]
     public var refreshMinutes: Int = 5
     public var showPercentInMenuBar: Bool = false
+    /// The providers Brimline may read (raw values of `Provider`). Claude only by default: a
+    /// provider is off until the user turns it on, and nothing of it is touched before.
+    public var enabledProviders: [String] = [Provider.claude.rawValue]
+    /// The accounts the user marked "Do not read" (account ids). They keep their last numbers.
+    public var unreadAccounts: [String] = []
 
     public init() {}
 
     public func isHidden(_ accountID: String) -> Bool { hiddenAccounts.contains(accountID) }
+
+    public func isEnabled(_ provider: Provider) -> Bool { enabledProviders.contains(provider.rawValue) }
+
+    public func isUnread(_ accountID: String) -> Bool { unreadAccounts.contains(accountID) }
+
+    /// May Brimline read this account at all: its provider is on and the account is not "Do not read".
+    public func mayRead(_ account: Account) -> Bool { isEnabled(account.provider) && !isUnread(account.id) }
 
     public func label(for accountID: String) -> String? {
         guard let l = labels[accountID]?.trimmingCharacters(in: .whitespacesAndNewlines), !l.isEmpty else { return nil }
@@ -131,6 +143,9 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
         let minutes = try c.decodeIfPresent(Int.self, forKey: .refreshMinutes) ?? defaults.refreshMinutes
         refreshMinutes = Self.refreshChoices.contains(minutes) ? minutes : defaults.refreshMinutes
         showPercentInMenuBar = try c.decodeIfPresent(Bool.self, forKey: .showPercentInMenuBar) ?? defaults.showPercentInMenuBar
+        // A file written before the providers has neither key: Claude stays on, as it was.
+        enabledProviders = try c.decodeIfPresent([String].self, forKey: .enabledProviders) ?? defaults.enabledProviders
+        unreadAccounts = try c.decodeIfPresent([String].self, forKey: .unreadAccounts) ?? defaults.unreadAccounts
     }
 }
 

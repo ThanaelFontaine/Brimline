@@ -8,6 +8,29 @@ public enum UsageWindow: String, Sendable, CaseIterable {
     case session
     /// The weekly limits only (all models, and the model's week when a model is given).
     case week
+    /// The daily limits only.
+    case day
+    /// The monthly limits only (a billing cycle).
+    case month
+    /// The limits that have another window length.
+    case period
+
+    /// The windows an agent can ask for.
+    public static let names = allCases.map(\.rawValue)
+}
+
+extension Provider {
+    /// The windows that exist for this provider. `any` always does. Asking another provider's window
+    /// (for example `session` of Grok) is an error, not an empty answer.
+    public var windows: [UsageWindow] {
+        switch self {
+        case .claude: return [.any, .session, .week]
+        case .chatgpt: return [.any, .session, .week, .period]
+        case .gemini: return [.any, .day]
+        case .grok: return [.any, .period]
+        case .cursor: return [.any, .month]
+        }
+    }
 }
 
 public struct AccountChoice: Sendable {
@@ -20,11 +43,17 @@ public struct AccountChoice: Sendable {
 
 public enum Ranking {
     /// The account closest to one of its limits (the menu bar glyph follows it), with its percentage.
-    public static func mostLoaded(_ accounts: [AccountUsage], now: Date) -> (usage: AccountUsage, percent: Double)? {
+    /// Only the providers in `providers` count (all of them when nil): a provider that is off never sets the glyph.
+    public static func mostLoaded(_ accounts: [AccountUsage], providers: Set<Provider>? = nil,
+                                  now: Date) -> (usage: AccountUsage, percent: Double)? {
         accounts
+            .filter { providers?.contains($0.account.provider) ?? true }
             .compactMap { u in u.highestPercent(at: now).map { (usage: u, percent: $0) } }
             .max { $0.percent < $1.percent }
     }
+
+    /// Statuses whose last numbers may be old: those accounts come after every other.
+    private static func isDoubtful(_ status: AccountStatus) -> Bool { status == .unavailable || status == .formatChanged }
 
     /// Accounts ranked by room left for `window` and `model`, the best first.
     ///
@@ -37,12 +66,16 @@ public enum Ranking {
                             now: Date) -> [AccountChoice] {
         let wanted = model?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let choices: [AccountChoice] = accounts.compactMap { usage in
-            guard usage.fetchedAt != nil, usage.status != .reconnect, usage.status != .signedOut else { return nil }
+            guard usage.fetchedAt != nil, usage.status != .reconnect, usage.status != .signedOut,
+                  usage.status != .notReadable else { return nil }
             let considered = usage.limits.filter { limit in
                 switch limit.kind {
-                case .session: return window != .week
-                case .weekly: return window != .session
-                case .weeklyModel:
+                case .session: return window == .any || window == .session
+                case .weekly: return window == .any || window == .week
+                case .daily: return window == .any || window == .day
+                case .monthly: return window == .any || window == .month
+                case .period: return window == .any || window == .period
+                case .model:
                     guard window != .session, let wanted, !wanted.isEmpty else { return false }
                     return limit.model?.lowercased() == wanted
                 }
@@ -53,7 +86,7 @@ public enum Ranking {
             return AccountChoice(usage: usage, headroom: headroom, bindingLimit: binding)
         }
         return choices.sorted { a, b in
-            let aUnavailable = a.usage.status == .unavailable, bUnavailable = b.usage.status == .unavailable
+            let aUnavailable = Self.isDoubtful(a.usage.status), bUnavailable = Self.isDoubtful(b.usage.status)
             if aUnavailable != bUnavailable { return bUnavailable }
             if a.headroom != b.headroom { return a.headroom > b.headroom }
             return (a.usage.fetchedAt ?? .distantPast) > (b.usage.fetchedAt ?? .distantPast)

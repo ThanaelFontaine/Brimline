@@ -56,7 +56,7 @@ struct UsageTests {
         let limits = try UsageParser.parse(try fixture("usage-team-seat"))
         #expect(limits == [
             UsageLimit(kind: .session, percent: 48, resetsAt: date("2026-10-25T03:00:00Z")),
-            UsageLimit(kind: .weeklyModel, model: "Fable", percent: 0, resetsAt: date("2026-10-27T02:00:00Z")),
+            UsageLimit(kind: .model, model: "Fable", percent: 0, resetsAt: date("2026-10-27T02:00:00Z")),
         ])
         let usage = AccountUsage(account: account("team@example.org"), status: .ok, limits: limits, fetchedAt: Date())
         #expect(usage.hasNoGlobalWeeklyLimit)
@@ -65,7 +65,7 @@ struct UsageTests {
     @Test("Account with a weekly limit: session, week and Fable week")
     func weeklyAccount() throws {
         let limits = try UsageParser.parse(try fixture("usage-contact-np"))
-        #expect(limits.map(\.kind) == [.session, .weekly, .weeklyModel])
+        #expect(limits.map(\.kind) == [.session, .weekly, .model])
         #expect(limits.map(\.percent) == [2, 49, 0])
         #expect(limits[1].resetsAt == date("2026-10-27T12:00:00Z"))
         #expect(limits[2].model == "Fable")
@@ -119,10 +119,10 @@ struct UsageTests {
         let d = account("d@example.com", dir: "/opt/d")
         let e = account("e@example.com", dir: "/opt/e")
         let credentials = FakeCredentials([
-            a.keychainService: .success(ClaudeCredential(accessToken: "tok-a", expiresAt: later)),
-            b.keychainService: .success(ClaudeCredential(accessToken: "tok-b", expiresAt: later)),
-            c.keychainService: .success(ClaudeCredential(accessToken: "tok-c", expiresAt: now.addingTimeInterval(-1))),
-            e.keychainService: .success(ClaudeCredential(accessToken: "tok-e", expiresAt: nil)),
+            a.keychainService!: .success(ClaudeCredential(accessToken: "tok-a", expiresAt: later)),
+            b.keychainService!: .success(ClaudeCredential(accessToken: "tok-b", expiresAt: later)),
+            c.keychainService!: .success(ClaudeCredential(accessToken: "tok-c", expiresAt: now.addingTimeInterval(-1))),
+            e.keychainService!: .success(ClaudeCredential(accessToken: "tok-e", expiresAt: nil)),
         ])
         let http = FakeHTTP([
             "tok-a": (200, try fixture("usage-contact-np"), [:]),
@@ -139,7 +139,7 @@ struct UsageTests {
             AccountUsage(account: e, status: .ok, limits: oldLimits, fetchedAt: fetched),
         ])
 
-        let snapshot = await service.refresh(accounts: [a, b, c, d, e], previous: previous, now: now)
+        let snapshot = await service.refresh(accounts: [a, b, c, d, e], settings: allOn, previous: previous, now: now)
         #expect(snapshot.accounts.map(\.status) == [.ok, .reconnect, .expired, .signedOut, .unavailable])
         #expect(snapshot.accounts[0].limits.count == 3)
         #expect(snapshot.accounts[0].fetchedAt == now)
@@ -158,17 +158,17 @@ struct UsageTests {
     func backoff() async throws {
         let now = date("2026-10-25T01:00:00Z")
         let a = account("a@example.com")
-        let credentials = FakeCredentials([a.keychainService: .success(ClaudeCredential(accessToken: "tok", expiresAt: nil))])
+        let credentials = FakeCredentials([a.keychainService!: .success(ClaudeCredential(accessToken: "tok", expiresAt: nil))])
         let http = FakeHTTP(["tok": (429, Data(), ["Retry-After": "600"])])
         let service = UsageService(credentials: credentials, http: http)
 
-        let first = await service.refresh(account: a, previous: nil, now: now)
+        let first = await service.refresh(account: a, settings: allOn, previous: nil, now: now)
         #expect(first.status == .unavailable)
         #expect(first.retryAfter == now.addingTimeInterval(600)) // Retry-After wins over 2 min
-        let skipped = await service.refresh(account: a, previous: first, now: now.addingTimeInterval(60))
+        let skipped = await service.refresh(account: a, settings: allOn, previous: first, now: now.addingTimeInterval(60))
         #expect(http.requests.count == 1)
         #expect(skipped.failureCount == 1)
-        let forced = await service.refresh(account: a, previous: first, now: now.addingTimeInterval(60), force: true)
+        let forced = await service.refresh(account: a, settings: allOn, previous: first, now: now.addingTimeInterval(60), force: true)
         #expect(http.requests.count == 2)
         #expect(forced.failureCount == 2)
 
@@ -178,17 +178,17 @@ struct UsageTests {
         #expect(UsageService.retryDelay(afterFailures: 9) == 3600)
     }
 
-    @Test("A network failure or an unknown answer makes the account unavailable")
+    @Test("A network failure makes the account unavailable, an unknown answer says the format changed")
     func unknownAnswer() async throws {
         let a = account("a@example.com", dir: "/opt/a")
         let b = account("b@example.com", dir: "/opt/b")
         let credentials = FakeCredentials([
-            a.keychainService: .success(ClaudeCredential(accessToken: "tok-a", expiresAt: nil)),
-            b.keychainService: .success(ClaudeCredential(accessToken: "tok-b", expiresAt: nil)),
+            a.keychainService!: .success(ClaudeCredential(accessToken: "tok-a", expiresAt: nil)),
+            b.keychainService!: .success(ClaudeCredential(accessToken: "tok-b", expiresAt: nil)),
         ])
         let http = FakeHTTP(["tok-a": (200, Data(#"{"new_shape":true}"#.utf8), [:])])
-        let snapshot = await UsageService(credentials: credentials, http: http).refresh(accounts: [a, b], previous: nil)
-        #expect(snapshot.accounts.map(\.status) == [.unavailable, .unavailable])
+        let snapshot = await UsageService(credentials: credentials, http: http).refresh(accounts: [a, b], settings: allOn, previous: nil)
+        #expect(snapshot.accounts.map(\.status) == [.formatChanged, .unavailable])
         #expect(snapshot.accounts.map(\.detail) == ["unknown answer", "network"])
     }
 }

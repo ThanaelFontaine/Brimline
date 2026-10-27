@@ -47,7 +47,7 @@ struct FormattingTests {
     @Test("Limit names and state messages exist in both languages")
     func strings() {
         let fr = Strings(.fr), en = Strings(.en)
-        let fable = UsageLimit(kind: .weeklyModel, model: "Fable", percent: 0, resetsAt: nil)
+        let fable = UsageLimit(kind: .model, model: "Fable", percent: 0, resetsAt: nil)
         #expect(fr.limitName(fable) == "Semaine · Fable")
         #expect(en.limitName(fable) == "Week · Fable")
         #expect(fr.session == "Session 5 h")
@@ -59,6 +59,26 @@ struct FormattingTests {
         #expect(fr.licenseLine == "Code source public sous licence PolyForm Shield 1.0.0")
     }
 
+    @Test("The new kinds of limits and the new states have a name and a message in both languages")
+    func newKindsAndStates() {
+        let fr = Strings(.fr), en = Strings(.en)
+        for kind in [LimitKind.daily, .monthly, .period] {
+            let limit = UsageLimit(kind: kind, percent: 1, resetsAt: nil)
+            #expect(!en.limitName(limit).isEmpty)
+            #expect(fr.limitName(limit) != en.limitName(limit))
+        }
+        let named = UsageLimit(kind: .period, percent: 1, resetsAt: nil, label: "Credits")
+        #expect(en.limitName(named) == "Credits")
+        for status in AccountStatus.allCases where status != .ok {
+            #expect(en.statusMessage(status) != nil)
+            #expect(fr.statusMessage(status) != en.statusMessage(status))
+            #expect(en.statusName(status) != fr.statusName(status) || status == .pending)
+        }
+        #expect(en.statusMessage(.formatChanged) == "The provider changed its answer: update Brimline.")
+        #expect(fr.doNotRead == "Ne pas lire")
+        #expect(en.doNotRead == "Do not read")
+    }
+
     @Test("No em or en dash in any interface text")
     func noLongDashes() {
         let dashes: [Character] = ["\u{2014}", "\u{2013}"]
@@ -66,7 +86,9 @@ struct FormattingTests {
             let s = Strings(language)
             let texts = [s.session, s.week, s.noGlobalWeekly, s.expiredMessage, s.reconnectMessage,
                          s.unavailableMessage, s.signedOutMessage, s.accountsIntro, s.agentsIntro,
-                         s.openAtLoginHelp, s.licenseLine, s.tagline, s.readOnlyNote, s.howToLink]
+                         s.openAtLoginHelp, s.licenseLine, s.tagline, s.readOnlyNote, s.howToLink,
+                         s.formatChangedMessage, s.notReadableMessage, s.providersTitle, s.providersHelp,
+                         s.doNotRead, s.doNotReadHelp]
             for text in texts { #expect(!text.contains { dashes.contains($0) }) }
         }
     }

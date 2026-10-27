@@ -26,7 +26,7 @@ public struct AccountDiscovery: Sendable {
             let identity = configFile.flatMap(Self.readIdentity(configFile:))
             let isDefault = dir == defaultDir
             accounts.append(Account(
-                configDir: dir,
+                source: dir,
                 email: identity?.email,
                 organization: identity?.organization,
                 seatTier: identity?.seatTier,

@@ -13,13 +13,17 @@ public struct MCPServer: Sendable {
     /// Returns the last snapshot (nil when the app has not written one yet) and the settings.
     public var load: @Sendable () -> (UsageSnapshot?, BrimlineSettings)
     public var now: @Sendable () -> Date
+    /// The home folder, for writing paths as `~/...` in the answers.
+    public var home: URL
 
     public init(version: String,
                 load: @escaping @Sendable () -> (UsageSnapshot?, BrimlineSettings),
-                now: @escaping @Sendable () -> Date = { Date() }) {
+                now: @escaping @Sendable () -> Date = { Date() },
+                home: URL = FileManager.default.homeDirectoryForCurrentUser) {
         self.version = version
         self.load = load
         self.now = now
+        self.home = home
     }
 
     /// Largest message accepted on one line.
@@ -110,21 +114,24 @@ public struct MCPServer: Sendable {
 
     // MARK: Tools
 
+    static var providerNames: [String] { Provider.allCases.map(\.rawValue) }
+
     static var tools: [[String: Any]] { [
         [
             "name": "list_accounts",
             "title": "List accounts",
-            "description": "Lists the AI subscription accounts Brimline knows on this Mac (provider, email address, organization, status). No usage numbers.",
+            "description": "Lists the AI subscription accounts Brimline knows on this Mac (provider, email address, organization, source, status). No usage numbers.",
             "inputSchema": ["type": "object", "properties": [String: Any](), "additionalProperties": false] as [String: Any],
             "annotations": ["readOnlyHint": true, "openWorldHint": false],
         ],
         [
             "name": "get_usage",
             "title": "Get usage",
-            "description": "Usage of each account: every limit (five hour session, week, week per model) with the percentage used and the reset time, plus the age of the numbers.",
+            "description": "Usage of each account: every limit (five hour session, week, day, month, per model...) with the percentage used and the reset time, plus the age of the numbers.",
             "inputSchema": [
                 "type": "object",
                 "properties": [
+                    "provider": ["type": "string", "enum": providerNames, "description": "Optional: only the accounts of this provider. All providers when omitted."],
                     "account": ["type": "string", "description": "Optional: an email address or an account id. All accounts when omitted."],
                     "include_hidden": ["type": "boolean", "description": "Include the accounts hidden in the app's settings. Default false."],
                 ] as [String: Any],
@@ -135,11 +142,12 @@ public struct MCPServer: Sendable {
         [
             "name": "best_account",
             "title": "Best account",
-            "description": "The account with the most room left. window: any (every limit that applies, default), session (five hour window only) or week (weekly limits only). model: optional model name (for example Fable) to include its weekly limit.",
+            "description": "The account of one provider with the most room left. provider: claude (default), chatgpt, gemini, grok or cursor. window: any (every limit that applies, default), session, week, day, month or period: a window that does not exist for the provider is an error. model: optional model name (for example Fable) to include its own limit.",
             "inputSchema": [
                 "type": "object",
                 "properties": [
-                    "window": ["type": "string", "enum": ["any", "session", "week"], "description": "Which limits count. Default any."],
+                    "provider": ["type": "string", "enum": providerNames, "description": "Which provider's accounts are ranked. Default claude."],
+                    "window": ["type": "string", "enum": UsageWindow.names, "description": "Which limits count. Default any."],
                     "model": ["type": "string", "description": "Optional model name, matched without case."],
                 ] as [String: Any],
                 "additionalProperties": false,
@@ -164,10 +172,12 @@ public struct MCPServer: Sendable {
                 var entry: [String: Any] = [
                     "id": u.account.id,
                     "provider": u.account.provider.rawValue,
-                    "folder": u.account.configDir,
+                    "source": AgentPath.display(u.account.source, home: home),
                     "hidden": settings.isHidden(u.account.id),
                     "status": u.status.rawValue,
                 ]
+                entry["folder"] = u.account.provider == .claude ? u.account.source : NSNull()
+                entry["reason"] = u.status == .notReadable ? (u.reason?.rawValue ?? NSNull()) : NSNull()
                 entry["email"] = u.account.email ?? NSNull()
                 entry["organization"] = u.account.organization ?? NSNull()
                 entry["label"] = settings.label(for: u.account.id) ?? NSNull()
@@ -181,8 +191,15 @@ public struct MCPServer: Sendable {
 
         case "get_usage":
             let includeHidden = arguments["include_hidden"] as? Bool ?? false
+            var provider: Provider?
+            if let name = arguments["provider"] as? String {
+                guard let parsed = Provider(rawValue: name) else {
+                    return .success(Self.toolError("Unknown provider \(name): use \(Self.providerNames.joined(separator: ", "))."))
+                }
+                provider = parsed
+            }
             var report = AgentUsageReport(snapshot: snapshot, settings: settings, source: "cache", now: now,
-                                          includeHidden: includeHidden)
+                                          includeHidden: includeHidden, provider: provider, home: home)
             if let wanted = (arguments["account"] as? String)?.trimmingCharacters(in: .whitespaces), !wanted.isEmpty {
                 report.accounts = report.accounts.filter {
                     $0.id == wanted || $0.email?.caseInsensitiveCompare(wanted) == .orderedSame
@@ -191,23 +208,36 @@ public struct MCPServer: Sendable {
                     return .success(Self.toolError("No account matches \(wanted). Call list_accounts to see the accounts."))
                 }
             }
-            return .success(Self.toolResult(AgentJSON.object(report)))
+            var result = AgentJSON.object(report)
+            if report.accounts.isEmpty, let provider, var object = result as? [String: Any] {
+                object["note"] = Self.emptyNote(provider, settings: settings)
+                result = object
+            }
+            return .success(Self.toolResult(result))
 
         case "best_account":
+            let providerName = (arguments["provider"] as? String) ?? Provider.claude.rawValue
+            guard let provider = Provider(rawValue: providerName) else {
+                return .success(Self.toolError("Unknown provider \(providerName): use \(Self.providerNames.joined(separator: ", "))."))
+            }
             let windowName = (arguments["window"] as? String) ?? "any"
             guard let window = UsageWindow(rawValue: windowName) else {
-                return .success(Self.toolError("Unknown window \(windowName): use any, session or week."))
+                return .success(Self.toolError("Unknown window \(windowName): use \(UsageWindow.names.joined(separator: ", "))."))
+            }
+            guard provider.windows.contains(window) else {
+                return .success(Self.toolError("The window \(windowName) does not exist for \(provider.rawValue): use \(provider.windows.map(\.rawValue).joined(separator: " or "))."))
             }
             let model = arguments["model"] as? String
-            let visible = snapshot.accounts.filter { !settings.isHidden($0.account.id) }
+            let visible = snapshot.accounts.filter { !settings.isHidden($0.account.id) && $0.account.provider == provider }
             let ranking = Ranking.rank(visible, window: window, model: model, now: now)
             let entries = ranking.map { choice -> [String: Any] in
-                var entry: [String: Any] = AgentJSON.object(AgentAccount(choice.usage, settings: settings, now: now)) as? [String: Any] ?? [:]
+                var entry: [String: Any] = AgentJSON.object(AgentAccount(choice.usage, settings: settings, now: now, home: home)) as? [String: Any] ?? [:]
                 entry["headroom_percent"] = choice.headroom
                 entry["binding_limit"] = choice.bindingLimit.map { AgentJSON.object(AgentLimit($0, now: now)) } ?? NSNull()
                 return entry
             }
             var result: [String: Any] = [
+                "provider": provider.rawValue,
                 "window": window.rawValue,
                 "generated_at": ISODate.format(snapshot.generatedAt),
                 "age_seconds": max(0, Int(now.timeIntervalSince(snapshot.generatedAt))),
@@ -215,12 +245,24 @@ public struct MCPServer: Sendable {
                 "ranking": entries,
             ]
             result["model"] = model ?? NSNull()
-            if entries.isEmpty { result["note"] = "No account has usage numbers yet." }
+            if entries.isEmpty { result["note"] = Self.emptyNote(provider, settings: settings) }
             return .success(Self.toolResult(result))
 
         default:
             return .failure(RPCError(code: -32602, message: "Unknown tool: \(tool)"))
         }
+    }
+
+    /// Why an answer holds no account of a provider: it is off (nothing of it is read), or it has no numbers.
+    static func emptyNote(_ provider: Provider, settings: BrimlineSettings) -> String {
+        if !settings.isEnabled(provider) {
+            // A provider without a reader cannot be switched on: do not point at a switch that is refused.
+            if !Providers.isSupported(provider) {
+                return "This version of Brimline does not read \(provider.rawValue) yet, so there is no account to show."
+            }
+            return "\(provider.rawValue) is off in Brimline, so nothing of it is read. The user can turn it on in the Brimline settings or with: brimline providers enable \(provider.rawValue)"
+        }
+        return "No \(provider.rawValue) account has usage numbers yet."
     }
 
     static func toolResult(_ structured: Any) -> [String: Any] {

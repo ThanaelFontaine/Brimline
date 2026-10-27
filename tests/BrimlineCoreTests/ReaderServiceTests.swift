@@ -10,19 +10,19 @@ struct ReaderServiceTests {
 
     private func claudeService(_ a: Account, credential: Result<ClaudeCredential, CredentialError>,
                                http: FakeHTTP = FakeHTTP([:])) -> UsageService {
-        UsageService(credentials: FakeCredentials([a.keychainService: credential]), http: http)
+        UsageService(credentials: FakeCredentials([a.keychainService!: credential]), http: http)
     }
 
     @Test("A Keychain tool that fails is unavailable and backs off; an unreadable item is signed out with no delay")
     func keychainFailures() async {
         let a = account("a@example.com", dir: "/opt/a")
-        let failed = await claudeService(a, credential: .failure(.toolFailed(44))).refresh(account: a, previous: nil, now: now)
+        let failed = await claudeService(a, credential: .failure(.toolFailed(44))).refresh(account: a, settings: allOn, previous: nil, now: now)
         #expect(failed.status == .unavailable)
         #expect(failed.detail == "security exited with 44")
         #expect(failed.failureCount == 1)
         #expect(failed.retryAfter == now.addingTimeInterval(120))
 
-        let unreadable = await claudeService(a, credential: .failure(.unreadable)).refresh(account: a, previous: nil, now: now)
+        let unreadable = await claudeService(a, credential: .failure(.unreadable)).refresh(account: a, settings: allOn, previous: nil, now: now)
         #expect(unreadable.status == .signedOut)
         #expect(unreadable.detail == "unreadable Keychain item")
         #expect(unreadable.failureCount == 0)
@@ -38,7 +38,7 @@ struct ReaderServiceTests {
         ]
         for (header, expected) in cases {
             let http = FakeHTTP(["tok": (429, Data(), header.map { ["Retry-After": $0] } ?? [:])])
-            let usage = await claudeService(a, credential: cred, http: http).refresh(account: a, previous: nil, now: now)
+            let usage = await claudeService(a, credential: cred, http: http).refresh(account: a, settings: allOn, previous: nil, now: now)
             #expect(usage.status == .unavailable, "header \(header ?? "none")")
             #expect(usage.failureCount == 1, "header \(header ?? "none")")
             #expect(usage.retryAfter == now.addingTimeInterval(expected), "header \(header ?? "none")")
@@ -50,7 +50,7 @@ struct ReaderServiceTests {
         let a = account("a@example.com")
         let cred = Result<ClaudeCredential, CredentialError>.success(ClaudeCredential(accessToken: "tok", expiresAt: nil))
         let http = FakeHTTP(["tok": (500, Data(), ["Retry-After": "900"])])
-        let usage = await claudeService(a, credential: cred, http: http).refresh(account: a, previous: nil, now: now)
+        let usage = await claudeService(a, credential: cred, http: http).refresh(account: a, settings: allOn, previous: nil, now: now)
         #expect(usage.detail == "HTTP 500")
         #expect(usage.retryAfter == now.addingTimeInterval(120))
     }
@@ -64,7 +64,7 @@ struct ReaderServiceTests {
                                    failureCount: 4, retryAfter: now.addingTimeInterval(-1), detail: "HTTP 503")
 
         let ok = FakeHTTP(["tok": (200, try fixture("usage-contact-np"), [:])])
-        let healed = await claudeService(a, credential: cred, http: ok).refresh(account: a, previous: failing, now: now)
+        let healed = await claudeService(a, credential: cred, http: ok).refresh(account: a, settings: allOn, previous: failing, now: now)
         #expect(healed.status == .ok)
         #expect(healed.failureCount == 0)
         #expect(healed.retryAfter == nil)
@@ -72,7 +72,7 @@ struct ReaderServiceTests {
         #expect(healed.fetchedAt == now)
 
         let refused = FakeHTTP(["tok": (401, Data(), [:])])
-        let after = await claudeService(a, credential: cred, http: refused).refresh(account: a, previous: failing, now: now)
+        let after = await claudeService(a, credential: cred, http: refused).refresh(account: a, settings: allOn, previous: failing, now: now)
         #expect(after.status == .reconnect)
         #expect(after.failureCount == 0)
         #expect(after.retryAfter == nil)
@@ -85,15 +85,15 @@ struct ReaderServiceTests {
         let a = account("a@example.com", dir: "/opt/a")
         let b = account("b@example.com", dir: "/opt/b")
         let credentials = FakeCredentials([
-            a.keychainService: .success(ClaudeCredential(accessToken: "tok-a", expiresAt: nil)),
-            b.keychainService: .success(ClaudeCredential(accessToken: "tok-b", expiresAt: nil)),
+            a.keychainService!: .success(ClaudeCredential(accessToken: "tok-a", expiresAt: nil)),
+            b.keychainService!: .success(ClaudeCredential(accessToken: "tok-b", expiresAt: nil)),
         ])
         let http = FakeHTTP(["tok-a": (200, try fixture("usage-contact-np"), [:]), "tok-b": (200, try fixture("usage-contact-np"), [:])])
-        _ = await UsageService(credentials: credentials, http: http).refresh(accounts: [a, b], previous: nil, now: now)
+        _ = await UsageService(credentials: credentials, http: http).refresh(accounts: [a, b], settings: allOn, previous: nil, now: now)
         #expect(http.requests.count == 2)
         #expect(http.requests.allSatisfy { $0.url == URL(string: "https://api.anthropic.com/api/oauth/usage") })
         #expect(Set(http.requests.compactMap { $0.value(forHTTPHeaderField: "Authorization") }) == ["Bearer tok-a", "Bearer tok-b"])
-        #expect(Set(credentials.reads) == [a.keychainService, b.keychainService])
+        #expect(Set(credentials.reads) == [a.keychainService!, b.keychainService!])
     }
 
     @Test("Results keep the order of the accounts and each account goes to the reader of its provider")
@@ -101,6 +101,7 @@ struct ReaderServiceTests {
         struct Stub: ProviderReader {
             var provider: Provider
             var answer: ProviderReading
+            var allowedURLs: [URL] { [] }
             func discover(home: URL, settings: BrimlineSettings) -> [Account] { [] }
             func read(account: Account, now: Date) async -> ProviderReading { answer }
         }
@@ -112,7 +113,7 @@ struct ReaderServiceTests {
             Stub(provider: .claude, answer: .limits(limits, shape: "x")),
             Stub(provider: .grok, answer: .failure(status: .reconnect, detail: "stub", retryAfter: nil)),
         ])
-        let snapshot = await service.refresh(accounts: [other, claude], previous: nil, now: now)
+        let snapshot = await service.refresh(accounts: [other, claude], settings: allOn, previous: nil, now: now)
         #expect(snapshot.accounts.map(\.account.id) == [other.id, claude.id])
         #expect(snapshot.accounts.map(\.status) == [.reconnect, .ok])
         #expect(snapshot.accounts[1].limits == limits)
@@ -122,11 +123,12 @@ struct ReaderServiceTests {
     func notReadableAnswer() async {
         struct Stub: ProviderReader {
             var provider: Provider { .claude }
+            var allowedURLs: [URL] { [] }
             func discover(home: URL, settings: BrimlineSettings) -> [Account] { [] }
             func read(account: Account, now: Date) async -> ProviderReading { .notReadable(reason: .consumerPlan) }
         }
         let a = account("a@example.com")
-        let usage = await UsageService(readers: [Stub()]).refresh(account: a, previous: nil, now: now)
+        let usage = await UsageService(readers: [Stub()]).refresh(account: a, settings: allOn, previous: nil, now: now)
         #expect(usage.failureCount == 0)
         #expect(usage.retryAfter == nil)
     }
@@ -135,7 +137,7 @@ struct ReaderServiceTests {
     func expiredNeverSent() async {
         let a = account("a@example.com")
         let http = FakeHTTP(["tok": (200, Data(), [:])])
-        let reader = ClaudeReader(credentials: FakeCredentials([a.keychainService: .success(ClaudeCredential(accessToken: "tok", expiresAt: now))]), http: http)
+        let reader = ClaudeReader(credentials: FakeCredentials([a.keychainService!: .success(ClaudeCredential(accessToken: "tok", expiresAt: now))]), http: http)
         guard case .expired = await reader.read(account: a, now: now) else {
             Issue.record("expected expired")
             return

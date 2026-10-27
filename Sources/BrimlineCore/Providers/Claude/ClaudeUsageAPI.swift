@@ -3,7 +3,7 @@ import Foundation
 /// The Claude usage endpoint used by Claude Code. Internal and undocumented: it may change.
 public enum ClaudeUsageAPI {
     public static let url = URL(string: "https://api.anthropic.com/api/oauth/usage")!
-    public static let timeout: TimeInterval = 15
+    public static let timeout: TimeInterval = URLSessionHTTPClient.timeout
     public static let betaHeader = "oauth-2025-04-20"
     /// Brimline says who it is: it never presents itself as Claude Code.
     public static var userAgent: String { "Brimline/\(BrimlineVersion.current) (+\(Links.repository.absoluteString))" }

@@ -35,10 +35,10 @@ struct RegistryTests {
         let limited = account("limited@example.com", dir: "/opt/limited")
         let missing = account("missing@example.com", dir: "/opt/missing")
         let credentials = FakeCredentials([
-            ok.keychainService: .success(ClaudeCredential(accessToken: "tok-ok", expiresAt: later)),
-            expired.keychainService: .success(ClaudeCredential(accessToken: "tok-expired", expiresAt: now)),
-            refused.keychainService: .success(ClaudeCredential(accessToken: "tok-refused", expiresAt: later)),
-            limited.keychainService: .success(ClaudeCredential(accessToken: "tok-limited", expiresAt: later)),
+            ok.keychainService!: .success(ClaudeCredential(accessToken: "tok-ok", expiresAt: later)),
+            expired.keychainService!: .success(ClaudeCredential(accessToken: "tok-expired", expiresAt: now)),
+            refused.keychainService!: .success(ClaudeCredential(accessToken: "tok-refused", expiresAt: later)),
+            limited.keychainService!: .success(ClaudeCredential(accessToken: "tok-limited", expiresAt: later)),
         ])
         let http = FakeHTTP([
             "tok-ok": (200, try fixture("usage-contact-np"), [:]),
@@ -75,7 +75,7 @@ struct RegistryTests {
     @Test("An account whose provider has no reader is left alone, with no retry delay")
     func noReader() async {
         let a = account("a@example.com")
-        let usage = await UsageService(readers: []).refresh(account: a, previous: nil, now: date("2026-10-27T01:00:00Z"))
+        let usage = await UsageService(readers: []).refresh(account: a, settings: allOn, previous: nil, now: date("2026-10-27T01:00:00Z"))
         #expect(usage.status == .unavailable)
         #expect(usage.retryAfter == nil)
         #expect(usage.failureCount == 0)

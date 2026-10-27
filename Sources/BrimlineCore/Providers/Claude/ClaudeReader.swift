@@ -15,15 +15,19 @@ public struct ClaudeReader: ProviderReader {
     }
 
     public var provider: Provider { .claude }
+    public var allowedURLs: [URL] { [ClaudeUsageAPI.url] }
 
     public func discover(home: URL, settings: BrimlineSettings) -> [Account] {
         AccountDiscovery(home: home, extraFolders: settings.extraFolders).discover()
     }
 
     public func read(account: Account, now: Date) async -> ProviderReading {
+        guard let service = account.keychainService else {
+            return .failure(status: .signedOut, detail: "no Keychain item", retryAfter: nil)
+        }
         let credential: ClaudeCredential
         do throws(CredentialError) {
-            credential = try await Self.read(credentials, service: account.keychainService)
+            credential = try await Self.read(credentials, service: service)
         } catch {
             switch error {
             case .notFound:
@@ -36,15 +40,21 @@ public struct ClaudeReader: ProviderReader {
         }
 
         if credential.isExpired(at: now) { return .expired }
+        // A token that cannot go in a header as it is (a line break, a space) is never sent.
+        guard ProviderText.isHeaderToken(credential.accessToken) else {
+            return .failure(status: .reconnect, detail: "unusable token", retryAfter: nil)
+        }
 
         do {
-            let (data, response) = try await http.send(ClaudeUsageAPI.request(accessToken: credential.accessToken))
+            let client = http.restricted(to: allowedURLs)
+            let (data, response) = try await client.send(ClaudeUsageAPI.request(accessToken: credential.accessToken))
             switch response.statusCode {
             case 200:
                 do {
-                    return .limits(try UsageParser.parse(data), shape: "")
+                    return .limits(try UsageParser.parse(data), shape: ResponseShape.fingerprint(of: data))
                 } catch {
-                    return .failure(status: .unavailable, detail: "unknown answer", retryAfter: nil)
+                    // JSON that is not the expected one, or a page: the format changed, never a number.
+                    return .failure(status: .formatChanged, detail: "unknown answer", retryAfter: nil)
                 }
             case 401:
                 return .failure(status: .reconnect, detail: "HTTP 401", retryAfter: nil)

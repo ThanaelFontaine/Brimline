@@ -14,10 +14,10 @@ struct CacheAndRankingTests {
         let keychainValue = #"{"claudeAiOauth":{"accessToken":"\#(access)","refreshToken":"\#(refresh)","expiresAt":4102444800000}}"#
         let credential = try #require(ClaudeCredential.decode(Data(keychainValue.utf8)))
         let service = UsageService(
-            credentials: FakeCredentials([accounts[0].keychainService: .success(credential)]),
+            credentials: FakeCredentials([accounts[0].keychainService!: .success(credential)]),
             http: FakeHTTP([access: (200, try fixture("usage-contact-np"), [:])])
         )
-        let snapshot = await service.refresh(accounts: accounts, previous: nil)
+        let snapshot = await service.refresh(accounts: accounts, settings: allOn, previous: nil)
         #expect(snapshot.accounts[0].status == .ok)
 
         let cache = UsageCache(file: BrimlinePaths(home: home.url).cacheFile)
@@ -90,11 +90,11 @@ struct CacheAndRankingTests {
             usage("you@example.com", [
                 UsageLimit(kind: .session, percent: 34, resetsAt: soon),
                 UsageLimit(kind: .weekly, percent: 70, resetsAt: monday),
-                UsageLimit(kind: .weeklyModel, model: "Fable", percent: 0, resetsAt: monday),
+                UsageLimit(kind: .model, model: "Fable", percent: 0, resetsAt: monday),
             ]),
             usage("team@example.org", [
                 UsageLimit(kind: .session, percent: 90, resetsAt: soon),
-                UsageLimit(kind: .weeklyModel, model: "Fable", percent: 95, resetsAt: monday),
+                UsageLimit(kind: .model, model: "Fable", percent: 95, resetsAt: monday),
             ]),
             usage("idle@example.net", [
                 UsageLimit(kind: .session, percent: 100, resetsAt: date("2026-10-25T00:30:00Z")), // already reset

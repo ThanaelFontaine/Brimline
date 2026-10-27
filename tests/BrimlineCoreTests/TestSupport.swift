@@ -90,6 +90,13 @@ let utc = TimeZone(identifier: "UTC")!
 func date(_ iso: String) -> Date { ISODate.parse(iso)! }
 
 func account(_ email: String, dir: String = "/opt/team/.claude-work") -> Account {
-    Account(configDir: dir, email: email, organization: nil, seatTier: nil,
+    Account(source: dir, email: email, organization: nil, seatTier: nil,
             keychainService: KeychainServiceName.forConfigDir(dir, isDefault: false))
 }
+
+/// Settings with every provider on, for the tests that are not about consent.
+let allOn: BrimlineSettings = {
+    var s = BrimlineSettings()
+    s.enabledProviders = Provider.allCases.map(\.rawValue)
+    return s
+}()

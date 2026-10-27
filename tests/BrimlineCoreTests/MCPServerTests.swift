@@ -77,7 +77,7 @@ struct MCPServerTests {
         #expect(accounts.count == 3)
         #expect(all["age_seconds"] as? Int == 90)
         let limits = try #require(accounts[0]["limits"] as? [[String: Any]])
-        #expect(limits.map { $0["kind"] as? String } == ["session", "weekly", "weekly_model"])
+        #expect(limits.map { $0["kind"] as? String } == ["session", "weekly", "model"])
         #expect(limits[0]["percent"] as? Double == 34)
         #expect(limits[0]["resets_at"] as? String == "2026-10-25T03:00:00Z")
         #expect(accounts[0]["age_seconds"] as? Int == 60)
