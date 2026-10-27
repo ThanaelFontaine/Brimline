@@ -63,8 +63,8 @@ Every state is said in words, never by color alone:
 ## For agents
 
 ```bash
-brimline status --json                                 # every account, every limit, with the age of the data
-claude mcp add brimline -- ~/.local/bin/brimline mcp   # MCP tools: list_accounts, get_usage, best_account
+brimline status --json                                              # every account, every limit, with the age of the data
+claude mcp add --scope user brimline -- ~/.local/bin/brimline mcp   # MCP tools: list_accounts, get_usage, best_account
 ```
 
 Both read the cache written by the app and never see a token (only `brimline status --live` reads the Keychain, like the app). Details and JSON format: [docs/agents.md](docs/agents.md).
