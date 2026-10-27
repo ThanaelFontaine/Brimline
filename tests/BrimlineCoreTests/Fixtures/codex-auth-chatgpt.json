@@ -1,0 +1,12 @@
+{
+  "auth_mode": "chatgpt",
+  "OPENAI_API_KEY": null,
+  "tokens": {
+    "id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNvbWVvbmVAZXhhbXBsZS5jb20iLCJleHAiOjQxMDI0NDQ4MDAsImh0dHBzOi8vYXBpLm9wZW5haS5jb20vYXV0aCI6eyJjaGF0Z3B0X2FjY291bnRfaWQiOiI2N2U1NTA0NC0xMGIxLTQyNmYtOTI0Ny1iYjY4MGU1ZmUwYzgiLCJjaGF0Z3B0X3BsYW5fdHlwZSI6InBsdXMifX0.fake-signature-not-checked",
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc5MjAwMDAwMCwiaHR0cHM6Ly9hcGkub3BlbmFpLmNvbS9hdXRoIjp7ImNoYXRncHRfcGxhbl90eXBlIjoicGx1cyJ9fQ.fake-signature-not-checked",
+    "refresh_token": "rt.SEED-CODEX-REFRESH-TOKEN-3a9f1c",
+    "account_id": "67e55044-10b1-426f-9247-bb680e5fe0c8"
+  },
+  "last_refresh": "2026-10-27T08:00:00Z",
+  "_fixture_source": "Shape from openai/codex at commit aeb6b22c8bda5f4d4b6ab80ebd3ccdb3f47fb3ab: codex-rs/login/src/auth/storage.rs (AuthDotJson) and codex-rs/login/src/token_data.rs (TokenData). Every value is invented."
+}

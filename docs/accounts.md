@@ -54,6 +54,16 @@ For each folder, Brimline reads:
 
 From the sign-in, only the access token is used, in memory, for one request to `https://api.anthropic.com/api/oauth/usage`. Brimline never uses the refresh token, never renews a sign-in, never writes to the Keychain, and never writes a token to a file, a log or its answers to agents.
 
+## ChatGPT, through Codex
+
+Brimline reads the limits of ChatGPT through Codex, the official tool: there is nothing to type into Brimline.
+
+1. Sign in to Codex with your ChatGPT account (`codex login`, or the sign-in screen of Codex). Codex keeps its sign-in in `~/.codex/auth.json` by default. If you changed Codex's setting to keep it in the Keychain, Brimline cannot read it and says so.
+2. Turn ChatGPT on in **Settings, Accounts** (or `brimline providers enable chatgpt`): it starts off.
+3. Brimline shows one card for `~/.codex`. A Codex folder elsewhere (`CODEX_HOME`) is added by hand for now, in `~/Library/Application Support/Brimline/settings.json`, under `extraCodexFolders`.
+
+Brimline reads only `auth.json` in that folder, and of it the sign-in mode, the access token and the account id. It never renews the sign-in: if Codex has been closed for a long time the card says "Open Codex to refresh the sign-in." An account signed in with an API key has no subscription limit to show. Details in [providers](providers.md).
+
 ## Gemini
 
 Gemini has no account to link: Google publishes no limit Brimline can read. Turn Gemini on in **Settings, Accounts** (or `brimline providers enable gemini`) and, if `~/.gemini` exists on your Mac, one card tells you where your limits are (the Gemini app, Settings, Usage limits, and `/stats model` in Gemini CLI). Brimline only checks that the folder exists and opens nothing in it. Details in [providers](providers.md).

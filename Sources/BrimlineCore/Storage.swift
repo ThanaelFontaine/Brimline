@@ -107,6 +107,8 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
 
     public var schemaVersion: Int = 1
     public var extraFolders: [String] = []
+    /// Codex folders (`CODEX_HOME`) added by hand, besides `~/.codex`. Each is read for its `auth.json` only.
+    public var extraCodexFolders: [String] = []
     public var hiddenAccounts: [String] = []
     public var labels: [String: String] = [:]
     public var refreshMinutes: Int = 5
@@ -138,6 +140,7 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
         let defaults = BrimlineSettings()
         schemaVersion = try c.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
         extraFolders = try c.decodeIfPresent([String].self, forKey: .extraFolders) ?? defaults.extraFolders
+        extraCodexFolders = try c.decodeIfPresent([String].self, forKey: .extraCodexFolders) ?? defaults.extraCodexFolders
         hiddenAccounts = try c.decodeIfPresent([String].self, forKey: .hiddenAccounts) ?? defaults.hiddenAccounts
         labels = try c.decodeIfPresent([String: String].self, forKey: .labels) ?? defaults.labels
         let minutes = try c.decodeIfPresent(Int.self, forKey: .refreshMinutes) ?? defaults.refreshMinutes

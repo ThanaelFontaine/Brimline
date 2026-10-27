@@ -1,0 +1,5 @@
+{
+  "auth_mode": "apikey",
+  "OPENAI_API_KEY": "sk-SEED-CODEX-API-KEY-5d2e",
+  "_fixture_source": "Shape from openai/codex at commit aeb6b22c8bda5f4d4b6ab80ebd3ccdb3f47fb3ab: codex-rs/login/src/auth/storage.rs (AuthDotJson) and codex-rs/login/src/token_data.rs (TokenData). Every value is invented."
+}

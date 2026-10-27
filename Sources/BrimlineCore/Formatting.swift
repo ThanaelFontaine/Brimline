@@ -120,6 +120,23 @@ public struct Strings: Sendable {
         t("Google does not publish Gemini limits in a form Brimline can read. They are in the Gemini app (Settings, Usage limits) and in Gemini CLI (/stats model).",
           "Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire. Elles sont dans l'app Gemini (Réglages, Limites d'utilisation) et dans Gemini CLI (/stats model).")
     }
+    /// Codex is signed in with an API key: there is no subscription limit.
+    public var chatgptAPIKeyMessage: String {
+        t("Codex is signed in with an API key: there is no subscription limit to show.",
+          "Codex est connecté par une clé d'API : il n'a pas de limite d'abonnement à montrer.")
+    }
+    /// No `auth.json` in Codex's folder: its sign-in is in the Keychain, or it is signed out.
+    public var chatgptSignedOutMessage: String {
+        t("Codex keeps its sign-in in the Keychain or is signed out: Brimline only reads ~/.codex/auth.json.",
+          "Codex range sa connexion dans le Trousseau ou n'est pas connecté : Brimline ne lit que ~/.codex/auth.json.")
+    }
+    public var chatgptExpiredMessage: String {
+        t("Open Codex to refresh the sign-in.", "Ouvrez Codex pour rafraîchir la connexion.")
+    }
+    public var chatgptReconnectMessage: String {
+        t("ChatGPT refused Codex's sign-in: open Codex and sign in again.",
+          "ChatGPT a refusé la connexion de Codex : ouvrez Codex et reconnectez-vous.")
+    }
     public func lastKnown(_ age: String) -> String { t("Last known values, \(age)", "Dernières valeurs connues, \(age)") }
     public func dataAge(_ age: String) -> String { t("Data from \(age)", "Données d'\(age)") }
 
@@ -152,10 +169,14 @@ public struct Strings: Sendable {
     /// The message of an account: the sentence of its provider when it is not readable by design, the
     /// message of its status otherwise.
     public func message(for usage: AccountUsage) -> String? {
-        if usage.status == .notReadable, usage.account.provider == .gemini, usage.reason == .consumerPlan {
-            return geminiNotReadableMessage
+        switch (usage.account.provider, usage.status, usage.reason) {
+        case (.gemini, .notReadable, .consumerPlan?): return geminiNotReadableMessage
+        case (.chatgpt, .notReadable, .apiKey?): return chatgptAPIKeyMessage
+        case (.chatgpt, .notReadable, .keychainOrSignedOut?): return chatgptSignedOutMessage
+        case (.chatgpt, .expired, _): return chatgptExpiredMessage
+        case (.chatgpt, .reconnect, _): return chatgptReconnectMessage
+        default: return statusMessage(usage.status)
         }
-        return statusMessage(usage.status)
     }
 
     // Panel.
