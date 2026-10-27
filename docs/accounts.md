@@ -80,7 +80,7 @@ Brimline reads the limits of Grok through the Grok CLI, the official tool: there
 2. Turn Grok on in **Settings, Accounts** (or `brimline providers enable grok`): it starts off.
 3. Brimline shows one card when the folder `~/.grok` exists. Without the Grok CLI there is no card: xAI publishes the limits of Grok for the CLI only, and the others are in your Grok account settings.
 
-Brimline reads only `auth.json` in that folder, and of it the sign-in with an xAI account: the session token and the user id, in memory, for one request to `https://cli-chat-proxy.grok.com`. It never renews the sign-in: if the Grok CLI has been closed for a long time the card says "Open the Grok CLI to refresh the sign-in." A CLI signed in with an API key has no subscription limit to show. Early in a period the card says "No number yet for this period." Details in [providers](providers.md).
+Brimline reads only `auth.json` in that folder, and of it the sign-in with an xAI account: the session token and the user id, in memory, for one request to `https://cli-chat-proxy.grok.com`. It never renews the sign-in: if the Grok CLI has been closed for a long time the card says "Open the Grok CLI to refresh the sign-in." A CLI signed in with an API key has no subscription limit to show. A free account, whose answer has no credit limit, says "xAI returns no credit limit for this account."; an allowance with no use yet says "No number yet for this period." Details in [providers](providers.md).
 
 ## Common situations
 

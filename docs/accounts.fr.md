@@ -80,7 +80,7 @@ Brimline lit les limites de Grok par le CLI Grok, l'outil officiel : il n'y a ri
 2. Allumez Grok dans **Réglages, Comptes** (ou `brimline providers enable grok`) : il démarre coupé.
 3. Brimline montre une carte quand le dossier `~/.grok` existe. Sans le CLI Grok, pas de carte : xAI ne publie les limites de Grok que pour le CLI, et les autres sont dans les réglages de votre compte Grok.
 
-Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement la connexion d'un compte xAI : le jeton de session et l'identifiant, en mémoire, le temps d'une requête vers `https://cli-chat-proxy.grok.com`. Il ne renouvelle jamais la connexion : si le CLI Grok est resté fermé longtemps, la carte dit « Ouvrez le CLI Grok pour rafraîchir la connexion. » Un CLI connecté par une clé d'API n'a pas de limite d'abonnement à montrer. En début de période, la carte dit « Pas encore de chiffre pour cette période. » Détails dans [providers](providers.md) (en anglais).
+Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement la connexion d'un compte xAI : le jeton de session et l'identifiant, en mémoire, le temps d'une requête vers `https://cli-chat-proxy.grok.com`. Il ne renouvelle jamais la connexion : si le CLI Grok est resté fermé longtemps, la carte dit « Ouvrez le CLI Grok pour rafraîchir la connexion. » Un CLI connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Un compte gratuit, dont la réponse ne donne aucune limite de crédits, dit « xAI ne renvoie aucune limite de crédits pour ce compte. » ; un plafond sans usage encore dit « Pas encore de chiffre pour cette période. » Détails dans [providers](providers.md) (en anglais).
 
 ## Situations courantes
 
