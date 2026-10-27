@@ -45,6 +45,24 @@ In **Settings, Accounts** each provider has its own block: a switch, one line th
 
 ![Accounts settings](images/settings-accounts-light.png)
 
+## Several accounts
+
+Each provider tells its accounts apart in its own way, and Brimline shows one line per account it finds:
+
+| Provider | One account is | To add another |
+|---|---|---|
+| Claude | one Claude Code folder (`~/.claude`, `~/.claude-*`, or a folder you added) | give it its own folder and sign in there (steps 1 to 3 above) |
+| ChatGPT | one Codex folder (`~/.codex`, or a `CODEX_HOME` folder you added) | **Add a Codex folder…**, under ChatGPT in **Settings, Accounts** |
+| Grok | the sign-in of the Grok CLI (`~/.grok`): one account | none: the Grok CLI keeps a single sign-in |
+| Cursor | the sign-in of the Cursor app: one account | none: the app keeps a single sign-in |
+| Gemini | the sign-in of Antigravity: one account | none: Antigravity keeps a single sign-in |
+
+With four Claude accounts, make four folders (for example `~/.claude-first`, `~/.claude-second`, `~/.claude-third`, and `~/.claude` for the fourth), sign in once in each, and Brimline lists the four. Give each a short label in **Settings, Accounts** if its address is long.
+
+**A sign-in made with `claude setup-token` is not read.** That command makes a long-lived token for scripts. On 27 October 2026 we tried three such tokens against the address Brimline asks for limits (one request each, nothing else read or kept): none returned any limits (one answer was a refusal, HTTP 403, and two were "too many requests", HTTP 429, again an hour later). Brimline therefore reads folders only, and claims nothing about those tokens. If you only have such a token, sign in with `/login` in a folder of its own instead.
+
+**A folder you no longer use stays "Session expired".** Brimline never renews a sign-in, and only Claude Code does, when you use that account. Its last numbers stay, in grey, with their age.
+
 ## What Brimline reads, and what it never does
 
 For each folder, Brimline reads:

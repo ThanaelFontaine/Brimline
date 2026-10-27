@@ -45,6 +45,24 @@ Dans **Réglages, Comptes**, chaque fournisseur a son bloc : un interrupteur, un
 
 ![Réglages des comptes](images/settings-accounts-fr-light.png)
 
+## Plusieurs comptes
+
+Chaque fournisseur distingue ses comptes à sa façon, et Brimline montre une ligne par compte trouvé :
+
+| Fournisseur | Un compte, c'est | Pour en ajouter un |
+|---|---|---|
+| Claude | un dossier de Claude Code (`~/.claude`, `~/.claude-*`, ou un dossier ajouté) | lui donner son propre dossier et s'y connecter (étapes 1 à 3 ci-dessus) |
+| ChatGPT | un dossier de Codex (`~/.codex`, ou un dossier `CODEX_HOME` ajouté) | **Ajouter un dossier Codex…**, sous ChatGPT dans **Réglages, Comptes** |
+| Grok | la connexion du Grok CLI (`~/.grok`) : un seul compte | rien : le Grok CLI garde une seule connexion |
+| Cursor | la connexion de l'app Cursor : un seul compte | rien : l'app garde une seule connexion |
+| Gemini | la connexion d'Antigravity : un seul compte | rien : Antigravity garde une seule connexion |
+
+Avec quatre comptes Claude, faites quatre dossiers (par exemple `~/.claude-premier`, `~/.claude-deuxieme`, `~/.claude-troisieme`, et `~/.claude` pour le quatrième), connectez-vous une fois dans chacun, et Brimline liste les quatre. Donnez à chacun un libellé court dans **Réglages, Comptes** si son adresse est longue.
+
+**Une connexion faite avec `claude setup-token` n'est pas lue.** Cette commande fabrique un jeton de longue durée pour des scripts. Le 27 octobre 2026, nous avons essayé trois jetons de ce genre sur l'adresse que Brimline interroge pour les limites (une requête chacun, rien d'autre lu ni gardé) : aucun n'a renvoyé de limites (une réponse était un refus, HTTP 403, et deux étaient « trop de requêtes », HTTP 429, de nouveau une heure plus tard). Brimline ne lit donc que des dossiers, et n'affirme rien sur ces jetons. Si vous n'avez qu'un tel jeton, connectez-vous plutôt avec `/login` dans un dossier à part.
+
+**Un dossier que vous n'utilisez plus reste « Session expirée ».** Brimline ne renouvelle jamais une connexion : seul Claude Code le fait, quand vous utilisez ce compte. Ses derniers chiffres restent, en gris, avec leur âge.
+
 ## Ce que Brimline lit, et ce qu'il ne fait jamais
 
 Pour chaque dossier, Brimline lit :
