@@ -1,10 +1,18 @@
 # Changelog
 
-All notable changes to Sightglass are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
+All notable changes to Brimline are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 
 The version lives in the `VERSION` file. `0.0.0` is the development version: nothing is released. Every other version gets its tag and its GitHub release from the CI, with the notes of its section below.
 
 ## [Unreleased]
+
+### Changed
+
+- **Sightglass is now Brimline.** The app, the `brimline` command and the MCP server (`brimline mcp`, server name `brimline`) carry the new name everywhere: the interface in English and French, the bundle (`Brimline.app`, `eu.thanaelfontaine.brimline`), the "Open at login" LaunchAgent (`eu.thanaelfontaine.brimline.plist`), the folder `~/Library/Application Support/Brimline/`, the `User-Agent` (`Brimline/<version>`), the `BRIMLINE_LANG` variable and the repository address. There is no `sightglass` alias: the app was never published and nothing known calls the old command.
+- **Why.** The name Sightglass is already carried by close software: an AI company bought by Juniper Square in April 2026, two GitHub repositories on the same ground (a Claude Code limits tool and a macOS menu bar app) and a product studio, plus trademarks in the United States. A search for Brimline found no software, repository or trademark (TMview, USPTO, WIPO). The rename came before the first public release so that nobody has to follow it later.
+- **Your data comes along.** At its first launch, Brimline copies `settings.json` and `usage.json` from `~/Library/Application Support/Sightglass/`: only those two files, never over a file Brimline already has, without following a link, and without changing the old folder. Nothing is deleted.
+- **`scripts/install.sh` handles the old install.** It quits the old app (by its full path), removes the old `~/.local/bin/sightglass` link when it points into the old app, turns off the old LaunchAgent (`launchctl disable`, undone by `enable`, the file stays) and writes the Brimline one, then prints the commands that move the old files to the Trash, without running them.
+- **For your agents:** register the server again under the new name, `claude mcp add brimline -- ~/.local/bin/brimline mcp` (see [docs/agents.md](docs/agents.md)).
 
 ## [0.1.0] - 2026-10-25
 

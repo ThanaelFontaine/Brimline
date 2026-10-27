@@ -1,29 +1,29 @@
-# Sightglass for agents
+# Brimline for agents
 
 Your agents can read the same numbers as the menu bar, so they can pick an account that still has room instead of failing in the middle of a task. Two ways: a command with JSON output, and a local MCP server.
 
-Both read the **cache written by the Sightglass app** (`~/Library/Application Support/Sightglass/usage.json`), refreshed every 5 minutes by default. They never read the Keychain and never see a token, except `sightglass status --live` (below), which reads like the app. Every answer says how old its numbers are.
+Both read the **cache written by the Brimline app** (`~/Library/Application Support/Brimline/usage.json`), refreshed every 5 minutes by default. They never read the Keychain and never see a token, except `brimline status --live` (below), which reads like the app. Every answer says how old its numbers are.
 
 ## Where the command is
 
-The command is inside the app: `Sightglass.app/Contents/Helpers/sightglass`. `scripts/install.sh` links it to `~/.local/bin/sightglass`. **Settings, Agents** shows its exact path, with ready to copy snippets.
+The command is inside the app: `Brimline.app/Contents/Helpers/brimline`. `scripts/install.sh` links it to `~/.local/bin/brimline`. **Settings, Agents** shows its exact path, with ready to copy snippets.
 
 ![Agents settings](images/settings-agents-light.png)
 
 ## The command
 
 ```text
-sightglass status [--json] [--live]   Usage of each account
-sightglass accounts [--json]          Accounts found on this Mac (no Keychain read)
-sightglass mcp                        Local MCP server over stdio
-sightglass --version
+brimline status [--json] [--live]   Usage of each account
+brimline accounts [--json]          Accounts found on this Mac (no Keychain read)
+brimline mcp                        Local MCP server over stdio
+brimline --version
 ```
 
 - `status` reads the cache, even when the app is not running (check `age_seconds`). Only when there is no cache at all does it say so and exit with code 2.
 - `status --live` reads every account now, with the same code as the app: it reads the Keychain through `/usr/bin/security` and asks Anthropic. It does not write the cache (the app stays the only writer).
 - Exit codes: 0 on success, 2 when there is no cache yet, 64 for a wrong command or option.
 
-### `sightglass status --json`
+### `brimline status --json`
 
 ```json
 {
@@ -85,12 +85,12 @@ Every key is always present; a missing value is `null`. `<home>` stands for your
 
 ## The MCP server
 
-`sightglass mcp` speaks the [Model Context Protocol](https://modelcontextprotocol.io/specification/2025-06-18) over stdio (JSON-RPC 2.0, one message per line). It answers `initialize`, `ping`, `tools/list` and `tools/call`.
+`brimline mcp` speaks the [Model Context Protocol](https://modelcontextprotocol.io/specification/2025-06-18) over stdio (JSON-RPC 2.0, one message per line). It answers `initialize`, `ping`, `tools/list` and `tools/call`.
 
 ### Add it to Claude Code
 
 ```bash
-claude mcp add sightglass -- ~/.local/bin/sightglass mcp
+claude mcp add brimline -- ~/.local/bin/brimline mcp
 ```
 
 ### Or to any MCP client
@@ -98,8 +98,8 @@ claude mcp add sightglass -- ~/.local/bin/sightglass mcp
 ```json
 {
   "mcpServers": {
-    "sightglass": {
-      "command": "<home>/.local/bin/sightglass",
+    "brimline": {
+      "command": "<home>/.local/bin/brimline",
       "args": ["mcp"]
     }
   }
@@ -115,7 +115,7 @@ All three are read only.
 | Tool | Arguments | Returns |
 |---|---|---|
 | `list_accounts` | none | Each account: id, provider, email, organization, label, folder, hidden, status |
-| `get_usage` | `account` (optional: an email or an id), `include_hidden` (optional, default false) | The same JSON as `sightglass status --json` |
+| `get_usage` | `account` (optional: an email or an id), `include_hidden` (optional, default false) | The same JSON as `brimline status --json` |
 | `best_account` | `window` (`any`, `session` or `week`; default `any`), `model` (optional, for example `Fable`) | `best` (the account with the most room left), `ranking` (all, best first), each with `headroom_percent` and the `binding_limit` that sets it |
 
 How `best_account` ranks: for each account with numbers, it takes the limits that apply (`any`: the session, the week across all models, and the model's week when `model` is given; `session`: the session only; `week`: the weekly limits only), keeps the tightest one, and sorts by room left. Hidden accounts and accounts whose sign-in was refused are left out; an account whose token merely expired stays in, since Claude Code renews it when used. Unavailable accounts come after all the others, since their numbers may be old. An account that has none of the limits asked for (a team seat without a weekly limit, asked for `week`) is judged on its tightest limit, so a full session never reads as 100% room. Ties go to the freshest numbers. A window whose reset time has passed counts as empty.
