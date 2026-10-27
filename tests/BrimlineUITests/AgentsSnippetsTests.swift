@@ -24,3 +24,17 @@ struct AgentsSnippetsTests {
         #expect(m.mcpAddCommand == "claude mcp add --scope user brimline -- '/tmp/some one/.local/bin/brimline' mcp")
     }
 }
+
+@MainActor
+@Suite("Accounts tab")
+struct AccountsTabTests {
+    @Test("a Gemini account is never described as a Claude account")
+    func geminiAccountKeepsItsOwnName() {
+        let account = Account(provider: .gemini, source: "/tmp/someone/.gemini", email: nil,
+                              organization: nil, seatTier: nil, keychainService: nil)
+        let usage = AccountUsage(account: account, status: .notReadable)
+        let line = AccountSettingsRow.details(for: usage, strings: Strings(.en))
+        #expect(line.hasPrefix("Gemini"))
+        #expect(!line.contains("Claude"))
+    }
+}
