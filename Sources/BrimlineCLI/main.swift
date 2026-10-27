@@ -58,7 +58,7 @@ case "--help", "-h", "help":
 
 case "accounts":
     rejectUnknown(["--json"])
-    let accounts = AccountDiscovery(extraFolders: settings.extraFolders).discover()
+    let accounts = Providers.discover(settings: settings)
     if flags.contains("--json") {
         struct Entry: Encodable {
             var id, provider, folder, keychainService: String
@@ -95,7 +95,7 @@ case "status":
     let snapshot: UsageSnapshot
     let source: String
     if flags.contains("--live") {
-        let accounts = AccountDiscovery(extraFolders: settings.extraFolders).discover()
+        let accounts = Providers.discover(settings: settings)
         snapshot = await UsageService().refresh(accounts: accounts, previous: cache.load(), now: now, force: true)
         source = "live"
     } else if let cached = cache.load() {

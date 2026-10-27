@@ -109,7 +109,7 @@ public final class AppModel {
 
     /// Looks for the accounts again (new ~/.claude-* folder, folder added by hand).
     public func rescan() {
-        accounts = AccountDiscovery(home: home, extraFolders: settings.extraFolders).discover()
+        accounts = Providers.discover(home: home, settings: settings)
         if var snap = snapshot {
             let ids = Set(accounts.map(\.id))
             snap.accounts.removeAll { !ids.contains($0.account.id) }
