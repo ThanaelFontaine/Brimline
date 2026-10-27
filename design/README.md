@@ -13,6 +13,7 @@ Vue d'ensemble de la direction artistique : `DA.md`. Planche à ouvrir dans un n
 | `icons/AppIcon.icns` | Icône de l'app pour macOS (`iconutil` depuis `AppIcon.iconset/`, pas de catalogue Xcode). |
 | `icons/menubar-template.svg` et `.pdf` | Glyphe gabarit de la barre des menus : noir et transparence, aucune couleur, niveau 60 %. `glyph-level.svg` en est la version à niveau variable. |
 | `planche.html` | Planche : icône d'app, glyphe à 0, 25, 72, 95 % et expiré, couleurs, typographie, jauges. |
+| `planche-barre.html` | Planche de QUOTA-73, lot L6 : onglet de Réglages « Barre des menus » (« Ranger la barre des menus ») qui explique comment retirer les icônes de Claude, ChatGPT et Cursor, avec ses états (deux apps, aucune, erreurs d'ouverture), le geste ⌘ glisser et les textes EN et FR. Langue et thème : `#fr-light`, `#fr-dark`, `#en-light`, `#en-dark`. Captures dans `captures-barre/`, régénérées par `NODE_PATH=<node_modules avec playwright> node design/src/render-barre.cjs` ; contrôles dans `tests/test_design_barre.py`. |
 | `planche-fournisseurs.html` | Planche de QUOTA-35 : plusieurs fournisseurs côte à côte (panneau en deux variantes, fenêtres, états, Réglages, pastilles, textes EN et FR). Langue et thème par l'adresse : `#fr-light`, `#fr-dark`, `#en-light`, `#en-dark`. Captures dans `captures-fournisseurs/`, régénérées par `NODE_PATH=<node_modules avec playwright> node design/src/render-fournisseurs.cjs`. |
 
 ## Consommer les jetons
