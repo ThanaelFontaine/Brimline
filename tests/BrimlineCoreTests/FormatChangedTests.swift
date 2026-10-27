@@ -117,7 +117,7 @@ struct FormatChangedTests {
         #expect(!text.contains("Fable"))
         #expect(!text.contains("12.5"))
         #expect(!text.contains("obey"))
-        #expect(text.contains("\"?\""))
+        #expect(text.contains("\"<key>\""))
         #expect(ResponseShape.skeleton(of: Data("<html>".utf8)) == nil)
     }
 

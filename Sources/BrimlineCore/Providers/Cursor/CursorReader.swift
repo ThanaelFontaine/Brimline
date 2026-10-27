@@ -1,22 +1,30 @@
 import Foundation
 
-/// Cursor: detection and a sentence, nothing read from the network yet.
-///
-/// The app keeps its sign-in in its SQLite state database. This reader looks at that one database
-/// and answers with what it finds: a plain token is acknowledged (the limits come with the next lot),
-/// a protected, absent or unreadable one is a sentence. The value is never kept and never sent.
+/// Cursor: the sign-in the app keeps in its SQLite state database, then the call its own dashboard
+/// makes for the usage of a plan (`GET https://cursor.com/api/usage-summary`).
 ///
 /// Rules: one file (`~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`), opened
 /// read-only without following a link, and creating nothing: in WAL mode only when its `-wal` and
 /// `-shm` files already exist, in the classic journal mode only when no `-journal` file is there (a
-/// write is in progress); one prepared query; no Keychain item (never "Cursor Safe Storage"), no program launched, no request.
-/// The provider is off until the user turns it on, like every provider but Claude.
+/// write is in progress); one prepared query; no Keychain item (never "Cursor Safe Storage"), no
+/// program launched. A value Cursor encrypted is never decrypted: the card says where to see the usage.
+/// A plain token is used once, in memory, for the one request below, and never kept (see `CursorToken`).
+/// An expired token is never sent and never renewed (Cursor renews it when it runs); a refused one, or a
+/// redirection (to the sign-in page), asks to open Cursor; every other failure is `unavailable`, which
+/// the service retries with a growing delay. The provider is off until the user turns it on, like every
+/// provider but Claude.
 public struct CursorReader: ProviderReader {
-    public init() {}
+    public var http: any HTTPClient
+
+    /// How long before its expiry a token is no longer sent.
+    static let expiryMargin: TimeInterval = 60
+
+    public init(http: any HTTPClient = URLSessionHTTPClient()) {
+        self.http = http
+    }
 
     public var provider: Provider { .cursor }
-    /// Nothing is requested yet.
-    public var allowedURLs: [URL] { [] }
+    public var allowedURLs: [URL] { [CursorUsageAPI.url] }
 
     static let databaseName = "state.vscdb"
 
@@ -41,16 +49,9 @@ public struct CursorReader: ProviderReader {
         guard database.lastPathComponent == Self.databaseName else {
             return .failure(status: .unavailable, detail: "unexpected source", retryAfter: nil)
         }
+        let content: CursorSession.Content
         do throws(CursorSession.Failure) {
-            switch try CursorSession.classify(database: database) {
-            case .clear:
-                // The sign-in is readable; reading the limits comes next. The value is already gone.
-                return .failure(status: .pending, detail: "reading to come", retryAfter: nil)
-            case .encrypted, .absent:
-                return .notReadable(reason: .protectedSignIn)
-            case .unrecognized:
-                return .failure(status: .formatChanged, detail: "unknown sign-in format", retryAfter: nil)
-            }
+            content = try CursorSession.content(database: database)
         } catch {
             switch error {
             case .logFilesMissing:
@@ -68,6 +69,53 @@ public struct CursorReader: ProviderReader {
             case .notADatabase:
                 return .failure(status: .formatChanged, detail: "unknown state database", retryAfter: nil)
             }
+        }
+
+        switch content {
+        case .clear(let jwt):
+            return await readUsage(jwt: jwt, now: now)
+        case .encrypted, .absent:
+            return .notReadable(reason: .protectedSignIn)
+        case .unrecognized:
+            return .failure(status: .formatChanged, detail: "unknown sign-in format", retryAfter: nil)
+        }
+    }
+
+    /// The one request, with the plain token of the app.
+    private func readUsage(jwt: String, now: Date) async -> ProviderReading {
+        // A token that cannot go in a header, or whose `sub` is not a plain identifier, is never sent.
+        guard let token = CursorToken(jwt: jwt) else {
+            return .failure(status: .formatChanged, detail: "unusable token", retryAfter: nil)
+        }
+        if let expiry = token.expiry, expiry <= now.addingTimeInterval(Self.expiryMargin) {
+            return .expired
+        }
+
+        do {
+            let client = http.restricted(to: allowedURLs)
+            let (data, response) = try await client.send(CursorUsageAPI.request(token: token))
+            switch response.statusCode {
+            case 200:
+                let shape = ResponseShape.fingerprint(of: data)
+                do {
+                    let reading = try CursorUsageParser.parse(data)
+                    if reading.unlimited { return .annotated([], shape: shape, note: .noLimit) }
+                    if reading.limits.isEmpty { return .annotated([], shape: shape, note: .noFigureYet) }
+                    return .limits(reading.limits, shape: shape)
+                } catch {
+                    // JSON that is not the expected one, or a page: the format changed, never a number.
+                    return .failure(status: .formatChanged, detail: "unknown answer", retryAfter: nil)
+                }
+            case 401, 403, 300..<400:
+                // Refused, or sent to the sign-in page: Cursor renews its sign-in when it is opened.
+                return .expired
+            case 429:
+                return .failure(status: .unavailable, detail: "HTTP 429", retryAfter: response.retryAfterSeconds)
+            default:
+                return .failure(status: .unavailable, detail: "HTTP \(response.statusCode)", retryAfter: nil)
+            }
+        } catch {
+            return .failure(status: .unavailable, detail: "network", retryAfter: nil)
         }
     }
 }

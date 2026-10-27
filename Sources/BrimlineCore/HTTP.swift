@@ -69,7 +69,7 @@ public struct URLSessionHTTPClient: HTTPClient {
     }
 
     /// Refuses every redirection (the 3xx becomes the answer), any URL that is not https and any
-    /// answer that does not come from the URL asked; sends and keeps no cookie; the body is read up
+    /// answer that does not come from the URL asked; handles and keeps no cookie itself (a `Cookie` header set by a reader, Cursor, is sent as set); the body is read up
     /// to `maxBodyBytes`, then the request fails.
     public func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         guard let url = request.url, url.scheme == "https" else { throw URLError(.unsupportedURL) }

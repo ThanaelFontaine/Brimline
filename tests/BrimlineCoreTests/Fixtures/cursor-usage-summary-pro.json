@@ -1,0 +1,33 @@
+{
+  "_fixture_source": "Shape from steipete/CodexBar at commit 5f93dc3: Sources/CodexBarCore/Providers/Cursor/CursorStatusProbe.swift (CursorUsageSummary, CursorIndividualUsage, CursorPlanUsage, CursorOverallUsage, CursorTeamUsage) and CursorStatusProbe+UsageSummary.swift (GET https://cursor.com/api/usage-summary). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider cursor). Individual Pro plan with the three percentages.",
+  "billingCycleStart": "2026-10-14T09:15:10.000Z",
+  "billingCycleEnd": "2026-11-14T09:15:10.000Z",
+  "membershipType": "pro",
+  "limitType": "user",
+  "isUnlimited": false,
+  "autoModelSelectedDisplayMessage": "You are using Auto",
+  "namedModelSelectedDisplayMessage": "You are using a named model",
+  "individualUsage": {
+    "plan": {
+      "enabled": true,
+      "used": 1840,
+      "limit": 2000,
+      "remaining": 160,
+      "breakdown": {
+        "included": 2000,
+        "bonus": 0,
+        "total": 1840
+      },
+      "autoPercentUsed": 12.5,
+      "apiPercentUsed": 3.25,
+      "totalPercentUsed": 15.75
+    },
+    "onDemand": {
+      "enabled": true,
+      "used": 120,
+      "limit": 5000,
+      "remaining": 4880
+    }
+  },
+  "teamUsage": {}
+}

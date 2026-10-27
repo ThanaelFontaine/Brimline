@@ -248,6 +248,12 @@ public struct Strings: Sendable {
     }
     /// Under a Grok account's title when its credits are a pool shared by the Grok products.
     public var sharedPoolSubtitle: String { t("Credits shared across Grok products", "Crédits partagés entre les produits Grok") }
+    public var noLimitMessage: String {
+        t("Cursor sets no limit for this plan.", "Cursor ne fixe pas de limite pour ce plan.")
+    }
+    public var cursorExpiredMessage: String {
+        t("Open Cursor to refresh the sign-in.", "Ouvrez Cursor pour rafraîchir la connexion.")
+    }
     public var resetNotPublishedMessage: String {
         t("Reset time not published by Google", "Remise à zéro non publiée par Google")
     }
@@ -285,6 +291,7 @@ public struct Strings: Sendable {
         case (.grok, .expired, _): return grokExpiredMessage
         case (.grok, .reconnect, _): return grokReconnectMessage
         case (.cursor, .notReadable, .protectedSignIn?): return cursorProtectedMessage
+        case (.cursor, .expired, _): return cursorExpiredMessage
         default: return statusMessage(usage.status)
         }
     }
@@ -294,6 +301,7 @@ public struct Strings: Sendable {
         case .noFigureYet: return noFigureYetMessage
         case .sharedPool: return sharedPoolMessage
         case .resetNotPublished: return resetNotPublishedMessage
+        case .noLimit: return noLimitMessage
         }
     }
 
@@ -359,8 +367,8 @@ public struct Strings: Sendable {
             verb = t("reads ~/.grok/auth.json and asks cli-chat-proxy.grok.com for usage.",
                      "lit ~/.grok/auth.json et demande l'usage à cli-chat-proxy.grok.com.")
         case .cursor:
-            verb = t("looks for the Cursor app sign-in, read only. Brimline does not read Cursor usage yet.",
-                     "cherche la connexion de l'app Cursor, en lecture seule. Brimline ne lit pas encore l'usage de Cursor.")
+            verb = t("reads the sign-in of the Cursor app (read only, never its Keychain) and asks cursor.com for usage.",
+                     "lit la connexion de l'app Cursor (en lecture seule, jamais son Trousseau) et demande l'usage à cursor.com.")
         }
         if on { return verb.prefix(1).uppercased() + verb.dropFirst() }
         return t("Off: Brimline reads nothing. When on, it \(verb)", "Coupé : Brimline ne lit rien. Allumé, il \(verb)")

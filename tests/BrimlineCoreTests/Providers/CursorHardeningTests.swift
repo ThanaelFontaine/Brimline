@@ -71,7 +71,7 @@ struct CursorHardeningTests {
         defer { try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: database.url.path) }
         let card = Account(provider: .cursor, source: database.url.path, email: nil, organization: nil, seatTier: nil,
                            keychainService: nil)
-        guard case .failure(let status, let detail, _) = await CursorReader().read(account: card, now: now) else {
+        guard case .failure(let status, let detail, _) = await CursorReader(http: CursorFakeHTTP.offline()).read(account: card, now: now) else {
             Issue.record("expected a failure")
             return
         }

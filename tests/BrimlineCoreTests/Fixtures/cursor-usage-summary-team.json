@@ -1,0 +1,24 @@
+{
+  "_fixture_source": "Shape from steipete/CodexBar at commit 5f93dc3: Sources/CodexBarCore/Providers/Cursor/CursorStatusProbe.swift (CursorUsageSummary, CursorIndividualUsage, CursorPlanUsage, CursorOverallUsage, CursorTeamUsage) and CursorStatusProbe+UsageSummary.swift (GET https://cursor.com/api/usage-summary). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider cursor). Team member with no plan block: a personal cap under individualUsage.overall (cents).",
+  "billingCycleStart": "2026-10-14T09:15:10.000Z",
+  "billingCycleEnd": "2026-11-14T09:15:10.000Z",
+  "membershipType": "enterprise",
+  "limitType": "team",
+  "isUnlimited": false,
+  "individualUsage": {
+    "overall": {
+      "enabled": true,
+      "used": 7384,
+      "limit": 10000,
+      "remaining": 2616
+    }
+  },
+  "teamUsage": {
+    "pooled": {
+      "enabled": true,
+      "used": 91000,
+      "limit": 400000,
+      "remaining": 309000
+    }
+  }
+}

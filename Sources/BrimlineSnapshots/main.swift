@@ -244,7 +244,7 @@ struct WindowFrame<Content: View>: View {
     }
 }
 
-/// The settings of the Accounts images: Claude, ChatGPT and Gemini on, Grok off (and Cursor, not read yet).
+/// The settings of the Accounts images: Claude, ChatGPT and Gemini on, Grok off (and Cursor, off by default).
 var accountsTabSettings: BrimlineSettings {
     var s = providerSettings
     s.enabledProviders = [Provider.claude, .chatgpt, .gemini].map(\.rawValue)
