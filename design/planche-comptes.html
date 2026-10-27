@@ -79,7 +79,7 @@
   .pair { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .pair + .pair { margin-top: 4px; }
   .grid-cases { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 24px 32px; margin-top: 16px; }
-  .zoom { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; margin-top: 12px; }
+  .zoom { display: flex; gap: 24px; flex-wrap: wrap; width: max-content; max-width: 1408px; align-items: flex-start; margin-top: 12px; }
   .zoom canvas { image-rendering: pixelated; border-radius: 6px; }
   .zoom figure { margin: 0; }
   .vo { font-size: 13px; background: var(--card); border-radius: 8px; padding: 8px 10px; max-width: 760px; margin-top: 8px; }
@@ -189,7 +189,7 @@
 
 <h2 id="mesures">3. Les mesures, agrandies</h2>
 <p>Géométrie au demi-point pour l'écran 2x (trait de 1,5 pt), au point pour l'écran 1x (trait de 1 pt), comme le glyphe actuel. Tout est aligné sur la grille de pixels.</p>
-<div class="zoom" data-render="zoom"></div>
+<div class="scroll-x"><div class="zoom" data-render="zoom"></div></div>
 <div class="scroll-x"><table class="spec" data-render="dims"></table></div>
 
 <h2 id="variantes">4. Les variantes, côte à côte</h2>
