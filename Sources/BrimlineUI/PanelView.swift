@@ -244,8 +244,8 @@ struct LimitRow: View {
         let percent = limit.effectivePercent(at: now)
         // Unavailable: the number is not shown (it could be wrong), the gauge is an empty dotted tube.
         let unavailable = usage.status == .unavailable
-        // Expired or refused sign-in: the last known number, in grey, with its age.
-        let muted = usage.status == .expired || usage.status == .reconnect
+        // Expired or refused sign-in, or an answer Brimline no longer understands: the last known number, in grey, with its age.
+        let muted = usage.status == .expired || usage.status == .reconnect || usage.status == .formatChanged
 
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline) {

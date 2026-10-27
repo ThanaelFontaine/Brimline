@@ -89,7 +89,11 @@ nonisolated(unsafe) var hinted = false
 func hintIfEmpty(_ provider: Provider?, settings: BrimlineSettings) {
     guard let provider, !settings.isEnabled(provider), !hinted else { return }
     hinted = true
-    printError("\(provider.displayName) is off, so nothing of it is read. Turn it on with: brimline providers enable \(provider.rawValue)")
+    if Providers.isSupported(provider) {
+        printError("\(provider.displayName) is off, so nothing of it is read. Turn it on with: brimline providers enable \(provider.rawValue)")
+    } else {
+        printError("This version of Brimline does not read \(provider.displayName) yet, so there is nothing to show.")
+    }
 }
 
 func rejectUnknown(_ allowed: Set<String>) {

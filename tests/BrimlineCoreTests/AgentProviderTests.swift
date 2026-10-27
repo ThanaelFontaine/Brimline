@@ -87,7 +87,19 @@ struct AgentProviderTests {
         let empty = UsageSnapshot(generatedAt: Self.now, accounts: [Self.snapshot.accounts[0]])
         let result = try data(try call(server(empty, settings: settings), "get_usage", #"{"provider":"cursor"}"#))
         #expect((result["accounts"] as? [Any])?.isEmpty == true)
-        #expect((result["note"] as? String)?.contains("brimline providers enable cursor") == true)
+        let note = result["note"] as? String
+        // No reader for Cursor in this version: the note must not promise a switch that is refused.
+        #expect(note?.contains("does not read cursor yet") == true)
+        #expect(note?.contains("providers enable") == false)
+    }
+
+    @Test("get_usage for Claude turned off points to the switch")
+    func usageClaudeOff() throws {
+        var settings = BrimlineSettings()
+        settings.enabledProviders = []
+        let empty = UsageSnapshot(generatedAt: Self.now, accounts: [])
+        let result = try data(try call(server(empty, settings: settings), "get_usage", #"{"provider":"claude"}"#))
+        #expect((result["note"] as? String)?.contains("brimline providers enable claude") == true)
     }
 
     @Test("best_account ranks Claude by default, and the provider asked otherwise")
@@ -130,7 +142,7 @@ struct AgentProviderTests {
         var settings = BrimlineSettings()
         settings.enabledProviders = ["claude"]
         let off = try data(try call(server(settings: settings), "best_account", #"{"provider":"gemini"}"#))
-        #expect((off["note"] as? String)?.contains("gemini is off in Brimline") == true)
+        #expect((off["note"] as? String)?.contains("does not read gemini yet") == true)
     }
 
     @Test("The tools list names the providers and the windows")
