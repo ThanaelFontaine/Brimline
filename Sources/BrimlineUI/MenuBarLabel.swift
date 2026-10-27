@@ -12,7 +12,7 @@ public struct MenuBarLabel: View {
 
     public var body: some View {
         let level = model.menuBarLevel
-        let image = BrimlineGlyph.image(level: level.percent.map { $0 / 100 }, dimmed: level.dimmed)
+        let image = MenuBarGaugeImage.proof()
         HStack(spacing: 3) {
             Image(nsImage: image)
             if model.settings.showPercentInMenuBar, let percent = level.percent {
