@@ -2,7 +2,7 @@
 
 ## Which providers does Brimline support?
 
-Claude, through Claude Code sign-ins; ChatGPT, through the Codex sign-in (the 5 hour session and the week that Codex shows with `/status`); Gemini as a sentence only: Google publishes no Gemini limit Brimline can read, so the Gemini card says where the limits are instead of showing a number; and Cursor, detected only for now: Brimline sees whether Cursor's sign-in is readable, and its limits come in a later version (see [providers](providers.md)). ChatGPT, Gemini and Cursor are off until you turn them on. Grok is planned: the settings list it as "Coming soon". Each provider is a small plugin; the ones that read limits use the sign-in their official tool already keeps.
+Claude, through Claude Code sign-ins; ChatGPT, through the Codex sign-in (the 5 hour session and the week that Codex shows with `/status`); Grok, through the sign-in of the Grok CLI (the credits of the current period); and Gemini as a sentence only: Google publishes no Gemini limit Brimline can read, so the Gemini card says where the limits are instead of showing a number (see [providers](providers.md)); and Cursor, detected only for now: Brimline sees whether Cursor's sign-in is readable, and its limits come in a later version. ChatGPT, Gemini, Grok and Cursor are off until you turn them on. Each provider is a small plugin; the ones that read limits use the sign-in their official tool already keeps.
 
 ## Where do the numbers come from?
 

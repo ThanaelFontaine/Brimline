@@ -72,6 +72,16 @@ Cursor has no account to link, and Brimline does not read its limits yet. Turn C
 
 Gemini has no account to link: Google publishes no limit Brimline can read. Turn Gemini on in **Settings, Accounts** (or `brimline providers enable gemini`) and, if `~/.gemini` exists on your Mac, one card tells you where your limits are (the Gemini app, Settings, Usage limits, and `/stats model` in Gemini CLI). Brimline only checks that the folder exists and opens nothing in it. Details in [providers](providers.md).
 
+## Grok, through the Grok CLI
+
+Brimline reads the limits of Grok through the Grok CLI, the official tool: there is nothing to type into Brimline.
+
+1. Sign in to the Grok CLI with your xAI account (`grok login`, which opens your browser). The CLI keeps its sign-in in `~/.grok/auth.json`.
+2. Turn Grok on in **Settings, Accounts** (or `brimline providers enable grok`): it starts off.
+3. Brimline shows one card when the folder `~/.grok` exists. Without the Grok CLI there is no card: xAI publishes the limits of Grok for the CLI only, and the others are in your Grok account settings.
+
+Brimline reads only `auth.json` in that folder, and of it the sign-in with an xAI account: the session token and the user id, in memory, for one request to `https://cli-chat-proxy.grok.com`. It never renews the sign-in: if the Grok CLI has been closed for a long time the card says "Open the Grok CLI to refresh the sign-in." A CLI signed in with an API key has no subscription limit to show. Early in a period the card says "No number yet for this period." Details in [providers](providers.md).
+
 ## Common situations
 
 | What you see | What it means | What to do |

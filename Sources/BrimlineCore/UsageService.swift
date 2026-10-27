@@ -70,15 +70,9 @@ public struct UsageService: Sendable {
 
         switch await reader.read(account: account, now: now) {
         case .limits(let limits, let shape):
-            usage.limits = ProviderText.sanitize(limits, now: now)
-            usage.status = .ok
-            usage.fetchedAt = now
-            usage.failureCount = 0
-            usage.retryAfter = nil
-            usage.detail = nil
-            usage.reason = nil
-            usage.responseShape = shape.isEmpty ? nil : shape
-            return usage
+            return read(usage, limits: limits, shape: shape, note: nil, now: now)
+        case .annotated(let limits, let shape, let note):
+            return read(usage, limits: limits, shape: shape, note: note, now: now)
         case .expired:
             return failed(usage, status: .expired, detail: nil, now: now, backoff: false)
         case .notReadable(let reason):
@@ -95,12 +89,28 @@ public struct UsageService: Sendable {
         }
     }
 
+    private func read(_ usage: AccountUsage, limits: [UsageLimit], shape: String, note: AccountNote?,
+                      now: Date) -> AccountUsage {
+        var u = usage
+        u.limits = ProviderText.sanitize(limits, now: now)
+        u.status = .ok
+        u.fetchedAt = now
+        u.failureCount = 0
+        u.retryAfter = nil
+        u.detail = nil
+        u.reason = nil
+        u.responseShape = shape.isEmpty ? nil : shape
+        u.note = note
+        return u
+    }
+
     private func failed(_ usage: AccountUsage, status: AccountStatus, detail: String?, now: Date,
                         backoff: Bool) -> AccountUsage {
         var u = usage
         u.status = status
         u.detail = detail
         u.reason = nil
+        u.note = nil
         if backoff {
             u.failureCount += 1
             u.retryAfter = now.addingTimeInterval(Self.retryDelay(afterFailures: u.failureCount))

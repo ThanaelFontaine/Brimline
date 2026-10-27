@@ -127,9 +127,9 @@ struct CursorTests {
 
     // MARK: Registry and discovery
 
-    @Test("Cursor is in the registry, after Gemini, and calls nothing")
+    @Test("Cursor is in the registry, last, and calls nothing")
     func registry() {
-        #expect(Providers.all.map(\.provider) == [.claude, .chatgpt, .gemini, .cursor])
+        #expect(Providers.all.map(\.provider) == [.claude, .chatgpt, .gemini, .grok, .cursor])
         #expect(CursorReader().allowedURLs.isEmpty)
         #expect(Providers.isSupported(.cursor))
     }

@@ -120,6 +120,14 @@ public enum AccountStatus: String, Codable, Sendable, CaseIterable {
     case pending
 }
 
+/// Something to say next to the numbers of an account that was read (`status` is `ok`).
+public enum AccountNote: String, Codable, Sendable {
+    /// The provider answered but has no percentage yet for this period (Grok, early in a period): never a 0 %.
+    case noFigureYet = "no_figure_yet"
+    /// The limit is a pool shared by several products of the provider (Grok's unified billing).
+    case sharedPool = "shared_pool"
+}
+
 /// The usage of one account: the last known numbers and the state of the last attempt.
 public struct AccountUsage: Codable, Sendable, Identifiable {
     public var account: Account
@@ -141,13 +149,15 @@ public struct AccountUsage: Codable, Sendable, Identifiable {
     /// Fingerprint of the keys of the last answer (SHA-256, no value in it): a change of it is a
     /// change of the provider's format.
     public var responseShape: String?
+    /// Something to say next to the numbers of the last reading, when `status` is `ok`.
+    public var note: AccountNote?
 
     public var id: String { account.id }
 
     public init(account: Account, status: AccountStatus = .pending, limits: [UsageLimit] = [],
                 fetchedAt: Date? = nil, checkedAt: Date? = nil, failureCount: Int = 0,
                 retryAfter: Date? = nil, detail: String? = nil, reason: NotReadableReason? = nil,
-                responseShape: String? = nil) {
+                responseShape: String? = nil, note: AccountNote? = nil) {
         self.account = account
         self.status = status
         self.limits = limits
@@ -158,6 +168,7 @@ public struct AccountUsage: Codable, Sendable, Identifiable {
         self.detail = detail
         self.reason = reason
         self.responseShape = responseShape
+        self.note = note
     }
 
     public var sessionLimit: UsageLimit? { limits.first { $0.kind == .session } }

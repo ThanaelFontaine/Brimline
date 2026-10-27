@@ -17,6 +17,8 @@ public enum ProviderReading: Sendable {
     /// The provider answered: the limits, and a fingerprint of the answer's shape (no value in it,
     /// empty until a provider needs it).
     case limits([UsageLimit], shape: String)
+    /// Like `limits`, with one thing to say next to them (or in their place when there are none).
+    case annotated([UsageLimit], shape: String, note: AccountNote)
     /// This account cannot be read, by design (not a failure, no retry delay).
     case notReadable(reason: NotReadableReason)
     /// The official tool's sign-in has expired: Brimline never sends it nor renews it.
