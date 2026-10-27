@@ -1,4 +1,4 @@
-// render.swift : produit les images de la DA de Brimline (icône, favicons, og, aperçu).
+// render-icons.swift : produit les images de la DA de Brimline (icône, favicons, og, aperçu, gabarit PDF).
 // Compilation : ce fichier sert de main.swift, avec BrimlineGlyph.swift et les sources de BrimlineCore
 // dans un seul module (sans la ligne `import BrimlineCore`) : swiftc -O -swift-version 6 -enable-bare-slash-regex
 // Usage : ./render <dossier da>
@@ -43,18 +43,15 @@ func linear(_ ctx: CGContext, _ colors: [CGColor], from: CGPoint, to: CGPoint) {
     ctx.drawLinearGradient(g, start: from, end: to, options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
 }
 
-// MARK: - Icône (repère non retourné, grille macOS 1024 : carré arrondi de 824 à 100 du bord)
+// MARK: - Icône (piste A · Ras : une cuve ouverte, et au-dessus de son bord un trait libre, la limite)
 
-/// Dessine l'icône. `square` : le carré arrondi (en coordonnées du contexte non retourné).
-/// `detail` : faux pour les très petites tailles (pas de boulons, de graduations ni de reflet).
+/// Dessine l'icône, avec les coordonnées de `icons/app-icon.svg` (grille macOS 1024 : carré arrondi de 824 à 100 du bord,
+/// y vers le bas). `square` : le carré arrondi (en coordonnées du contexte non retourné).
+/// `detail` : faux pour les très petites tailles (16 et 32 px : pas de reflet, de ménisque ni de halo, traits plus épais),
+/// comme `icons/app-icon-small.svg`.
 /// `fullBleed` : fond carré plein, sans arrondi ni ombre (apple-touch-icon).
 func drawIcon(_ ctx: CGContext, square: CGRect, detail: Bool = true, fullBleed: Bool = false, level: CGFloat = 0.62) {
     let u = square.width / 824
-    func R(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> CGRect {
-        CGRect(x: square.minX + (x - 100) * u, y: square.minY + (y - 100) * u, width: w * u, height: h * u)
-    }
-    func P(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: square.minX + (x - 100) * u, y: square.minY + (y - 100) * u) }
-
     let shape = fullBleed ? CGPath(rect: square, transform: nil)
         : CGPath(roundedRect: square, cornerWidth: 185.4 * u, cornerHeight: 185.4 * u, transform: nil)
 
@@ -67,62 +64,102 @@ func drawIcon(_ ctx: CGContext, square: CGRect, detail: Bool = true, fullBleed: 
     }
     ctx.saveGState()
     ctx.addPath(shape); ctx.clip()
-    // Fond graphite.
-    linear(ctx, [rgb(0x2C333A), rgb(0x111417)], from: P(512, 924), to: P(512, 100))
-    // Halo très léger derrière le tube.
-    let halo = CGGradient(colorsSpace: sRGB, colors: [rgb(0x3BBDC2, 0.20), rgb(0x3BBDC2, 0)] as CFArray, locations: nil)!
-    ctx.drawRadialGradient(halo, startCenter: P(512, 470), startRadius: 0, endCenter: P(512, 470), endRadius: 400 * u, options: [])
+    // À partir d'ici : coordonnées du SVG (y vers le bas, carré arrondi de (100, 100) à (924, 924)).
+    ctx.translateBy(x: square.minX, y: square.maxY)
+    ctx.scaleBy(x: u, y: -u)
+    ctx.translateBy(x: -100, y: -100)
+    func R(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> CGRect { CGRect(x: x, y: y, width: w, height: h) }
+    func rounded(_ r: CGRect, _ radius: CGFloat) -> CGPath { CGPath(roundedRect: r, cornerWidth: radius, cornerHeight: radius, transform: nil) }
 
-    // Verre : fond du tube.
-    let tube = R(412, 312, 200, 400)
-    ctx.setFillColor(rgb(0xFFFFFF, 0.07)); ctx.fill(tube)
+    // Fond graphite, puis halo très léger derrière la cuve (grandes tailles seulement).
+    linear(ctx, [rgb(0x2C333A), rgb(0x111417)], from: CGPoint(x: 512, y: 100), to: CGPoint(x: 512, y: 924))
+    if detail {
+        let halo = CGGradient(colorsSpace: sRGB, colors: [rgb(0x3BBDC2, 0.18), rgb(0x3BBDC2, 0)] as CFArray, locations: nil)!
+        ctx.drawRadialGradient(halo, startCenter: CGPoint(x: 512, y: 560), startRadius: 0, endCenter: CGPoint(x: 512, y: 560), endRadius: 420, options: [])
+    }
 
-    // Liquide.
-    let liquidTop = 312 + 400 * level
-    let liquid = R(428, 312, 168, liquidTop - 312)
-    ctx.saveGState(); ctx.clip(to: liquid)
-    linear(ctx, [rgb(0x0E7C86), rgb(0x4FD0D6)], from: P(512, 312), to: P(512, liquidTop))
-    ctx.restoreGState()
-    // Ménisque : fine bande claire au sommet du liquide.
-    ctx.setFillColor(rgb(0xA6ECEE, 0.85)); ctx.fill(R(428, liquidTop - (detail ? 10 : 18), 168, detail ? 10 : 18))
-
-    // Parois du verre.
-    ctx.setFillColor(rgb(0xFFFFFF, 0.30))
-    ctx.fill(R(412, 312, detail ? 12 : 22, 400)); ctx.fill(R(detail ? 600 : 590, 312, detail ? 12 : 22, 400))
+    /// Cuve ouverte : intérieur (x0...x1, du bord `top` au fond `bottom`, coins de rayon `r`).
+    func inner(_ x0: CGFloat, _ x1: CGFloat, _ top: CGFloat, _ bottom: CGFloat, _ r: CGFloat) -> CGPath {
+        let p = CGMutablePath()
+        p.move(to: CGPoint(x: x0, y: top)); p.addLine(to: CGPoint(x: x1, y: top))
+        p.addLine(to: CGPoint(x: x1, y: bottom - r))
+        p.addArc(tangent1End: CGPoint(x: x1, y: bottom), tangent2End: CGPoint(x: x1 - r, y: bottom), radius: r)
+        p.addLine(to: CGPoint(x: x0 + r, y: bottom))
+        p.addArc(tangent1End: CGPoint(x: x0, y: bottom), tangent2End: CGPoint(x: x0, y: bottom - r), radius: r)
+        p.closeSubpath(); return p
+    }
+    /// Parois de la cuve : l'anneau entre l'intérieur et l'extérieur, ouvert en haut (des pieds arrondis de rayon `cap`).
+    func walls(_ x0: CGFloat, _ x1: CGFloat, _ top: CGFloat, _ bottom: CGFloat, _ r: CGFloat, _ thick: CGFloat, cap: CGFloat) -> CGPath {
+        let p = CGMutablePath()
+        let ro = r + thick
+        p.move(to: CGPoint(x: x0 - thick, y: top))
+        if cap > 0 {
+            p.addArc(tangent1End: CGPoint(x: x0 - thick, y: top - cap), tangent2End: CGPoint(x: x0, y: top - cap), radius: cap)
+            p.addArc(tangent1End: CGPoint(x: x0, y: top - cap), tangent2End: CGPoint(x: x0, y: top), radius: cap)
+        } else { p.addLine(to: CGPoint(x: x0, y: top)) }
+        p.addLine(to: CGPoint(x: x0, y: bottom - r))
+        p.addArc(tangent1End: CGPoint(x: x0, y: bottom), tangent2End: CGPoint(x: x0 + r, y: bottom), radius: r)
+        p.addLine(to: CGPoint(x: x1 - r, y: bottom))
+        p.addArc(tangent1End: CGPoint(x: x1, y: bottom), tangent2End: CGPoint(x: x1, y: bottom - r), radius: r)
+        p.addLine(to: CGPoint(x: x1, y: top))
+        if cap > 0 {
+            p.addArc(tangent1End: CGPoint(x: x1, y: top - cap), tangent2End: CGPoint(x: x1 + thick, y: top - cap), radius: cap)
+            p.addArc(tangent1End: CGPoint(x: x1 + thick, y: top - cap), tangent2End: CGPoint(x: x1 + thick, y: top), radius: cap)
+        } else { p.addLine(to: CGPoint(x: x1 + thick, y: top)) }
+        p.addLine(to: CGPoint(x: x1 + thick, y: bottom - r))
+        p.addArc(tangent1End: CGPoint(x: x1 + thick, y: bottom + thick), tangent2End: CGPoint(x: x1 + thick - ro, y: bottom + thick), radius: ro)
+        p.addLine(to: CGPoint(x: x0 - thick + ro, y: bottom + thick))
+        p.addArc(tangent1End: CGPoint(x: x0 - thick, y: bottom + thick), tangent2End: CGPoint(x: x0 - thick, y: bottom - r), radius: ro)
+        p.closeSubpath(); return p
+    }
 
     if detail {
-        // Reflet vertical.
-        ctx.addPath(CGPath(roundedRect: R(446, 336, 18, 352), cornerWidth: 9 * u, cornerHeight: 9 * u, transform: nil))
-        ctx.setFillColor(rgb(0xFFFFFF, 0.22)); ctx.fillPath()
-        // Graduations à 25, 50 et 75 %.
-        ctx.setFillColor(rgb(0xFFFFFF, 0.55))
-        for t in [0.25, 0.5, 0.75] as [CGFloat] {
-            let y = 312 + 400 * t
-            ctx.fill(R(t == 0.5 ? 540 : 560, y - 3, t == 0.5 ? 52 : 32, 6))
-        }
-    }
-
-    // Brides métalliques (celle du haut figure la limite).
-    for y in [248, 712] as [CGFloat] {
-        let r = R(352, y, 320, 64)
-        ctx.saveGState()
-        ctx.addPath(CGPath(roundedRect: r, cornerWidth: 20 * u, cornerHeight: 20 * u, transform: nil)); ctx.clip()
-        linear(ctx, [rgb(0xE6EAED), rgb(0x8C959D)], from: CGPoint(x: r.midX, y: r.maxY), to: CGPoint(x: r.midX, y: r.minY))
-        ctx.setFillColor(rgb(0xFFFFFF, 0.55)); ctx.fill(CGRect(x: r.minX, y: r.maxY - 3 * u, width: r.width, height: 3 * u))
+        ctx.translateBy(x: 0, y: -20)
+        let glass = inner(380, 644, 388, 736, 68)
+        // Verre de la cuve.
+        ctx.addPath(glass); ctx.setFillColor(rgb(0xFFFFFF, 0.06)); ctx.fillPath()
+        // Liquide (62 % par défaut) et son ménisque.
+        let top = 736 - level * 348
+        ctx.saveGState(); ctx.addPath(glass); ctx.clip()
+        ctx.clip(to: R(380, top, 264, 736 - top))
+        linear(ctx, [rgb(0x4FD0D6), rgb(0x0E7C86)], from: CGPoint(x: 512, y: top), to: CGPoint(x: 512, y: 736))
+        ctx.setFillColor(rgb(0xA6ECEE, 0.85)); ctx.fill(R(380, top, 264, 10))
         ctx.restoreGState()
-        if detail {
-            for x in [392, 632] as [CGFloat] {
-                let c = P(x, y + 32)
-                ctx.setFillColor(rgb(0x5A636B)); ctx.fillEllipse(in: CGRect(x: c.x - 13 * u, y: c.y - 13 * u, width: 26 * u, height: 26 * u))
-                ctx.setFillColor(rgb(0xFFFFFF, 0.35)); ctx.fillEllipse(in: CGRect(x: c.x - 6 * u, y: c.y + 1 * u, width: 9 * u, height: 7 * u))
-            }
-        }
-    }
-    // Liseré intérieur du carré.
-    if !fullBleed {
-        ctx.addPath(shape); ctx.setStrokeColor(rgb(0xFFFFFF, 0.10)); ctx.setLineWidth(4 * u); ctx.strokePath()
+        // Reflet.
+        ctx.addPath(rounded(R(404, 410, 20, 270), 10)); ctx.setFillColor(rgb(0xFFFFFF, 0.18)); ctx.fillPath()
+        // Parois de verre.
+        ctx.addPath(walls(380, 644, 388, 736, 68, 28, cap: 14)); ctx.setFillColor(rgb(0xFFFFFF, 0.34)); ctx.fillPath()
+        // Le trait, sa lueur d'abord (flou gaussien de 16 : l'ombre d'une copie hors cadre en tient lieu).
+        ctx.saveGState()
+        let far: CGFloat = 4000
+        ctx.setShadow(offset: CGSize(width: far * u, height: 0), blur: 32 * u, color: rgb(0x3BBDC2, 0.45))
+        ctx.addPath(rounded(R(282 - far, 300, 460, 44), 22)); ctx.setFillColor(rgb(0x000000)); ctx.fillPath()
+        ctx.restoreGState()
+        ctx.saveGState(); ctx.addPath(rounded(R(282, 300, 460, 44), 22)); ctx.clip()
+        linear(ctx, [rgb(0xFFFFFF), rgb(0xC9D1D8)], from: CGPoint(x: 512, y: 300), to: CGPoint(x: 512, y: 344))
+        ctx.restoreGState()
+    } else {
+        ctx.translateBy(x: 0, y: -18)
+        let glass = inner(388, 636, 400, 724, 54)
+        let top = 724 - level * 324
+        ctx.saveGState(); ctx.addPath(glass); ctx.clip()
+        ctx.setFillColor(rgb(0x3BBDC2)); ctx.fill(R(388, top, 248, 724 - top))
+        ctx.restoreGState()
+        ctx.addPath(walls(388, 636, 400, 724, 54, 56, cap: 0)); ctx.setFillColor(rgb(0xE6EAED)); ctx.fillPath()
+        ctx.addPath(rounded(R(272, 280, 480, 72), 36)); ctx.setFillColor(rgb(0xFFFFFF)); ctx.fillPath()
     }
     ctx.restoreGState()
+
+    // Liseré intérieur du carré.
+    if !fullBleed {
+        ctx.saveGState()
+        ctx.translateBy(x: square.minX, y: square.minY)
+        let inset = 2 * u
+        ctx.addPath(CGPath(roundedRect: square.offsetBy(dx: -square.minX, dy: -square.minY).insetBy(dx: inset, dy: inset),
+                           cornerWidth: 183.4 * u, cornerHeight: 183.4 * u, transform: nil))
+        ctx.setStrokeColor(rgb(0xFFFFFF, 0.10)); ctx.setLineWidth(4 * u); ctx.strokePath()
+        ctx.restoreGState()
+    }
 }
 
 func iconPNG(_ px: Int, _ name: String) {
@@ -335,7 +372,7 @@ png(1600, 1320, "apercu.png", opaque: true) { ctx in
     }
 
     // Glyphe agrandi (x4), clair et sombre.
-    let levels: [(Double, String)] = [(0, "0 %"), (0.25, "25 %"), (0.70, "70 %"), (0.95, "95 %")]
+    let levels: [(Double, String)] = [(0, "0 %"), (0.25, "25 %"), (0.72, "72 %"), (0.95, "95 %")]
     for (row, pal) in [(0, L), (1, D)] {
         let y0: CGFloat = 130 + CGFloat(row) * 150
         roundRect(ctx, CGRect(x: 380, y: y0, width: 560, height: 130), 12, fill: rgb(pal.surface), stroke: rgb(pal.border))
@@ -345,7 +382,7 @@ png(1600, 1320, "apercu.png", opaque: true) { ctx in
             text(label, gx + 36, y0 + 100, size: 13, weight: .semibold, color: pal.text, align: .center, mono: true)
         }
     }
-    text("Glyphe gabarit 18 pt, agrandi 4 fois : le liquide monte vers la bride du haut (la limite)", 380, 418, size: 13, color: L.text2)
+    text("Gabarit 18 pt ×4 : le liquide monte vers le bord, le trait au-dessus est la limite", 380, 418, size: 13, color: L.text2)
 
     // Barres des menus simulées, taille réelle en 2x (18 pt = 36 px).
     for (row, pal) in [(0, L), (1, D)] {
@@ -353,7 +390,7 @@ png(1600, 1320, "apercu.png", opaque: true) { ctx in
         let bar = CGRect(x: 980, y: y0 + 41, width: 560, height: 48)
         roundRect(ctx, bar, 10, fill: rgb(row == 0 ? 0xF2F2F4 : 0x26292D), stroke: rgb(pal.border))
         var bx: CGFloat = 1000
-        for (lv, label) in [(0.25, "25 %"), (0.70, "70 %"), (0.95, "95 %")] as [(Double, String)] {
+        for (lv, label) in [(0.25, "25 %"), (0.72, "72 %"), (0.95, "95 %")] as [(Double, String)] {
             glyph(ctx, bx, y0 + 47, k: 2, level: lv, color: rgb(pal.text))
             text(label, bx + 40, y0 + 53, size: 26, weight: .medium, color: pal.text, mono: true)
             bx += 122
@@ -366,5 +403,16 @@ png(1600, 1320, "apercu.png", opaque: true) { ctx in
     // Cartes de compte.
     card(ctx, x: 300, y: 580, k: 1.5, L)
     card(ctx, x: 860, y: 580, k: 1.5, D)
+}
+// 5. Gabarit de la barre des menus en PDF vectoriel (noir et transparence, niveau 60 %), comme icons/menubar-template.svg.
+do {
+    var box = CGRect(x: 0, y: 0, width: 18, height: 18)
+    let info = [kCGPDFContextTitle: "Brimline menubar template"] as CFDictionary
+    if let consumer = CGDataConsumer(url: URL(fileURLWithPath: OUT + "/menubar-template.pdf") as CFURL),
+       let pdf = CGContext(consumer: consumer, mediaBox: &box, info) {
+        pdf.beginPDFPage(nil)
+        BrimlineGlyph.draw(level: 0.6, in: pdf, scale: 2, color: rgb(0x000000))
+        pdf.endPDFPage(); pdf.closePDF()
+    }
 }
 print("ok")

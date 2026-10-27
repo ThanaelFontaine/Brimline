@@ -9,7 +9,7 @@ Le *brim* est le bord jusqu'où monte une cuve ; la *line* est la limite tracée
 Trois règles fondent tout le reste :
 
 1. **Le chiffre d'abord.** Chaque jauge a son pourcentage écrit en texte. La couleur confirme, elle ne porte jamais seule l'information.
-2. **Le liquide, c'est ce qui est consommé.** La jauge et le glyphe montent vers la limite (la bride du haut, le bout de la piste). Le vide au-dessus, c'est ce qui reste. Le pourcentage affiché est celui de l'API (part utilisée), pour qu'on puisse le comparer aux chiffres de Claude.
+2. **Le liquide, c'est ce qui est consommé.** La jauge et le glyphe montent vers la limite (le bord de la cuve et le trait au-dessus, le bout de la piste). Le vide au-dessus, c'est ce qui reste. Le pourcentage affiché est celui de l'API (part utilisée), pour qu'on puisse le comparer aux chiffres de Claude.
 3. **Natif avant tout.** L'app emprunte tout au système (SF Pro, matériaux, couleurs `.primary` et `.secondary`, boutons sans cadre). Brimline n'ajoute que l'accent et les couleurs de jauge.
 
 ## Couleurs
@@ -131,15 +131,16 @@ Grille de 4 : 2, 4, 8, 12, 16, 24, 32, 48, 64.
 
 ## Le glyphe de la barre des menus
 
-Fichiers : `BrimlineGlyph.swift` (app), `icons/menubar-template.svg` et `glyph-level.svg` (site).
+Fichiers : `BrimlineGlyph.swift` (app), `icons/menubar-template.svg` et `.pdf`, `glyph-level.svg` (site).
 
 - Image **gabarit** 18 x 18 pt, noir et transparence, `isTemplate = true` : macOS la teinte (clair, sombre, barre teintée, survol). Jamais de couleur dans la barre des menus.
-- Dessin : deux brides horizontales (12 pt de large) et deux parois verticales autour d'une cavité de 6 pt. Le liquide (4 pt de large) monte de la bride du bas vers celle du haut, qui figure la limite.
-- Netteté : géométrie au pixel près en 1x (traits de 1 pt) et en 2x (traits de 1,5 pt). Contrôlé par rendu : aucune demi-teinte en 1x, seulement les coins arrondis des brides en 2x.
+- Dessin (piste A · Ras, choisie le 27/10/2026) : une cuve ouverte en U (10 pt de large, bord à 5 pt du haut, coins arrondis) et, au-dessus de son bord, un trait libre de 14 pt : la limite. Le liquide (4 pt de large) monte du fond de la cuve vers son bord (8 pt de course). Le trait ne touche jamais la cuve : c'est lui qui fait la marque, à protéger.
+- Netteté : géométrie au pixel près en 1x (traits de 1 pt) et en 2x (traits de 1,5 pt, la géométrie de `icons/menubar-template.svg`). Les tests de rendu (`BrimlineGlyphTests`) lisent les pixels : le trait, les parois et le fond sont pleins à tous les niveaux, rien entre le trait et le bord.
 - Niveau : celui de la limite **la plus proche de son plafond** parmi les comptes affichés. Au moins 1 pt de liquide dès que le niveau dépasse 0. La course pleine est réservée à 100 %, pour que 99 % ne se confonde pas avec la limite.
 - Pourcentage à côté (réglage) : texte système de la barre des menus, chiffres à chasse fixe, même valeur que le glyphe. Le glyphe n'a pas de couleur : à 90 % et plus, seuls le niveau et le chiffre parlent, c'est voulu.
 - Données expirées ou indisponibles : glyphe atténué (opacité 0,45, `dimmed: true`), avec la dernière valeur connue ou tube vide si aucune.
 - Aucun compte : tube vide, opacité pleine.
+- États de la planche : 0, 25, 72 et 95 %, puis expiré (opacité 0,45), en clair et en sombre.
 - Libellé VoiceOver : « Brimline, 72 % ».
 
 Usage :
@@ -155,12 +156,11 @@ BrimlineGlyph.image(level: last, dimmed: true)   // expiré ou indisponible
 
 - Grille macOS : carré arrondi de 824 px dans 1024, à 100 px du bord, rayon 185,4, ombre portée douce.
 - Fond graphite (dégradé `#2C333A` vers `#111417`), halo sarcelle très discret.
-- Au centre, le voyant :
-  - deux brides métalliques à boulons ;
-  - un tube de verre avec reflet ;
-  - des graduations à 25, 50 et 75 % ;
-  - le liquide sarcelle à 62 % avec son ménisque.
-- En 16 et 32 px, le dessin se simplifie : pas de boulons, de reflet ni de graduations ; parois plus épaisses.
+- Au centre, la cuve :
+  - une cuve de verre ouverte, aux parois translucides, avec un reflet ;
+  - le liquide sarcelle à 62 %, avec son ménisque ;
+  - au-dessus du bord, le trait : la limite, en ivoire, avec une lueur sarcelle discrète. Il ne touche jamais la cuve.
+- En 16 et 32 px (`icons/app-icon-small.svg`), le dessin se simplifie : pas de halo, de reflet, de ménisque ni de lueur ; parois et trait plus épais, liquide d'un aplat.
 
 ## Site
 
