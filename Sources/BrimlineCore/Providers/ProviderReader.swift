@@ -29,6 +29,9 @@ public enum ProviderReading: Sendable {
 /// One provider's way to find its accounts on the Mac and read their limits.
 public protocol ProviderReader: Sendable {
     var provider: Provider { get }
+    /// The closed list of URLs this reader may call, whole (see `AllowListHTTPClient`). Nothing else
+    /// is ever requested, with a token or without.
+    var allowedURLs: [URL] { get }
     /// The accounts of this provider, from exact places on disk. Reads no secret.
     func discover(home: URL, settings: BrimlineSettings) -> [Account]
     /// Reads one account. Never throws: every outcome is a `ProviderReading`.

@@ -15,6 +15,8 @@ final class CountingReader: ProviderReader, @unchecked Sendable {
     var discoverCalls: Int { lock.withLock { discovered } }
     var readCalls: Int { lock.withLock { reads } }
 
+    var allowedURLs: [URL] { [] }
+
     func discover(home: URL, settings: BrimlineSettings) -> [Account] {
         lock.withLock { discovered += 1 }
         return []
@@ -149,6 +151,7 @@ struct ConsentTests {
     func notReadable() async {
         struct Stub: ProviderReader {
             var provider: Provider { .claude }
+            var allowedURLs: [URL] { [] }
             func discover(home: URL, settings: BrimlineSettings) -> [Account] { [] }
             func read(account: Account, now: Date) async -> ProviderReading { .notReadable(reason: .consumerPlan) }
         }

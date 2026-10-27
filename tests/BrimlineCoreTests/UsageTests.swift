@@ -178,7 +178,7 @@ struct UsageTests {
         #expect(UsageService.retryDelay(afterFailures: 9) == 3600)
     }
 
-    @Test("A network failure or an unknown answer makes the account unavailable")
+    @Test("A network failure makes the account unavailable, an unknown answer says the format changed")
     func unknownAnswer() async throws {
         let a = account("a@example.com", dir: "/opt/a")
         let b = account("b@example.com", dir: "/opt/b")
@@ -188,7 +188,7 @@ struct UsageTests {
         ])
         let http = FakeHTTP(["tok-a": (200, Data(#"{"new_shape":true}"#.utf8), [:])])
         let snapshot = await UsageService(credentials: credentials, http: http).refresh(accounts: [a, b], settings: allOn, previous: nil)
-        #expect(snapshot.accounts.map(\.status) == [.unavailable, .unavailable])
+        #expect(snapshot.accounts.map(\.status) == [.formatChanged, .unavailable])
         #expect(snapshot.accounts.map(\.detail) == ["unknown answer", "network"])
     }
 }

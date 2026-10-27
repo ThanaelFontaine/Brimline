@@ -101,6 +101,7 @@ struct ReaderServiceTests {
         struct Stub: ProviderReader {
             var provider: Provider
             var answer: ProviderReading
+            var allowedURLs: [URL] { [] }
             func discover(home: URL, settings: BrimlineSettings) -> [Account] { [] }
             func read(account: Account, now: Date) async -> ProviderReading { answer }
         }
@@ -122,6 +123,7 @@ struct ReaderServiceTests {
     func notReadableAnswer() async {
         struct Stub: ProviderReader {
             var provider: Provider { .claude }
+            var allowedURLs: [URL] { [] }
             func discover(home: URL, settings: BrimlineSettings) -> [Account] { [] }
             func read(account: Account, now: Date) async -> ProviderReading { .notReadable(reason: .consumerPlan) }
         }

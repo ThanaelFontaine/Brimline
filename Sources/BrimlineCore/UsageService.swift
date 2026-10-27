@@ -70,7 +70,7 @@ public struct UsageService: Sendable {
 
         switch await reader.read(account: account, now: now) {
         case .limits(let limits, let shape):
-            usage.limits = limits
+            usage.limits = ProviderText.sanitize(limits, now: now)
             usage.status = .ok
             usage.fetchedAt = now
             usage.failureCount = 0
