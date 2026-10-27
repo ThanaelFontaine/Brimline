@@ -485,10 +485,10 @@ public struct Strings: Sendable {
         }
         return t("Turn off “\(label)”", "Coupez « \(label) »")
     }
-    /// "In Settings › Desktop app": where that switch is.
+    /// "In Settings › System" (Claude): where that switch is.
     public func menuBarSettingPath(_ app: MenuBarApp) -> String {
         switch app {
-        case .claude: t("In Settings › Desktop app", "Dans Paramètres › Application de bureau")
+        case .claude: t("In Settings › System", "Dans Paramètres › Système")
         case .chatgpt: t("In Settings › General", "Dans Paramètres › Général")
         case .cursor: t("In Cursor Settings › General", "Dans Cursor Settings › General")
         }

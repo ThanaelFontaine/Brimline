@@ -73,5 +73,7 @@ struct MenuBarTidyTests {
         }
         #expect(Strings(.fr).menuBarTurnOff(.claude) == "Coupez « Barre de menus »")
         #expect(Strings(.en).menuBarTurnOff(.chatgpt) == "Turn off “Show in menu bar”")
+        #expect(Strings(.en).menuBarSettingPath(.claude) == "In Settings › System")
+        #expect(Strings(.fr).menuBarSettingPath(.claude) == "Dans Paramètres › Système")
     }
 }
