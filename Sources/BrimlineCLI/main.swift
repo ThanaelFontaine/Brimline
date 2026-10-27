@@ -3,8 +3,9 @@ import BrimlineCore
 
 // The `brimline` command: the same numbers as the menu bar, for people and agents.
 //
-//   brimline status [--json] [--live]   usage of each account (from the app's cache, or read now)
-//   brimline accounts [--json]          accounts found on this Mac (no Keychain read)
+//   brimline status [--json] [--live] [--provider <name>]   usage of each account (from the app's cache, or read now)
+//   brimline status --live --shape [--provider <name>]      the skeleton of each provider's answer (keys and types)
+//   brimline accounts [--json] [--provider <name>]          accounts found on this Mac (no Keychain read)
 //   brimline providers [enable|disable <name>]   which providers Brimline reads
 //   brimline mcp                        local MCP server over stdio
 //   brimline --version | --help
@@ -19,10 +20,16 @@ let usage = """
 Brimline \(version): your AI subscription limits, account by account.
 
 Usage:
-  brimline status [--json] [--live]   Usage of each account. Reads the cache written by the
-                                      Brimline app; --live reads the Keychain and asks the
-                                      provider now (macOS may ask to allow the Keychain read).
-  brimline accounts [--json]          Accounts found on this Mac.
+  brimline status [--json] [--live] [--provider <name>]
+                                      Usage of each account. Reads the cache written by the
+                                      Brimline app; --live reads the sign-in and asks the
+                                      provider now, for the providers that are on.
+                                      --provider limits the answer to one provider.
+  brimline status --live --shape [--provider <name>]
+                                      Shows the shape of the provider's answer (keys and the type
+                                      of each value, never a value), to check a format.
+  brimline accounts [--json] [--provider <name>]
+                                      Accounts found on this Mac.
   brimline providers [--json]         The providers and whether each is on. Only Claude is on by
                                       default: a provider that is off is not touched at all.
   brimline providers enable <name>    Turn a provider on (claude, chatgpt, gemini, grok, cursor).
@@ -37,7 +44,53 @@ Documentation: \(Links.agentsDoc.absoluteString)
 var arguments = Array(CommandLine.arguments.dropFirst())
 let command = arguments.first ?? "status"
 if !arguments.isEmpty { arguments.removeFirst() }
+
+// `--provider <name>` (or `--provider=<name>`) is taken out first: its value is not a flag.
+var providerFilter: Provider?
+var providerGiven = false
+do {
+    var rest: [String] = []
+    var index = 0
+    while index < arguments.count {
+        let argument = arguments[index]
+        var value: String?
+        if argument == "--provider" {
+            index += 1
+            guard index < arguments.count else {
+                printError("brimline: --provider needs a name (\(Provider.allCases.map(\.rawValue).joined(separator: ", "))).")
+                exit(64)
+            }
+            value = arguments[index]
+        } else if argument.hasPrefix("--provider=") {
+            value = String(argument.dropFirst("--provider=".count))
+        }
+        if let value {
+            providerGiven = true
+            guard let provider = Provider(rawValue: value.lowercased()) else {
+                printError("brimline: unknown provider \(value). Choose one of \(Provider.allCases.map(\.rawValue).joined(separator: ", ")).")
+                exit(64)
+            }
+            providerFilter = provider
+        } else {
+            rest.append(argument)
+        }
+        index += 1
+    }
+    arguments = rest
+}
 let flags = Set(arguments)
+if providerGiven && command != "status" && command != "accounts" {
+    printError("brimline: --provider goes with status and accounts (the MCP tools take a provider argument). See brimline --help.")
+    exit(64)
+}
+
+/// A short hint on stderr when a provider was asked for and there is nothing to show: it is off.
+nonisolated(unsafe) var hinted = false
+func hintIfEmpty(_ provider: Provider?, settings: BrimlineSettings) {
+    guard let provider, !settings.isEnabled(provider), !hinted else { return }
+    hinted = true
+    printError("\(provider.displayName) is off, so nothing of it is read. Turn it on with: brimline providers enable \(provider.rawValue)")
+}
 
 func rejectUnknown(_ allowed: Set<String>) {
     let unknown = flags.subtracting(allowed)
@@ -63,19 +116,22 @@ case "--help", "-h", "help":
 
 case "accounts":
     rejectUnknown(["--json"])
-    let accounts = Providers.discover(settings: settings)
+    let accounts = Providers.discover(settings: settings).filter { providerFilter == nil || $0.provider == providerFilter }
+    if accounts.isEmpty { hintIfEmpty(providerFilter, settings: settings) }
     if flags.contains("--json") {
         struct Entry: Encodable {
-            var id, provider, folder: String
-            var keychainService, email, organization, label: String?
+            var id, provider, source: String
+            var folder, keychainService, email, organization, label: String?
             var hidden: Bool
             enum CodingKeys: String, CodingKey {
-                case id, provider, folder, email, organization, label, hidden
+                case id, provider, source, folder, email, organization, label, hidden
                 case keychainService = "keychain_service"
             }
         }
+        let home = FileManager.default.homeDirectoryForCurrentUser
         let entries = accounts.map {
-            Entry(id: $0.id, provider: $0.provider.rawValue, folder: $0.source, keychainService: $0.keychainService,
+            Entry(id: $0.id, provider: $0.provider.rawValue, source: AgentPath.display($0.source, home: home),
+                  folder: $0.provider == .claude ? $0.source : nil, keychainService: $0.keychainService,
                   email: $0.email, organization: $0.organization, label: settings.label(for: $0.id),
                   hidden: settings.isHidden($0.id))
         }
@@ -89,7 +145,8 @@ case "accounts":
             let hidden = settings.isHidden(a.id) ? "  (hidden)" : ""
             print("\(a.email ?? a.folderName)\(hidden)")
             if let org = a.organization { print("  \(org)") }
-            print("  \((a.source as NSString).abbreviatingWithTildeInPath)")
+            let place = (a.source as NSString).abbreviatingWithTildeInPath
+            print(a.provider == .claude ? "  \(place)" : "  \(a.provider.displayName) · \(place)")
         }
     }
 
@@ -140,15 +197,38 @@ case "providers":
     }
 
 case "status":
-    rejectUnknown(["--json", "--live"])
+    rejectUnknown(["--json", "--live", "--shape"])
     let now = Date()
     let cache = UsageCache(file: paths.cacheFile)
     let snapshot: UsageSnapshot
     let source: String
+    let showShape = flags.contains("--shape")
+    if showShape && (!flags.contains("--live") || flags.contains("--json")) {
+        printError("brimline: --shape goes with --live, and replaces --json. See brimline --help.")
+        exit(64)
+    }
     if flags.contains("--live") {
-        let accounts = Providers.discover(settings: settings)
-        snapshot = await UsageService().refresh(accounts: accounts, settings: settings, previous: cache.load(), now: now, force: true)
+        let accounts = Providers.discover(settings: settings).filter { providerFilter == nil || $0.provider == providerFilter }
+        if accounts.isEmpty { hintIfEmpty(providerFilter, settings: settings) }
+        let recorder = RecordingHTTPClient()
+        let service = showShape
+            ? UsageService(readers: Providers.make(credentials: SecurityToolCredentialReader(), http: recorder))
+            : UsageService()
+        snapshot = await service.refresh(accounts: accounts, settings: settings, previous: cache.load(), now: now, force: true)
         source = "live"
+        if showShape {
+            // The skeleton of the last answer of each endpoint: keys and types, never a value.
+            let skeletons = recorder.skeletons
+            if skeletons.isEmpty {
+                printError("brimline: no answer to show (nothing was asked, or the provider did not answer with JSON).")
+                exit(2)
+            }
+            for entry in skeletons {
+                print(entry.url)
+                print(entry.skeleton)
+            }
+            exit(0)
+        }
     } else if let cached = cache.load() {
         snapshot = cached
         source = "cache"
@@ -163,13 +243,19 @@ case "status":
     }
 
     if flags.contains("--json") {
-        print(AgentUsageReport(snapshot: snapshot, settings: settings, source: source, now: now).jsonString())
+        print(AgentUsageReport(snapshot: snapshot, settings: settings, source: source, now: now,
+                               provider: providerFilter).jsonString())
     } else {
-        let visible = snapshot.accounts.filter { !settings.isHidden($0.account.id) }
-        if visible.isEmpty { print(strings.noAccountTitle) }
+        let visible = snapshot.accounts.filter {
+            !settings.isHidden($0.account.id) && (providerFilter == nil || $0.account.provider == providerFilter)
+        }
+        if visible.isEmpty {
+            print(strings.noAccountTitle)
+            hintIfEmpty(providerFilter, settings: settings)
+        }
         for u in visible {
             let title = settings.label(for: u.account.id) ?? u.account.email ?? u.account.folderName
-            print(title)
+            print(u.account.provider == .claude ? title : "\(u.account.provider.displayName) · \(title)")
             if let message = strings.statusMessage(u.status), u.status != .ok {
                 print("  \(message)")
             }
@@ -201,6 +287,7 @@ case "status":
 
 case "mcp":
     rejectUnknown([])
+
     let server = MCPServer(version: version, load: {
         let paths = BrimlinePaths()
         return (UsageCache(file: paths.cacheFile).load(), SettingsStore(file: paths.settingsFile).load())

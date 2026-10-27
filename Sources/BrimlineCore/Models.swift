@@ -100,7 +100,7 @@ public struct UsageLimit: Codable, Sendable, Hashable {
 }
 
 /// Where an account stands, as far as Brimline knows.
-public enum AccountStatus: String, Codable, Sendable {
+public enum AccountStatus: String, Codable, Sendable, CaseIterable {
     /// The last request succeeded.
     case ok
     /// The access token has expired: the official tool renews it the next time it is used.
