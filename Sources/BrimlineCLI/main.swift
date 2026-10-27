@@ -257,9 +257,10 @@ case "status":
             print(strings.noAccountTitle)
             hintIfEmpty(providerFilter, settings: settings)
         }
+        let home = FileManager.default.homeDirectoryForCurrentUser
         for u in visible {
-            for line in StatusText.lines(for: u, settings: settings, strings: strings, time: time, now: now,
-                                         refreshMinutes: settings.refreshMinutes) {
+            for line in StatusText.lines(for: u, among: visible, settings: settings, strings: strings, time: time,
+                                         now: now, home: home, refreshMinutes: settings.refreshMinutes) {
                 print(line)
             }
         }

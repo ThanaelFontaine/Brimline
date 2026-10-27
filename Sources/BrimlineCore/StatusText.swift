@@ -3,12 +3,19 @@ import Foundation
 /// The text `brimline status` prints for one account: its title, its sentence, one row per limit.
 /// In Core so that a test reads what the command says (the command itself is only the plumbing).
 public enum StatusText {
-    public static func lines(for usage: AccountUsage, settings: BrimlineSettings, strings: Strings,
-                             time: TimeFormatter, now: Date, refreshMinutes: Int) -> [String] {
+    /// The title is the one of the panel: Claude's address, or the provider and its plan ("ChatGPT Plus"), or the
+    /// label the user gave with the provider and plan after it. `visible` is every account shown in this answer: with
+    /// several of one provider, the place of each connection goes after the title.
+    public static func lines(for usage: AccountUsage, among visible: [AccountUsage], settings: BrimlineSettings,
+                             strings: Strings, time: TimeFormatter, now: Date, home: URL,
+                             refreshMinutes: Int) -> [String] {
         var out: [String] = []
         let account = usage.account
-        let name = settings.label(for: account.id) ?? account.email ?? account.folderName
-        let title = account.provider == .claude ? name : "\(account.provider.displayName) · \(name)"
+        let siblings = visible.filter { $0.account.provider == account.provider }.count
+        var title = AccountNames.title(for: account, settings: settings)
+        if let subtitle = AccountNames.subtitle(for: account, settings: settings, siblings: siblings, home: home) {
+            title += " · \(subtitle)"
+        }
         out.append(title)
         if let message = strings.message(for: usage), usage.status != .ok || usage.note != nil {
             out.append("  \(message)")
