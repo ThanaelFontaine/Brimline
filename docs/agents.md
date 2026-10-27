@@ -31,9 +31,9 @@ brimline --version
 ```
 
 - `status` reads the cache, even when the app is not running (check `age_seconds`). Only when there is no cache at all does it say so and exit with code 2.
-- `status --live` reads every account of the providers that are on, now, with the same code as the app: it reads the Keychain through `/usr/bin/security` and asks Anthropic. It does not write the cache (the app stays the only writer).
+- `status --live` reads every account of the providers that are on, now, with the same code as the app: for Claude it reads the Keychain through `/usr/bin/security` and asks Anthropic; for ChatGPT, Grok and Cursor it reads the sign-in file the official tool keeps and asks that provider; for Gemini it launches Google's `agy --print /usage`. It does not write the cache (the app stays the only writer), but it reads the app's cache for Gemini, so a Gemini read the app made less than 15 minutes ago is not repeated.
 - `--provider <name>` (`claude`, `chatgpt`, `gemini`, `grok` or `cursor`) limits `status` and `accounts` to one provider. If that provider is off, the answer is empty and a line on the standard error says how to turn it on (or, for a provider this version does not read yet, that there is nothing to show).
-- `status --live --shape` prints, for each provider asked, the **shape** of its last answer: every key and the type of its value (`"string"`, `"number"`, `"bool"`, `"null"`), never a value. It is for checking a format when a provider changes it; it replaces `--json` and needs `--live`.
+- `status --live --shape` prints, for each provider asked, the **shape** of its last answer: every key and the type of its value (`"string"`, `"number"`, `"bool"`, `"null"`), never a value. It is for checking a format when a provider changes it; it replaces `--json` and needs `--live`. Gemini has none: `agy` prints text, not JSON, so the answer is "no answer to show" (exit code 2).
 - `providers` lists the providers (on, off, or "not available yet" when this version has no reader for it); `providers enable <name>` and `providers disable <name>` change the setting file, and the app takes it at its next refresh. Claude is on by default, every other provider is **off until it is turned on**: a provider that is off is not touched at all.
 - There is no `brimline best` command: agents choose an account with the MCP tool `best_account` and its `provider` argument.
 - Exit codes: 0 on success, 2 when there is no cache yet (or no answer to show with `--shape`), 64 for a wrong command or option.
@@ -124,7 +124,7 @@ claude mcp add --scope user brimline -- ~/.local/bin/brimline mcp
 
 ### Add it to Codex (OpenAI)
 
-Codex declares an MCP server in one line, or in `~/.codex/config.toml`, with an absolute path. Through Brimline, Codex reads your Claude accounts: Brimline reads Claude accounts only today (the other providers come later and are off until you turn them on).
+Codex declares an MCP server in one line, or in `~/.codex/config.toml`, with an absolute path. Through Brimline, Codex reads the numbers of every provider that is on: Claude always, and ChatGPT, Gemini, Grok and Cursor once you have turned them on (Settings, Accounts, or `brimline providers enable <name>`); a provider that is off has no account in the answers.
 
 ```bash
 codex mcp add brimline -- ~/.local/bin/brimline mcp
@@ -222,6 +222,31 @@ The answer, shortened (the full one also lists each limit of each account):
 
 In words: you ask, "Before this long task, which of my Claude accounts has the most room this week?" The agent calls `best_account` with `window: week`, gets your@claude.ai with 58% room left on the week, resetting in about two days, and answers: "Use your@claude.ai: `claude` in its usual folder." The session you are in stays on its account; you start the next one.
 
+### Two providers, one question
+
+Say you hold a Claude account and a ChatGPT account (read through Codex), both on. You ask your agent: "Which of my two assistants has more room this week for a long task?" The agent calls `best_account` once per provider, since it ranks the accounts of one provider at a time:
+
+```json
+{ "name": "best_account", "arguments": { "provider": "claude",  "window": "week" } }
+{ "name": "best_account", "arguments": { "provider": "chatgpt", "window": "week" } }
+```
+
+The answers, shortened to what decides (the numbers are an example; each one carries `age_seconds`, `stale` and the full `ranking`):
+
+```json
+{ "provider": "claude",
+  "best": { "email": "your@claude.ai", "source": "~/.claude", "headroom_percent": 58,
+            "binding_limit": { "kind": "weekly", "percent": 42, "resets_in_seconds": 183600 } } }
+
+{ "provider": "chatgpt",
+  "best": { "email": null, "source": "~/.codex", "headroom_percent": 29,
+            "binding_limit": { "kind": "weekly", "percent": 71, "resets_in_seconds": 367200 } } }
+```
+
+The agent compares: Claude has 58 % of its week left and ChatGPT 29 %, so the long task goes to Claude; ChatGPT's week resets in about 4 days, Claude's in about 2. A ChatGPT account read through Codex has no address (`email` is `null`): it is told apart by its `source`, here `~/.codex`. A test (`AgentsDocExampleTests`) builds exactly this cache and checks every number above, so the page cannot drift from the server.
+
+If a provider gives no limit Brimline can read, the account is listed by `list_accounts` and `best_account` never ranks it. Gemini without Antigravity has `status: not_readable` and `reason: consumer_plan`. A free Grok account has `status: ok`, an empty `limits` and the sentence "xAI returns no credit limit for this account." in `message`.
+
 ### Example
 
 ```text
@@ -234,4 +259,5 @@ In words: you ask, "Before this long task, which of my Claude accounts has the m
 - Check `age_seconds` and `stale` before trusting a number.
 - Treat `unavailable` and `format_changed` as "unknown", not as "free".
 - Name the `provider` you want in `best_account`: the default is Claude.
-- The numbers come from an undocumented Anthropic endpoint (see the [FAQ](faq.md)): use them to choose, not as a guarantee.
+- Treat `not_readable`, and an `ok` account with no `limits`, as "no number exists", not as "free": a free Grok account, for one, gets no limit from xAI.
+- The numbers come from the providers' own internal endpoints, which none of them documents (see the [FAQ](faq.md) and [providers](providers.md), which says for each one what was tried): use them to choose, not as a guarantee.

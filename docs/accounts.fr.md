@@ -54,33 +54,42 @@ Pour chaque dossier, Brimline lit :
 
 De la connexion, seul le jeton d'accès sert, en mémoire, le temps d'une requête vers `https://api.anthropic.com/api/oauth/usage`. Brimline n'utilise jamais le jeton de renouvellement, ne renouvelle jamais une connexion, n'écrit jamais dans le Trousseau et n'écrit jamais un jeton dans un fichier, un journal ou ses réponses aux agents.
 
-## ChatGPT, par Codex
+## Connecter un autre fournisseur
 
-Brimline lit les limites de ChatGPT par Codex, l'outil officiel : il n'y a rien à saisir dans Brimline.
+ChatGPT, Gemini, Grok et Cursor n'ont pas de compte à saisir dans Brimline. Chacun se lit par **son propre outil officiel**, que vous installez et dans lequel vous vous connectez vous-même, avec la commande de sa propre documentation. Brimline lit ensuite ce que cet outil garde déjà (ou, pour Gemini, lance la commande de Google). Les mêmes quatre étapes valent pour chacun :
 
-1. Connectez Codex à votre compte ChatGPT (`codex login`, ou l'écran de connexion de Codex). Par défaut, Codex range sa connexion dans `~/.codex/auth.json`. Si vous avez réglé Codex pour la ranger dans le Trousseau, Brimline ne peut pas la lire et le dit.
-2. Allumez ChatGPT dans **Réglages, Comptes** (ou `brimline providers enable chatgpt`) : il démarre coupé.
-3. Brimline montre une carte pour `~/.codex`. Un dossier Codex ailleurs (`CODEX_HOME`) s'ajoute avec **Ajouter un dossier Codex…** dans **Réglages, Comptes**, sous ChatGPT (le sélecteur montre les dossiers cachés).
+1. Installez l'outil officiel et connectez-vous (plus bas, une ligne par fournisseur).
+2. Allumez le fournisseur dans **Réglages, Comptes** (ou `brimline providers enable <nom>`) : tout fournisseur sauf Claude démarre coupé, et un fournisseur coupé n'est pas touché du tout, pas même pour chercher son dossier.
+3. Brimline montre une carte. Si la connexion est de celles qu'il ne lit pas, la carte le dit en une phrase et ne montre aucune jauge : il ne vous demande jamais de déplacer une connexion ailleurs. Une connexion rangée dans le Trousseau, ou protégée par son app, est indiquée comme protégée et non lue.
+4. Pour laisser un compte tranquille, cochez **Ne pas lire ce compte** (Réglages, Comptes). Brimline garde alors ses derniers chiffres, en gris avec leur âge, et **n'ouvre plus sa connexion** : ni fichier, ni élément du Trousseau, ni requête. Décochez la case pour le lire de nouveau.
 
-Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de connexion, le jeton d'accès et l'identifiant du compte. Il ne renouvelle jamais la connexion : si Codex est resté fermé longtemps, la carte dit « Ouvrez Codex pour rafraîchir la connexion. » Un compte connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Détails dans [providers](providers.md) (en anglais).
+Ce qui a été essayé sur chaque fournisseur, et sur quel forfait, est dans le [tableau du README](../README.fr.md#fournisseurs) et dans [providers](providers.md) (en anglais). En bref, chacun a été essayé le 27 octobre 2026 sur un seul forfait (ChatGPT gratuit, Cursor Free, un compte Grok gratuit, un compte Google pour Gemini), et rien n'est affirmé pour un forfait qui n'a pas été essayé.
 
-## Cursor
+### ChatGPT, par Codex
 
-Cursor n'a pas de compte à relier : Brimline utilise la connexion que l'app Cursor garde déjà. Connectez-vous à Cursor, puis allumez Cursor dans **Réglages, Comptes** (ou `brimline providers enable cursor`) : il démarre coupé. Brimline regarde le seul fichier où Cursor range son état et, quand la connexion y est écrite en clair, demande à cursor.com l'usage de votre forfait : le cycle, avec son pourcentage et sa remise à zéro (et les pools Auto et API quand Cursor les donne). Si Cursor protège sa connexion (ou la garde en mode WAL et est fermé), la carte le dit et renvoie à cursor.com, Dashboard, Usage. Si la connexion a expiré, la carte dit « Ouvrez Cursor pour rafraîchir la connexion. » Brimline ne la renouvelle jamais, ne lit jamais l'élément du Trousseau de Cursor et ouvre ce fichier en lecture seule, sans rien créer dans le dossier de Cursor (si Cursor garde ce fichier en mode WAL, seulement pendant que Cursor tourne). Détails dans [providers](providers.md) (en anglais).
+Outil officiel : Codex, connecté à votre compte ChatGPT (`codex login`, ou l'écran de connexion de Codex). Par défaut, Codex range sa connexion dans `~/.codex/auth.json`. Si vous avez réglé Codex pour la ranger dans le Trousseau, Brimline ne peut pas la lire et le dit (« Codex range sa connexion dans le Trousseau ou n'est pas connecté ») : il ne lit jamais un élément du Trousseau de Codex.
 
-## Gemini, par Antigravity
+Allumez ensuite ChatGPT. Brimline montre une carte pour `~/.codex`. Un dossier Codex ailleurs (`CODEX_HOME`) s'ajoute avec **Ajouter un dossier Codex…** dans **Réglages, Comptes**, sous ChatGPT (le sélecteur montre les dossiers cachés).
 
-Gemini se lit par l'outil de Google, Antigravity CLI (`agy`), que vous installez et dans lequel vous vous connectez vous-même : Brimline ne vous connecte jamais. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`). Quand `agy` est dans `~/.local/bin/agy`, Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; l'outil de Google peut renouveler lui-même sa connexion) et montre, par groupe de modèles, la fenêtre de 5 heures et la semaine. Sans lui, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). **Gemini n'est pas encore lu et vérifié :** seule la build vérifiée le 27/10/2026 (Antigravity CLI 1.4.8) est lancée ; toute autre ne l'est pas. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
+Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de connexion, le jeton d'accès et l'identifiant du compte. Il ne renouvelle jamais la connexion : si Codex est resté fermé longtemps, la carte dit « Ouvrez Codex pour rafraîchir la connexion. » Un compte connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Essayé sur ChatGPT gratuit ; comparaison avec la page d'usage d'OpenAI en attente. Détails dans [providers](providers.md) (en anglais).
 
-## Grok, par le CLI Grok
+### Gemini, par Antigravity
 
-Brimline lit les limites de Grok par le CLI Grok, l'outil officiel : il n'y a rien à saisir dans Brimline.
+Outil officiel : l'Antigravity CLI de Google (`agy`), que vous installez et dans lequel vous vous connectez vous-même, comme le décrit [la documentation de Google](https://antigravity.google/docs/cli/headless/) (en anglais) : Brimline ne vous connecte jamais. `agy` se trouve dans `~/.local/bin/agy`. Allumez ensuite Gemini.
 
-1. Connectez le CLI Grok à votre compte xAI (`grok login`, qui ouvre votre navigateur). Le CLI range sa connexion dans `~/.grok/auth.json`.
-2. Allumez Grok dans **Réglages, Comptes** (ou `brimline providers enable grok`) : il démarre coupé.
-3. Brimline montre une carte quand le dossier `~/.grok` existe. Sans le CLI Grok, pas de carte : xAI ne publie les limites de Grok que pour le CLI, et les autres sont dans les réglages de votre compte Grok.
+Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; **le programme de Google peut renouveler lui-même sa connexion, et Brimline ne la lit ni ne l'écrit**) et montre, par groupe de modèles, la fenêtre de 5 heures et la semaine, et la limite propre à un modèle quand il y en a une. Seule la build vérifiée le 27/10/2026 (Antigravity CLI 1.4.8) est lancée ; toute autre ne l'est pas, et la carte dit « Antigravity a été mis à jour : mettez Brimline à jour. » Sans `agy`, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). Lu et vérifié sur un compte Google (`agy` ne dit pas le forfait) ; le pourcentage n'a été vu qu'à 100 % restant, et la référence est le texte d'`agy` lui-même. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
 
-Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement la connexion d'un compte xAI : le jeton de session et l'identifiant, en mémoire, le temps d'une requête vers `https://cli-chat-proxy.grok.com`. Il ne renouvelle jamais la connexion : si le CLI Grok est resté fermé longtemps, la carte dit « Ouvrez le CLI Grok pour rafraîchir la connexion. » Un CLI connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Un compte gratuit, dont la réponse ne donne aucune limite de crédits, dit « xAI ne renvoie aucune limite de crédits pour ce compte. » ; un plafond sans usage encore dit « Pas encore de chiffre pour cette période. » Détails dans [providers](providers.md) (en anglais).
+### Grok, par le CLI Grok
+
+Outil officiel : le CLI Grok, connecté à votre compte xAI (`grok login`, qui ouvre votre navigateur). Le CLI range sa connexion dans `~/.grok/auth.json`. Allumez ensuite Grok. Brimline montre une carte quand le dossier `~/.grok` existe. Sans le CLI Grok, pas de carte : xAI ne publie les limites de Grok que pour le CLI, et les autres sont dans les réglages de votre compte Grok.
+
+Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement la connexion d'un compte xAI : le jeton de session et l'identifiant, en mémoire, le temps d'une requête vers `https://cli-chat-proxy.grok.com`. Il ne renouvelle jamais la connexion : si le CLI Grok est resté fermé longtemps, la carte dit « Ouvrez le CLI Grok pour rafraîchir la connexion. » Un CLI connecté par une clé d'API n'a pas de limite d'abonnement à montrer.
+
+**Un compte Grok gratuit ne reçoit aucune limite de xAI** : sa carte dit « xAI ne renvoie aucune limite de crédits pour ce compte. » et ne montre ni jauge ni pourcentage (essayé le 27/10/2026 ; xAI n'a aucune page de comparaison, et un compte payant n'a pas été essayé). Un plafond sans usage encore dit « Pas encore de chiffre pour cette période. » Détails dans [providers](providers.md) (en anglais).
+
+### Cursor, par son app
+
+Outil officiel : l'app Cursor, connectée comme d'habitude. Cursor n'a pas de compte à relier : Brimline utilise la connexion que l'app garde déjà. Allumez Cursor. Brimline regarde le seul fichier où Cursor range son état et, quand la connexion y est écrite en clair, demande à cursor.com l'usage de votre forfait : le cycle, avec son pourcentage et sa remise à zéro (et les pools Auto et API quand Cursor les donne). Si Cursor protège sa connexion (ou la garde en mode WAL et est fermé), la carte dit « Cursor protège sa connexion sur ce Mac : Brimline ne la lit pas. » et renvoie à cursor.com, Dashboard, Usage. Si la connexion a expiré, la carte dit « Ouvrez Cursor pour rafraîchir la connexion. » Brimline ne la renouvelle jamais, ne lit jamais l'élément du Trousseau de Cursor et ouvre ce fichier en lecture seule, sans rien créer dans le dossier de Cursor (si Cursor garde ce fichier en mode WAL, seulement pendant que Cursor tourne). Essayé sur Cursor Free ; comparaison avec la page d'usage de cursor.com en attente. Détails dans [providers](providers.md) (en anglais).
 
 ## Situations courantes
 

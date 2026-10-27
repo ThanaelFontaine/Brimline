@@ -78,18 +78,19 @@ let stateAccounts: [AccountUsage] = [
 ]
 
 // One account per provider and every state: the panel grouped by provider (QUOTA-35, board D, variant A).
-func provider(_ provider: Provider, _ path: String, tier: String? = nil, byHand: Bool = false) -> Account {
+// The readers keep neither the address nor the plan of these providers, so the cards carry neither.
+func provider(_ provider: Provider, _ path: String, byHand: Bool = false) -> Account {
     Account(provider: provider, source: home.appendingPathComponent(path).path, email: nil, organization: nil,
-            seatTier: tier, keychainService: nil, addedByHand: byHand)
+            seatTier: nil, keychainService: nil, addedByHand: byHand)
 }
 
 let lab = account("team@claude.ai", ".claude-lab", org: nil, seat: "team")
 let weekend = account("weekend@claude.ai", ".claude-weekend", org: nil, seat: "pro")
-let codexPlus = provider(.chatgpt, ".codex", tier: "plus")
-let codexWork = provider(.chatgpt, "codex-work", tier: "pro", byHand: true)
+let codexPlus = provider(.chatgpt, ".codex")
+let codexWork = provider(.chatgpt, "codex-work", byHand: true)
 let codexKey = provider(.chatgpt, "codex-key", byHand: true)
 let grok = provider(.grok, ".grok/auth.json")
-let cursor = provider(.cursor, "Library/Application Support/Cursor", tier: "pro")
+let cursor = provider(.cursor, "Library/Application Support/Cursor")
 let gemini = provider(.gemini, ".gemini")
 
 let monthSeconds = 30 * 86_400
@@ -113,16 +114,25 @@ let providerAccounts: [AccountUsage] = [
     AccountUsage(account: codexWork, status: .expired, limits: [
         UsageLimit(kind: .weekly, percent: 40, resetsAt: minutes(60 * 24 * 4 + 120), windowSeconds: 604_800),
     ], fetchedAt: minutes(-60 * 24 * 3), checkedAt: minutes(-2)),
-    AccountUsage(account: grok, status: .ok, limits: [
-        UsageLimit(kind: .period, percent: 46, resetsAt: minutes(60 * 24 * 3 + 240), windowSeconds: 604_800),
-    ], fetchedAt: minutes(-2), checkedAt: minutes(-2), note: .sharedPool),
+    // What the real try of 27/10/2026 gave on a free Grok account: no credit limit, so no gauge and no number.
+    AccountUsage(account: grok, status: .ok, fetchedAt: minutes(-2), checkedAt: minutes(-2), note: .noCreditLimit),
     AccountUsage(account: cursor, status: .ok, limits: [
         UsageLimit(kind: .monthly, percent: 63, resetsAt: minutes(60 * 24 * 12), windowSeconds: monthSeconds),
         UsageLimit(kind: .model, model: "Auto", percent: 41, resetsAt: minutes(60 * 24 * 12), windowSeconds: monthSeconds),
         UsageLimit(kind: .model, model: "API", percent: 88, resetsAt: minutes(60 * 24 * 12), windowSeconds: monthSeconds),
     ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
-    AccountUsage(account: gemini, status: .notReadable, checkedAt: minutes(-2), reason: .consumerPlan),
+    // Gemini read through Antigravity: the limits of `agy --print /usage`, per group of models and window.
+    AccountUsage(account: gemini, status: .ok, limits: [
+        UsageLimit(kind: .model, model: "Gemini Models", percent: 18, resetsAt: minutes(210), windowSeconds: 18_000),
+        UsageLimit(kind: .model, model: "Gemini Models", percent: 33, resetsAt: minutes(60 * 24 * 5 + 90), windowSeconds: 604_800),
+        UsageLimit(kind: .model, model: "Claude and GPT models", percent: 0, resetsAt: minutes(300), windowSeconds: 18_000),
+        UsageLimit(kind: .model, model: "Claude and GPT models", percent: 6, resetsAt: minutes(60 * 24 * 5 + 90), windowSeconds: 604_800),
+        UsageLimit(kind: .model, model: "Gemini 4 Argon", percent: 12, resetsAt: minutes(60 * 24 * 5 + 90), windowSeconds: 604_800),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
 ]
+
+/// The sentence a Gemini card gives when Antigravity is not installed.
+let geminiWithoutAntigravity = AccountUsage(account: gemini, status: .notReadable, checkedAt: minutes(-2), reason: .consumerPlan)
 
 /// Each state of the board, one account each (the key is the name of the image).
 let providerStates: [(name: String, usage: AccountUsage)] = [
@@ -134,7 +144,7 @@ let providerStates: [(name: String, usage: AccountUsage)] = [
     ("do-not-read", AccountUsage(account: weekend, status: .ok, limits: [
         UsageLimit(kind: .weekly, percent: 37, resetsAt: minutes(60 * 24 * 5)),
     ], fetchedAt: minutes(-60 * 48), checkedAt: minutes(-60 * 48))),
-    ("sentence-gemini", providerAccounts[6]),
+    ("sentence-gemini", geminiWithoutAntigravity),
     ("sentence-grok-no-cli", AccountUsage(account: grok, status: .notReadable, checkedAt: minutes(-2), reason: .noCLI)),
     ("sentence-codex-api-key", AccountUsage(account: codexKey, status: .notReadable, checkedAt: minutes(-2), reason: .apiKey)),
     ("sentence-codex-keychain", AccountUsage(account: codexPlus, status: .notReadable, checkedAt: minutes(-2), reason: .keychainOrSignedOut)),
