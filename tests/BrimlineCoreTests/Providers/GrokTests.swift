@@ -168,17 +168,10 @@ struct GrokTests {
         #expect(Strings(.en).limitName(UsageLimit(kind: .period, percent: 1, resetsAt: nil)) == "Period")
     }
 
-    /// The answer of a free account, seen on 27/10/2026 with the Grok CLI 1.0.70 (keys as they are, values invented).
-    static let freeAccount = """
-    {"config":{"currentPeriod":{"type":"USAGE_PERIOD_TYPE_WEEKLY","start":"2026-10-21T00:00:00Z","end":"2026-10-28T00:00:00Z"},
-    "billingPeriodStart":"2026-10-21T00:00:00Z","billingPeriodEnd":"2026-10-28T00:00:00Z","isUnifiedBillingUser":true,
-    "onDemandCap":{"val":0},"onDemandUsed":{"val":0},"prepaidBalance":{"val":0},"topUpMethod":"TOP_UP_METHOD_SAVED_PAYMENT_METHOD"}}
-    """
-
     @Test("No percentage and no allowance (a free account): xAI gives no credit limit, said as seen, never a 0 %")
     func noCreditLimit() async throws {
         let home = try signedIn()
-        guard case .annotated(let limits, let shape, .noCreditLimit) = await read(answering(Data(Self.freeAccount.utf8)), in: home) else {
+        guard case .annotated(let limits, let shape, .noCreditLimit) = await read(answering(try fixture("grok-billing-free")), in: home) else {
             Issue.record("expected the no credit limit note")
             return
         }
@@ -665,7 +658,7 @@ struct GrokTests {
             .refresh(account: card, settings: on, previous: shared, now: now)
         #expect(plain.note == nil)
 
-        let fresh = await UsageService(readers: [GrokReader(http: answering(try fixture("grok-billing-fresh")))])
+        let fresh = await UsageService(readers: [GrokReader(http: answering(try fixture("grok-billing-free")))])
             .refresh(account: card, settings: on, previous: shared, now: now)
         #expect(fresh.note == .noCreditLimit && fresh.status == .ok && fresh.limits.isEmpty && fresh.fetchedAt == now)
 

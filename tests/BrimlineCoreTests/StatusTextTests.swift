@@ -34,6 +34,17 @@ struct StatusTextTests {
         #expect(fr.contains("Mois · Auto") && fr.contains("Mois · API") && !fr.contains("Semaine"))
     }
 
+    @Test("Cursor Free, read from the skeleton of a real answer, says Month for its three limits")
+    func cursorFromTheRealShape() throws {
+        let reading = try CursorUsageParser.parse(try fixture("cursor-usage-summary-free"))
+        let account = Account(provider: .cursor, source: "/tmp/someone/Library/Application Support/Cursor/User/globalStorage/state.vscdb",
+                              email: nil, organization: nil, seatTier: nil, keychainService: nil)
+        let usage = AccountUsage(account: account, status: .ok, limits: reading.limits, fetchedAt: now, checkedAt: now)
+        let text = lines(usage)
+        #expect(text.filter { $0.contains("Month") }.count == 3)
+        #expect(!text.joined().contains("Week"))
+    }
+
     @Test("Claude's model limits keep their week: the provider changes nothing for a week")
     func claudeKeepsItsWeek() {
         let account = Account(provider: .claude, source: "/tmp/someone/.claude", email: "your@claude.ai", organization: nil,
