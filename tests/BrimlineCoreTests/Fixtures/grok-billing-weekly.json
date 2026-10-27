@@ -1,0 +1,41 @@
+{
+  "_fixture_source": "Shape from xai-org/grok-build at commit 2bdd1d6a6369de0e8c68132ea4539e9abd9e14a8: crates/codegen/xai-grok-shell/src/extensions/billing.rs (BillingConfigResponse, BillingConfig, UsagePeriod, Cent and its tests, GET <cli proxy>/billing?format=credits). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider grok). Weekly period, as in the client's own test of the credits shape.",
+  "config": {
+    "creditUsagePercent": 42.5,
+    "currentPeriod": {
+      "type": "USAGE_PERIOD_TYPE_WEEKLY",
+      "start": "2026-10-26T00:00:00Z",
+      "end": "2026-11-02T00:00:00Z"
+    },
+    "onDemandCap": {
+      "val": 5000
+    },
+    "onDemandUsed": {
+      "val": 300
+    },
+    "prepaidBalance": {
+      "val": 1250
+    },
+    "isUnifiedBillingUser": true,
+    "productUsage": [
+      {
+        "product": "PRODUCT_GROK_BUILD",
+        "usagePercent": 61.2
+      }
+    ],
+    "history": [
+      {
+        "period": {
+          "type": "USAGE_PERIOD_TYPE_WEEKLY",
+          "start": "2026-10-19T00:00:00Z",
+          "end": "2026-10-26T00:00:00Z"
+        },
+        "onDemandUsed": {
+          "val": 120
+        }
+      }
+    ]
+  },
+  "onDemandEnabled": true,
+  "subscriptionTier": "SuperGrok"
+}

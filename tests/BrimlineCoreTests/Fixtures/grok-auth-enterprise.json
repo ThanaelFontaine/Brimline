@@ -1,0 +1,12 @@
+{
+  "_fixture_source": "Shape from xai-org/grok-build at commit 2bdd1d6a6369de0e8c68132ea4539e9abd9e14a8: crates/codegen/xai-grok-login/src/model.rs (GrokAuth, AuthStore: a map from a scope to a sign-in), config.rs (auth_scope: issuer, '::', client id) and storage.rs (the xai::api_key scope); crates/codegen/xai-grok-pager/docs/user-guide/02-authentication.md. Every value is invented.",
+  "https://acme.okta.com::client-1": {
+    "key": "SEED-ENTERPRISE-TOKEN-cc33dd44",
+    "auth_mode": "oidc",
+    "create_time": "2026-10-20T08:15:30Z",
+    "user_id": "u-1",
+    "expires_at": "2099-01-01T00:00:00Z",
+    "oidc_issuer": "https://acme.okta.com",
+    "oidc_client_id": "client-1"
+  }
+}

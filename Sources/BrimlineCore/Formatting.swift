@@ -87,8 +87,15 @@ public struct Strings: Sendable {
         case .model: return limit.label ?? weekModel(limit.model ?? "?")
         case .daily: return t("Day", "Jour")
         case .monthly: return t("Month", "Mois")
-        case .period: return limit.label ?? t("Period", "Période")
+        case .period: return limit.label ?? periodName(seconds: limit.windowSeconds)
         }
+    }
+    /// A week or a month by its length (Grok's credits renew weekly or monthly), "Period" otherwise.
+    private func periodName(seconds: Int?) -> String {
+        guard let seconds else { return t("Period", "Période") }
+        if seconds == 604_800 { return week }
+        if (28 * 86_400...31 * 86_400).contains(seconds) { return t("Month", "Mois") }
+        return t("Period", "Période")
     }
     public var noGlobalWeekly: String { t("No weekly limit across all models", "Pas de limite hebdomadaire globale") }
     // States.
@@ -153,6 +160,30 @@ public struct Strings: Sendable {
         }
     }
 
+    /// Grok limits exist for the Grok CLI only: no `~/.grok` sign-in, no limit to read.
+    public var grokNoCLIMessage: String {
+        t("xAI only publishes Grok limits for the Grok CLI. Without it, they are in your Grok account settings.",
+          "xAI ne publie les limites de Grok que pour le CLI Grok. Sans lui, elles sont dans les réglages de votre compte Grok.")
+    }
+    /// The Grok CLI is signed in with an API key: there is no subscription limit.
+    public var grokAPIKeyMessage: String {
+        t("The Grok CLI is signed in with an API key: there is no subscription limit to show.",
+          "Le CLI Grok est connecté par une clé d'API : il n'a pas de limite d'abonnement à montrer.")
+    }
+    public var grokExpiredMessage: String {
+        t("Open the Grok CLI to refresh the sign-in.", "Ouvrez le CLI Grok pour rafraîchir la connexion.")
+    }
+    public var grokReconnectMessage: String {
+        t("xAI refused the Grok CLI's sign-in: run grok login again.",
+          "xAI a refusé la connexion du CLI Grok : relancez grok login.")
+    }
+    public var noFigureYetMessage: String {
+        t("No number yet for this period.", "Pas encore de chiffre pour cette période.")
+    }
+    public var sharedPoolMessage: String {
+        t("This limit is a pool shared by the Grok products.", "Cette limite est un pool partagé entre les produits Grok.")
+    }
+
     public func statusMessage(_ status: AccountStatus) -> String? {
         switch status {
         case .ok: return nil
@@ -169,13 +200,25 @@ public struct Strings: Sendable {
     /// The message of an account: the sentence of its provider when it is not readable by design, the
     /// message of its status otherwise.
     public func message(for usage: AccountUsage) -> String? {
+        if usage.status == .ok, let note = usage.note { return noteMessage(note) }
         switch (usage.account.provider, usage.status, usage.reason) {
         case (.gemini, .notReadable, .consumerPlan?): return geminiNotReadableMessage
         case (.chatgpt, .notReadable, .apiKey?): return chatgptAPIKeyMessage
         case (.chatgpt, .notReadable, .keychainOrSignedOut?): return chatgptSignedOutMessage
         case (.chatgpt, .expired, _): return chatgptExpiredMessage
         case (.chatgpt, .reconnect, _): return chatgptReconnectMessage
+        case (.grok, .notReadable, .noCLI?): return grokNoCLIMessage
+        case (.grok, .notReadable, .apiKey?): return grokAPIKeyMessage
+        case (.grok, .expired, _): return grokExpiredMessage
+        case (.grok, .reconnect, _): return grokReconnectMessage
         default: return statusMessage(usage.status)
+        }
+    }
+
+    public func noteMessage(_ note: AccountNote) -> String {
+        switch note {
+        case .noFigureYet: return noFigureYetMessage
+        case .sharedPool: return sharedPoolMessage
         }
     }
 

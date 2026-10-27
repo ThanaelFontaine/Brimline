@@ -1,0 +1,31 @@
+{
+  "_fixture_source": "Shape from xai-org/grok-build at commit 2bdd1d6a6369de0e8c68132ea4539e9abd9e14a8: crates/codegen/xai-grok-shell/src/extensions/billing.rs (BillingConfigResponse, BillingConfig, UsagePeriod, Cent and its tests, GET <cli proxy>/billing?format=credits). Values invented; to be replaced by the skeleton of a real answer (brimline status --live --shape --provider grok). Legacy answer (GetGrokBuildBillingConfig): monthlyLimit and used in cents, billingPeriodStart and billingPeriodEnd, as in the client's own test.",
+  "config": {
+    "monthlyLimit": {
+      "val": 2000
+    },
+    "used": {
+      "val": 500
+    },
+    "onDemandCap": {
+      "val": 500
+    },
+    "billingPeriodStart": "2026-10-01T00:00:00Z",
+    "billingPeriodEnd": "2026-11-01T00:00:00Z",
+    "history": [
+      {
+        "billingCycle": {
+          "year": 2026,
+          "month": 9
+        },
+        "includedUsed": {
+          "val": 1800
+        },
+        "onDemandUsed": {},
+        "totalUsed": {
+          "val": 1800
+        }
+      }
+    ]
+  }
+}

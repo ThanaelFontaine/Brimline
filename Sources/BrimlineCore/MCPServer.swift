@@ -254,10 +254,11 @@ public struct MCPServer: Sendable {
     }
 
     /// Why an answer holds no account of a provider: it is off (nothing of it is read), or it has no numbers.
-    static func emptyNote(_ provider: Provider, settings: BrimlineSettings) -> String {
+    static func emptyNote(_ provider: Provider, settings: BrimlineSettings,
+                          readers: [any ProviderReader] = Providers.all) -> String {
         if !settings.isEnabled(provider) {
             // A provider without a reader cannot be switched on: do not point at a switch that is refused.
-            if !Providers.isSupported(provider) {
+            if !Providers.isSupported(provider, readers: readers) {
                 return "This version of Brimline does not read \(provider.rawValue) yet, so there is no account to show."
             }
             return "\(provider.rawValue) is off in Brimline, so nothing of it is read. The user can turn it on in the Brimline settings or with: brimline providers enable \(provider.rawValue)"

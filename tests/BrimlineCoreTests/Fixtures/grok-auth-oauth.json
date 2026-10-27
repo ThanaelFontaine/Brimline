@@ -1,0 +1,19 @@
+{
+  "_fixture_source": "Shape from xai-org/grok-build at commit 2bdd1d6a6369de0e8c68132ea4539e9abd9e14a8: crates/codegen/xai-grok-login/src/model.rs (GrokAuth, AuthStore: a map from a scope to a sign-in), config.rs (auth_scope: issuer, '::', client id) and storage.rs (the xai::api_key scope); crates/codegen/xai-grok-pager/docs/user-guide/02-authentication.md. Every value is invented.",
+  "https://auth.x.ai::b7a1c2d3-0000-4000-8000-000000000001": {
+    "key": "xai-SEED-GROK-SESSION-KEY-7d2e91",
+    "auth_mode": "oidc",
+    "create_time": "2026-10-20T08:15:30.123456789Z",
+    "user_id": "9f4e2a1c-6b3d-4f58-a0c7-1d2e3f405162",
+    "email": "someone@example.com",
+    "first_name": "Some",
+    "last_name": "One",
+    "principal_type": "User",
+    "principal_id": "9f4e2a1c-6b3d-4f58-a0c7-1d2e3f405162",
+    "coding_data_retention_opt_out": true,
+    "refresh_token": "rt.SEED-GROK-REFRESH-TOKEN-5b8c13",
+    "expires_at": "2099-01-01T00:00:00.987654321Z",
+    "oidc_issuer": "https://auth.x.ai",
+    "oidc_client_id": "b7a1c2d3-0000-4000-8000-000000000001"
+  }
+}
