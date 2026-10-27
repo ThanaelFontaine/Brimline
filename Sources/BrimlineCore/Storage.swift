@@ -118,6 +118,8 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
     public var enabledProviders: [String] = [Provider.claude.rawValue]
     /// The accounts the user marked "Do not read" (account ids). They keep their last numbers.
     public var unreadAccounts: [String] = []
+    /// The user dismissed the hint that other providers exist (shown while only Claude is on).
+    public var providerHintDismissed: Bool = false
 
     public init() {}
 
@@ -149,6 +151,7 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
         // A file written before the providers has neither key: Claude stays on, as it was.
         enabledProviders = try c.decodeIfPresent([String].self, forKey: .enabledProviders) ?? defaults.enabledProviders
         unreadAccounts = try c.decodeIfPresent([String].self, forKey: .unreadAccounts) ?? defaults.unreadAccounts
+        providerHintDismissed = try c.decodeIfPresent(Bool.self, forKey: .providerHintDismissed) ?? defaults.providerHintDismissed
     }
 }
 

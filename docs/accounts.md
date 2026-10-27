@@ -41,7 +41,7 @@ Brimline looks for accounts when it starts, and again when you click **Search ag
 - every `~/.claude-*` folder that contains a `.claude.json`;
 - the folders you added with **Add a Claude Code folder…** (the file picker shows hidden folders).
 
-In **Settings, Accounts** you can hide an account from the menu bar window, give it a custom label, or remove a folder you added by hand.
+In **Settings, Accounts** each provider has its own block: a switch, one line that says what Brimline reads and where it asks, and its accounts. For an account you can hide it from the menu bar window, give it a custom label, tick **Don't read this account** (Brimline keeps its last numbers, in grey with their age, and no longer opens its sign-in), or remove a folder you added by hand.
 
 ![Accounts settings](images/settings-accounts-light.png)
 
@@ -60,7 +60,7 @@ Brimline reads the limits of ChatGPT through Codex, the official tool: there is 
 
 1. Sign in to Codex with your ChatGPT account (`codex login`, or the sign-in screen of Codex). Codex keeps its sign-in in `~/.codex/auth.json` by default. If you changed Codex's setting to keep it in the Keychain, Brimline cannot read it and says so.
 2. Turn ChatGPT on in **Settings, Accounts** (or `brimline providers enable chatgpt`): it starts off.
-3. Brimline shows one card for `~/.codex`. A Codex folder elsewhere (`CODEX_HOME`) is added by hand for now, in `~/Library/Application Support/Brimline/settings.json`, under `extraCodexFolders`.
+3. Brimline shows one card for `~/.codex`. A Codex folder elsewhere (`CODEX_HOME`) is added with **Add a Codex folder…** in **Settings, Accounts**, under ChatGPT (the file picker shows hidden folders).
 
 Brimline reads only `auth.json` in that folder, and of it the sign-in mode, the access token and the account id. It never renews the sign-in: if Codex has been closed for a long time the card says "Open Codex to refresh the sign-in." An account signed in with an API key has no subscription limit to show. Details in [providers](providers.md).
 

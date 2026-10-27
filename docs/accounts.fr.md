@@ -41,7 +41,7 @@ Brimline cherche les comptes à son lancement, et de nouveau quand vous cliquez 
 - chaque dossier `~/.claude-*` qui contient un `.claude.json` ;
 - les dossiers ajoutés avec **Ajouter un dossier Claude Code…** (le sélecteur montre les dossiers cachés).
 
-Dans **Réglages, Comptes**, vous pouvez masquer un compte dans la fenêtre de la barre des menus, lui donner un libellé, ou retirer un dossier ajouté à la main.
+Dans **Réglages, Comptes**, chaque fournisseur a son bloc : un interrupteur, une ligne qui dit ce que Brimline lit et où il le demande, et ses comptes. Pour un compte, vous pouvez le masquer dans la fenêtre de la barre des menus, lui donner un libellé, cocher **Ne pas lire ce compte** (Brimline garde ses derniers chiffres, en gris avec leur âge, et n'ouvre plus sa connexion), ou retirer un dossier ajouté à la main.
 
 ![Réglages des comptes](images/settings-accounts-fr-light.png)
 
@@ -60,7 +60,7 @@ Brimline lit les limites de ChatGPT par Codex, l'outil officiel : il n'y a rien 
 
 1. Connectez Codex à votre compte ChatGPT (`codex login`, ou l'écran de connexion de Codex). Par défaut, Codex range sa connexion dans `~/.codex/auth.json`. Si vous avez réglé Codex pour la ranger dans le Trousseau, Brimline ne peut pas la lire et le dit.
 2. Allumez ChatGPT dans **Réglages, Comptes** (ou `brimline providers enable chatgpt`) : il démarre coupé.
-3. Brimline montre une carte pour `~/.codex`. Un dossier Codex ailleurs (`CODEX_HOME`) s'ajoute à la main pour l'instant, dans `~/Library/Application Support/Brimline/settings.json`, sous `extraCodexFolders`.
+3. Brimline montre une carte pour `~/.codex`. Un dossier Codex ailleurs (`CODEX_HOME`) s'ajoute avec **Ajouter un dossier Codex…** dans **Réglages, Comptes**, sous ChatGPT (le sélecteur montre les dossiers cachés).
 
 Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de connexion, le jeton d'accès et l'identifiant du compte. Il ne renouvelle jamais la connexion : si Codex est resté fermé longtemps, la carte dit « Ouvrez Codex pour rafraîchir la connexion. » Un compte connecté par une clé d'API n'a pas de limite d'abonnement à montrer. Détails dans [providers](providers.md) (en anglais).
 

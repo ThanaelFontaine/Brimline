@@ -29,7 +29,7 @@ Only the usage requests, sent to Anthropic with each account's own token and the
 In `~/Library/Application Support/Brimline/`:
 
 - `usage.json`: the last numbers of each account (percentages, reset times, status, the account's address and folder). No token, ever: the type that is written has no field for one, and a test checks the file.
-- `settings.json`: your preferences (refresh interval, hidden accounts, labels, folders added by hand, the providers that are on, the accounts marked "Do not read").
+- `settings.json`: your preferences (refresh interval, hidden accounts, labels, folders added by hand, the providers that are on, the accounts marked "Don't read this account").
 
 Both are readable by your user only.
 

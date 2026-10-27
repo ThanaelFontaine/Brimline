@@ -50,11 +50,21 @@ public struct TimeFormatter: Sendable {
         return f.string(from: date)
     }
 
+    /// "Sun Nov 8" / "dim. 8 nov.".
+    public func shortDate(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = language.locale
+        f.timeZone = timeZone
+        f.dateFormat = language == .fr ? "EEE d MMM" : "EEE MMM d"
+        return f.string(from: date)
+    }
+
     /// "resets in 2 h 10 (14:30)" / "repart dans 2 h 10 (14:30)"; "has reset" once the time is past.
     public func reset(_ resetsAt: Date, now: Date) -> String {
         let remaining = resetsAt.timeIntervalSince(now)
         if remaining <= 0 { return language == .fr ? "remis à zéro" : "has reset" }
-        let at = clock(resetsAt, withDay: remaining >= 24 * 3600)
+        // Past 6 days a weekday alone is ambiguous: the reset says its date ("Sun Nov 8").
+        let at = remaining > 6 * 24 * 3600 ? shortDate(resetsAt) : clock(resetsAt, withDay: remaining >= 24 * 3600)
         let prefix = language == .fr ? "repart dans" : "resets in"
         return "\(prefix) \(duration(remaining)) (\(at))"
     }
@@ -88,6 +98,49 @@ public struct Strings: Sendable {
         case .daily: return t("Day", "Jour")
         case .monthly: return t("Month", "Mois")
         case .period: return limit.label ?? periodName(seconds: limit.windowSeconds)
+        }
+    }
+
+    /// The name of a limit in a provider's card. A limit of one model reads "<window> · <model>" ("5 h · codex-mini",
+    /// "Week · Fable", "Month · Auto"); Grok's credits read "Credits · week"; a period says its length ("30-day period").
+    /// Without a provider this is `limitName(_:)`.
+    public func limitName(_ limit: UsageLimit, provider: Provider) -> String {
+        switch limit.kind {
+        case .model:
+            guard let model = limit.model else { return limitName(limit) }
+            guard let seconds = limit.windowSeconds else { return limitName(limit) }
+            return "\(windowName(seconds: seconds)) · \(model)"
+        case .period:
+            if provider == .grok {
+                let credits = t("Credits", "Crédits")
+                switch limit.windowSeconds {
+                case 604_800?: return "\(credits) · \(t("week", "semaine"))"
+                case let s? where (28 * 86_400...31 * 86_400).contains(s): return "\(credits) · \(t("month", "mois"))"
+                default: return credits
+                }
+            }
+            if let label = limit.label { return label }
+            guard let seconds = limit.windowSeconds else { return t("Period", "Période") }
+            if seconds == 604_800 { return week }
+            if seconds % 86_400 == 0 { return t("\(seconds / 86_400)-day period", "Période de \(seconds / 86_400) j") }
+            if seconds % 3_600 == 0 { return t("\(seconds / 3_600)-hour period", "Période de \(seconds / 3_600) h") }
+            return t("Period", "Période")
+        default:
+            return limitName(limit)
+        }
+    }
+    /// The length of a window as the first part of a sub-limit's name: "5 h", "Week", "Day", "Month", "3 d", "12 h".
+    private func windowName(seconds: Int) -> String {
+        switch seconds {
+        case 18_000: return "5 h"
+        case 604_800: return week
+        case 86_400: return t("Day", "Jour")
+        case (28 * 86_400)...(31 * 86_400): return t("Month", "Mois")
+        default:
+            let d = t("d", "j")
+            if seconds % 86_400 == 0 { return "\(seconds / 86_400) \(d)" }
+            if seconds % 3_600 == 0 { return "\(seconds / 3_600) h" }
+            return "\(max(1, seconds / 60)) min"
         }
     }
     /// A week or a month by its length (Grok's credits renew weekly or monthly), "Period" otherwise.
@@ -180,6 +233,8 @@ public struct Strings: Sendable {
     public var noFigureYetMessage: String {
         t("No number yet for this period.", "Pas encore de chiffre pour cette période.")
     }
+    /// Under a Grok account's title when its credits are a pool shared by the Grok products.
+    public var sharedPoolSubtitle: String { t("Credits shared across Grok products", "Crédits partagés entre les produits Grok") }
     public var sharedPoolMessage: String {
         t("This limit is a pool shared by the Grok products.", "Cette limite est un pool partagé entre les produits Grok.")
     }
@@ -234,6 +289,9 @@ public struct Strings: Sendable {
         t("Sign in to Claude Code, or add its folder in the settings.",
           "Connectez-vous à Claude Code, ou ajoutez son dossier dans les réglages.")
     }
+    public var allProvidersOff: String {
+        t("Every provider is off. Turn one on in the settings.", "Tous les fournisseurs sont coupés. Allumez-en un dans les réglages.")
+    }
     public var allHidden: String { t("Every account is hidden in the settings.", "Tous les comptes sont masqués dans les réglages.") }
 
     // Settings.
@@ -250,23 +308,87 @@ public struct Strings: Sendable {
     public var folder: String { t("Folder", "Dossier") }
     public var removeFolder: String { t("Remove", "Retirer") }
     public var comingSoon: String { t("Coming soon", "Bientôt") }
-    public var providersTitle: String { t("Providers", "Fournisseurs") }
-    public var providersHelp: String {
-        t("A provider that is off is not touched at all: Brimline opens none of its files and asks it nothing.",
-          "Un fournisseur coupé n'est pas touché du tout : Brimline n'ouvre aucun de ses fichiers et ne lui demande rien.")
-    }
-    public var doNotRead: String { t("Do not read", "Ne pas lire") }
+    public var doNotRead: String { t("Don't read this account", "Ne pas lire ce compte") }
     public var doNotReadHelp: String {
-        t("Brimline keeps the last numbers of this account and never reads it again until you turn this off.",
-          "Brimline garde les derniers chiffres de ce compte et ne le lit plus jusqu'à ce que vous décochiez.")
+        t("Brimline keeps its last numbers and no longer opens its sign-in.",
+          "Brimline garde ses derniers chiffres et n'ouvre plus sa connexion.")
+    }
+    public var whatIsRead: String { t("What is read", "Ce qui est lu") }
+    public func readProvider(_ name: String) -> String { t("Read \(name)", "Lire \(name)") }
+    public var addCodexFolder: String { t("Add a Codex folder…", "Ajouter un dossier Codex…") }
+    public var learnMore: String { t("Learn more", "En savoir plus") }
+    /// The line under a provider's name in a group header ("ChatGPT via Codex").
+    public func qualifier(for provider: Provider) -> String? {
+        provider == .chatgpt ? t("via Codex", "par Codex") : nil
+    }
+    /// What Brimline reads for a provider and where it asks, as the settings say it. Off, the same thing
+    /// is said as a promise: nothing is read until the switch is turned on.
+    public func providerCaption(_ provider: Provider, on: Bool) -> String {
+        let verb: String
+        switch provider {
+        case .claude:
+            verb = t("reads the Claude Code sign-in from the Keychain and asks api.anthropic.com for usage.",
+                     "lit la connexion de Claude Code dans le Trousseau et demande l'usage à api.anthropic.com.")
+        case .chatgpt:
+            verb = t("reads ~/.codex/auth.json and asks chatgpt.com for usage.",
+                     "lit ~/.codex/auth.json et demande l'usage à chatgpt.com.")
+        case .gemini:
+            verb = t("reads nothing: Google does not publish these limits. Brimline says where to see them.",
+                     "ne lit rien : Google ne publie pas ces limites. Brimline dit où les voir.")
+        case .grok:
+            verb = t("reads ~/.grok/auth.json and asks cli-chat-proxy.grok.com for usage.",
+                     "lit ~/.grok/auth.json et demande l'usage à cli-chat-proxy.grok.com.")
+        case .cursor:
+            verb = t("looks for the Cursor app sign-in, read only. Brimline does not read Cursor usage yet.",
+                     "cherche la connexion de l'app Cursor, en lecture seule. Brimline ne lit pas encore l'usage de Cursor.")
+        }
+        if on { return verb.prefix(1).uppercased() + verb.dropFirst() }
+        return t("Off: Brimline reads nothing. When on, it \(verb)", "Coupé : Brimline ne lit rien. Allumé, il \(verb)")
+    }
+    /// An account the user marked "Do not read", in the panel and in the settings.
+    public var readingOffNote: String { t("Reading turned off in Settings", "Lecture coupée dans les Réglages") }
+    public var readingOffStatus: String { t("Reading off", "Lecture coupée") }
+    /// A provider that is on but has no account on this Mac.
+    public func noSignIn(_ provider: Provider) -> String {
+        switch provider {
+        case .claude: return noAccountBody
+        case .chatgpt:
+            return t("No Codex sign-in found on this Mac. Sign in to Codex, then refresh.",
+                     "Aucune connexion de Codex trouvée sur ce Mac. Connectez-vous à Codex, puis actualisez.")
+        case .gemini: return geminiNotReadableMessage
+        case .grok:
+            return t("No Grok CLI sign-in found on this Mac. Run grok login, then refresh.",
+                     "Aucune connexion du CLI Grok trouvée sur ce Mac. Lancez grok login, puis actualisez.")
+        case .cursor:
+            return t("No Cursor app found on this Mac. Sign in to Cursor, then refresh.",
+                     "Aucune app Cursor trouvée sur ce Mac. Connectez-vous à Cursor, puis actualisez.")
+        }
+    }
+    /// Shown once, under the cards, while only Claude is on.
+    public var providerHint: String {
+        t("Brimline can also read ChatGPT (via Codex) and Grok, and tell you where to see Gemini limits. Each stays off until you turn it on.",
+          "Brimline peut aussi lire ChatGPT (par Codex) et Grok, et vous dire où voir les limites de Gemini. Chacun reste coupé tant que vous ne l'allumez pas.")
+    }
+    public var dismiss: String { t("Dismiss", "Masquer") }
+    /// A sentence cut after its first full stop: the first part, then the rest ("Learn more" shows it).
+    /// A text with a single sentence has no rest.
+    public static func splitSentence(_ text: String) -> (first: String, rest: String?) {
+        guard let range = text.range(of: ". ") else { return (text, nil) }
+        let first = String(text[..<range.upperBound]).trimmingCharacters(in: .whitespaces)
+        let rest = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+        return (first, rest.isEmpty ? nil : rest)
     }
     public var accountsIntro: String {
-        t("Brimline finds each Claude Code configuration folder by itself: ~/.claude, and every ~/.claude-\u{2060}* folder.",
-          "Brimline trouve seul chaque dossier de configuration de Claude Code : ~/.claude, et chaque dossier ~/.claude-\u{2060}*.")
+        t("Brimline only reads the providers you turn on here. A provider that is off is never read: no file opened, no request sent.",
+          "Brimline ne lit que les fournisseurs que vous allumez ici. Un fournisseur coupé n'est jamais lu : aucun fichier ouvert, aucune requête.")
     }
     public var chooseFolderMessage: String {
         t("Choose a Claude Code configuration folder (the one CLAUDE_CONFIG_DIR points to).",
           "Choisissez un dossier de configuration de Claude Code (celui que désigne CLAUDE_CONFIG_DIR).")
+    }
+    public var chooseCodexFolderMessage: String {
+        t("Choose a Codex folder (the one CODEX_HOME points to). Only its auth.json is read.",
+          "Choisissez un dossier de Codex (celui que désigne CODEX_HOME). Seul son auth.json est lu.")
     }
     public var refreshEvery: String { t("Refresh every", "Actualiser toutes les") }
     public func minutes(_ n: Int) -> String { "\(n) min" }
@@ -325,6 +447,11 @@ public struct Strings: Sendable {
     public func menuBarAccessibility(_ percent: Double?) -> String {
         percent.map { "Brimline, \(percentText($0))" } ?? "Brimline"
     }
+    /// "Brimline, 91%, Claude, Research lab": the number, then whose it is.
+    public func menuBarAccessibility(_ percent: Double?, provider: Provider?, account: String?) -> String {
+        guard percent != nil else { return "Brimline" }
+        return ([menuBarAccessibility(percent)] + [provider?.displayName, account].compactMap { $0 }).joined(separator: ", ")
+    }
     public func reason(_ detail: String?) -> String? {
         guard let detail else { return nil }
         switch detail {
@@ -347,6 +474,8 @@ public enum Links {
     public static func accountsDoc(_ language: Language) -> URL {
         documentationBase.appendingPathComponent(language == .fr ? "accounts.fr.md" : "accounts.md")
     }
+    /// What Brimline reads for each provider (the "What is read" link of the settings).
+    public static var providersDoc: URL { documentationBase.appendingPathComponent("providers.md") }
     public static var agentsDoc: URL { documentationBase.appendingPathComponent("agents.md") }
     public static var faq: URL { documentationBase.appendingPathComponent("faq.md") }
     public static let repository = URL(string: "https://github.com/ThanaelFontaine/Brimline")!

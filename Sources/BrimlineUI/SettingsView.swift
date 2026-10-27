@@ -102,72 +102,113 @@ struct AccountsTab: View {
                 }
             }
 
-            Section {
-                if model.allUsages.isEmpty {
-                    Text(s.noAccountBody).foregroundStyle(.secondary)
-                }
-                ForEach(model.allUsages.filter { $0.account.provider == .claude }) { usage in
-                    AccountSettingsRow(usage: usage, model: model)
-                }
-            } header: {
-                Text(Provider.claude.displayName)
-            } footer: {
-                HStack {
-                    Button(s.addFolder) { chooseFolder() }
-                    Button(s.rescan) { model.rescanAndRefresh() }
-                    Spacer()
-                }
-                .padding(.top, SGTheme.Space.xs)
-            }
-
-            ForEach(Provider.allCases.filter { $0 != .claude }, id: \.self) { provider in
+            // One block per provider (Claude, ChatGPT, Gemini, Grok, Cursor): its dot, its name, its switch, what it
+            // reads, then its accounts (only when it is on: a provider that is off is not looked for).
+            ForEach(Provider.allCases, id: \.self) { provider in
                 let usages = model.allUsages.filter { $0.account.provider == provider }
-                if !usages.isEmpty {
-                    Section(provider.displayName) {
+                let on = model.settings.isEnabled(provider)
+                Section {
+                    if on {
+                        if usages.isEmpty, provider == .claude {
+                            Text(s.noAccountBody).foregroundStyle(.secondary)
+                        }
                         ForEach(usages) { usage in
                             AccountSettingsRow(usage: usage, model: model)
                         }
                     }
+                } header: {
+                    ProviderHeader(provider: provider, model: model)
+                } footer: {
+                    if on { footerButtons(for: provider) }
                 }
-            }
-
-            Section {
-                ForEach(Provider.allCases, id: \.self) { provider in
-                    if Providers.isSupported(provider) {
-                        Toggle(provider.displayName, isOn: Binding(
-                            get: { model.settings.isEnabled(provider) },
-                            set: { model.setProvider(provider, enabled: $0) }
-                        ))
-                        .toggleStyle(.switch)
-                    } else {
-                        LabeledContent(provider.displayName) {
-                            Text(s.comingSoon).foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            } header: {
-                Text(s.providersTitle)
-            } footer: {
-                Text(s.providersHelp)
-                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .formStyle(.grouped)
     }
 
-    private func chooseFolder() {
+    @ViewBuilder
+    private func footerButtons(for provider: Provider) -> some View {
+        let s = model.strings
+        switch provider {
+        case .claude:
+            HStack {
+                Button(s.addFolder) { chooseFolder(message: s.chooseFolderMessage, prompt: s.addFolder) { model.addFolder($0) } }
+                Button(s.rescan) { model.rescanAndRefresh() }
+                Spacer()
+            }
+            .padding(.top, SGTheme.Space.xs)
+        case .chatgpt:
+            HStack {
+                Button(s.addCodexFolder) { chooseFolder(message: s.chooseCodexFolderMessage, prompt: s.addCodexFolder) { model.addCodexFolder($0) } }
+                Spacer()
+            }
+            .padding(.top, SGTheme.Space.xs)
+        default:
+            EmptyView()
+        }
+    }
+
+    private func chooseFolder(message: String, prompt: String, then add: (URL) -> Void) {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         panel.showsHiddenFiles = true
         panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
-        panel.message = model.strings.chooseFolderMessage
-        panel.prompt = model.strings.addFolder.replacingOccurrences(of: "…", with: "")
+        panel.message = message
+        panel.prompt = prompt.replacingOccurrences(of: "…", with: "")
         NSApp.activate(ignoringOtherApps: true)
         if panel.runModal() == .OK, let url = panel.url {
-            model.addFolder(url)
+            add(url)
         }
+    }
+}
+
+/// A provider's heading in the Accounts tab: dot, name, switch, and one line that says what Brimline reads.
+struct ProviderHeader: View {
+    var provider: Provider
+    @Bindable var model: AppModel
+
+    var body: some View {
+        let s = model.strings
+        let supported = Providers.isSupported(provider)
+        let on = model.settings.isEnabled(provider)
+        VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
+            HStack(alignment: .firstTextBaseline, spacing: SGTheme.Space.s) {
+                SGProviderDot(provider)
+                Text(provider.displayName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.primary)
+                if let qualifier = s.qualifier(for: provider) {
+                    Text(qualifier)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if supported {
+                    Toggle(s.readProvider(provider.displayName), isOn: Binding(
+                        get: { on },
+                        set: { model.setProvider(provider, enabled: $0) }
+                    ))
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .accessibilityLabel(s.readProvider(provider.displayName))
+                } else {
+                    Text(s.comingSoon).foregroundStyle(.secondary)
+                }
+            }
+            if supported {
+                // What is read, and where it is asked (the same line, off or on, so the promise is plain).
+                (Text(s.providerCaption(provider, on: on)) + Text(" ")
+                    + Text(.init("[\(s.whatIsRead)](\(Links.providersDoc.absoluteString))")))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .tint(SGTheme.accent)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .textCase(nil)
+        .padding(.bottom, SGTheme.Space.xs)
     }
 }
 
@@ -181,13 +222,13 @@ struct AccountSettingsRow: View {
         VStack(alignment: .leading, spacing: SGTheme.Space.s) {
             HStack(alignment: .top, spacing: SGTheme.Space.m) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(account.email ?? account.folderName)
+                    Text(model.identity(for: account))
                         .font(.system(size: 13, weight: .semibold))
                         .lineLimit(3)
                         .truncationMode(.middle)
                         .fixedSize(horizontal: false, vertical: true)
                         .help(account.email ?? account.source)
-                    Text(Self.details(for: usage, strings: s))
+                    Text(Self.details(for: usage, unread: model.settings.isUnread(account.id), strings: s))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -211,7 +252,7 @@ struct AccountSettingsRow: View {
                     .toggleStyle(.switch)
                     .controlSize(.small)
                     .labelsHidden()
-                    .accessibilityLabel("\(s.show) \(account.email ?? account.folderName)")
+                    .accessibilityLabel("\(s.show) \(model.identity(for: account))")
                 }
                 .fixedSize()
             }
@@ -223,24 +264,32 @@ struct AccountSettingsRow: View {
                     .textFieldStyle(.roundedBorder)
                     .labelsHidden()
                 if account.addedByHand {
-                    Button(s.removeFolder) { model.removeFolder(account.source) }
+                    Button(s.removeFolder) { model.removeAddedFolder(of: account) }
                 }
             }
-            Toggle(s.doNotRead, isOn: Binding(
-                get: { model.settings.isUnread(account.id) },
-                set: { model.setUnread($0, accountID: account.id) }
-            ))
-            .font(.system(size: 12))
-            .help(s.doNotReadHelp)
+            VStack(alignment: .leading, spacing: 2) {
+                Toggle(s.doNotRead, isOn: Binding(
+                    get: { model.settings.isUnread(account.id) },
+                    set: { model.setUnread($0, accountID: account.id) }
+                ))
+                .toggleStyle(.checkbox)
+                .font(.system(size: 12))
+                Text(s.doNotReadHelp)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 20)
+            }
         }
         .padding(.vertical, SGTheme.Space.xs)
     }
 
     /// The line under an account: its provider (never another provider's name), organization and status.
-    static func details(for usage: AccountUsage, strings s: Strings) -> String {
+    static func details(for usage: AccountUsage, unread: Bool = false, strings s: Strings) -> String {
         var parts = [usage.account.provider.displayName]
         if let org = usage.account.organization { parts.append(org) }
-        parts.append(s.statusName(usage.status))
+        if let tier = usage.account.seatTier { parts.append(tier.capitalized) }
+        parts.append(unread ? s.readingOffStatus : s.statusName(usage.status))
         return parts.joined(separator: " · ")
     }
 }
