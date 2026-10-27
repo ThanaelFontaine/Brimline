@@ -408,7 +408,7 @@ png(1600, 1320, "apercu.png", opaque: true) { ctx in
 do {
     var box = CGRect(x: 0, y: 0, width: 18, height: 18)
     let info = [kCGPDFContextTitle: "Brimline menubar template"] as CFDictionary
-    if let consumer = CGDataConsumer(url: URL(fileURLWithPath: OUT + "/menubar-template.pdf") as CFURL),
+    if let consumer = CGDataConsumer(url: URL(fileURLWithPath: OUT + "/icons/menubar-template.pdf") as CFURL),
        let pdf = CGContext(consumer: consumer, mediaBox: &box, info) {
         pdf.beginPDFPage(nil)
         BrimlineGlyph.draw(level: 0.6, in: pdf, scale: 2, color: rgb(0x000000))

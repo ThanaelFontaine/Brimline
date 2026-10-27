@@ -138,8 +138,8 @@ Fichiers : `BrimlineGlyph.swift` (app), `icons/menubar-template.svg` et `.pdf`, 
 - Netteté : géométrie au pixel près en 1x (traits de 1 pt) et en 2x (traits de 1,5 pt, la géométrie de `icons/menubar-template.svg`). Les tests de rendu (`BrimlineGlyphTests`) lisent les pixels : le trait, les parois et le fond sont pleins à tous les niveaux, rien entre le trait et le bord.
 - Niveau : celui de la limite **la plus proche de son plafond** parmi les comptes affichés. Au moins 1 pt de liquide dès que le niveau dépasse 0. La course pleine est réservée à 100 %, pour que 99 % ne se confonde pas avec la limite.
 - Pourcentage à côté (réglage) : texte système de la barre des menus, chiffres à chasse fixe, même valeur que le glyphe. Le glyphe n'a pas de couleur : à 90 % et plus, seuls le niveau et le chiffre parlent, c'est voulu.
-- Données expirées ou indisponibles : glyphe atténué (opacité 0,45, `dimmed: true`), avec la dernière valeur connue ou tube vide si aucune.
-- Aucun compte : tube vide, opacité pleine.
+- Données expirées ou indisponibles : glyphe atténué (opacité 0,45, `dimmed: true`), avec la dernière valeur connue ou cuve vide si aucune.
+- Aucun compte : cuve vide, opacité pleine.
 - États de la planche : 0, 25, 72 et 95 %, puis expiré (opacité 0,45), en clair et en sombre.
 - Libellé VoiceOver : « Brimline, 72 % ».
 
