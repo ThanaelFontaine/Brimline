@@ -6,7 +6,7 @@ What Brimline reads for each provider, where the source comes from, and what it 
 
 ## The five providers at a glance
 
-Every provider was tried on **27 October 2026**, on the account of the maker of Brimline, and **only on the plan named below**. Nothing is claimed for a plan that was not tried (a paid plan in particular). "Read and checked" means: the real answer was read, its shape matches the test data, ten reads in a row gave the same numbers with no change to the provider's files, nothing was written or renewed, and turning the provider off stopped every read. The details of each try are in the section of the provider.
+Every provider added in 0.2.0 was tried on **27 October 2026**, on the account of the maker of Brimline, and **only on the plan named below**. Nothing is claimed for a plan that was not tried (a paid plan in particular). "Read and checked" means: the real answer was read, its shape matches the test data, ten reads in a row gave the same numbers with no change to the provider's files, nothing was written or renewed, and turning the provider off stopped every read (except where its section says otherwise). The details of each try are in the section of the provider.
 
 | Provider | What Brimline reads | Source | Plan tried (27/10/2026) | State |
 |---|---|---|---|---|

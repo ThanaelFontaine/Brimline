@@ -42,7 +42,7 @@ Detail and reasons are in the sections below; this table is what the code does, 
 | Grok | `~/.grok` | `auth.json` in it, read only, no link followed | nothing | `https://cli-chat-proxy.grok.com/v1/billing?format=credits` |
 | Cursor | `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb` | that database, read only, creating nothing in Cursor's folder | nothing | `https://cursor.com/api/usage-summary` |
 
-Every provider but Claude is off until you turn it on, and an account marked "Do not read" is looked at by nobody. Nothing is ever written in a provider's folder.
+Every provider but Claude is off until you turn it on, and an account marked "Do not read" has its sign-in opened by nobody (no file, no Keychain item, no request). Nothing is ever written in a provider's folder.
 
 ### Providers are off until you turn them on
 

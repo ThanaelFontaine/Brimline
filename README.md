@@ -39,7 +39,7 @@ Why another tool, when good ones exist (CodexBar, ClaudeBar, Claude Usage Tracke
   <img src="docs/images/panel-providers-light.png" width="364" alt="The Brimline window with one account per provider: Claude, ChatGPT through Codex, Grok, Cursor and Gemini, grouped by provider (invented numbers)">
 </p>
 
-Each provider was tried on **27 October 2026** on the maker's own account, **only on the plan in the table**. Nothing is claimed for a plan that was not tried, a paid one in particular. The numbers in the pictures are invented.
+Each new provider was tried on **27 October 2026** on the maker's own account, **only on the plan in the table**. Nothing is claimed for a plan that was not tried, a paid one in particular. The numbers in the pictures are invented.
 
 | Provider | Read through | Source | Plan tried (27/10/2026) | State |
 |---|---|---|---|---|
@@ -87,7 +87,7 @@ claude mcp add --scope user brimline -- ~/.local/bin/brimline mcp   # MCP tools:
 brimline status --provider chatgpt --json                           # one provider only (claude, chatgpt, gemini, grok, cursor)
 ```
 
-Both read the cache written by the app and never see a token (only `brimline status --live` reads the Keychain, like the app). Details and JSON format: [docs/agents.md](docs/agents.md).
+All three read the cache written by the app and never see a token (only `brimline status --live` reads the Keychain, like the app). Details and JSON format: [docs/agents.md](docs/agents.md).
 
 ## Anthropic's terms
 

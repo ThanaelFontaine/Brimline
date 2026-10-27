@@ -60,7 +60,7 @@ ChatGPT, Gemini, Grok et Cursor n'ont pas de compte à saisir dans Brimline. Cha
 
 1. Installez l'outil officiel et connectez-vous (plus bas, une ligne par fournisseur).
 2. Allumez le fournisseur dans **Réglages, Comptes** (ou `brimline providers enable <nom>`) : tout fournisseur sauf Claude démarre coupé, et un fournisseur coupé n'est pas touché du tout, pas même pour chercher son dossier.
-3. Brimline montre une carte. Si la connexion est de celles qu'il ne lit pas, la carte le dit en une phrase et ne montre aucune jauge : il ne vous demande jamais de déplacer une connexion ailleurs. Une connexion rangée dans le Trousseau, ou protégée par son app, est « protégée, non lue ».
+3. Brimline montre une carte. Si la connexion est de celles qu'il ne lit pas, la carte le dit en une phrase et ne montre aucune jauge : il ne vous demande jamais de déplacer une connexion ailleurs. Une connexion rangée dans le Trousseau, ou protégée par son app, est indiquée comme protégée et non lue.
 4. Pour laisser un compte tranquille, cochez **Ne pas lire ce compte** (Réglages, Comptes). Brimline garde alors ses derniers chiffres, en gris avec leur âge, et **n'ouvre plus sa connexion** : ni fichier, ni élément du Trousseau, ni requête. Décochez la case pour le lire de nouveau.
 
 Ce qui a été essayé sur chaque fournisseur, et sur quel forfait, est dans le [tableau du README](../README.fr.md#fournisseurs) et dans [providers](providers.md) (en anglais). En bref, chacun a été essayé le 27 octobre 2026 sur un seul forfait (ChatGPT gratuit, Cursor Free, un compte Grok gratuit, un compte Google pour Gemini), et rien n'est affirmé pour un forfait qui n'a pas été essayé.

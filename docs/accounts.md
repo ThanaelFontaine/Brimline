@@ -60,7 +60,7 @@ ChatGPT, Gemini, Grok and Cursor have no account to type into Brimline. Each one
 
 1. Install the official tool and sign in to it (below, one line per provider).
 2. Turn the provider **on** in **Settings, Accounts** (or `brimline providers enable <name>`): every provider but Claude starts off, and a provider that is off is not touched at all, not even to look for its folder.
-3. Brimline shows one card for it. If the sign-in is one it does not read, the card says so in a sentence and shows no gauge: it never asks you to move a sign-in somewhere else. A sign-in kept in the Keychain, or protected by its app, is "protected, not read".
+3. Brimline shows one card for it. If the sign-in is one it does not read, the card says so in a sentence and shows no gauge: it never asks you to move a sign-in somewhere else. A sign-in kept in the Keychain, or protected by its app, is shown as protected and not read.
 4. To leave one account alone, tick **Don't read this account** (Settings, Accounts). Brimline then keeps its last numbers, in grey with their age, and **no longer opens its sign-in**: no file, no Keychain item, no request. Turn the box off to read it again.
 
 What was tried on each provider, and on which plan, is in the [table of the README](../README.md#providers) and in [providers](providers.md). In short, each was tried on 27 October 2026 on one plan only (ChatGPT Free, Cursor Free, a free Grok account, a Google account for Gemini), and nothing is claimed for a plan that was not tried.

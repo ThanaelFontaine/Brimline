@@ -245,7 +245,7 @@ The answers, shortened to what decides (the numbers are an example; each one car
 
 The agent compares: Claude has 58 % of its week left and ChatGPT 29 %, so the long task goes to Claude; ChatGPT's week resets in about 4 days, Claude's in about 2. A ChatGPT account read through Codex has no address (`email` is `null`): it is told apart by its `source`, here `~/.codex`. A test (`AgentsDocExampleTests`) builds exactly this cache and checks every number above, so the page cannot drift from the server.
 
-If a provider gives no limit Brimline can read (a free Grok account, or Gemini without Antigravity), its account is listed by `list_accounts` with `status: not_readable` and a `reason`, and `best_account` never ranks it.
+If a provider gives no limit Brimline can read, the account is listed by `list_accounts` and `best_account` never ranks it. Gemini without Antigravity has `status: not_readable` and `reason: consumer_plan`. A free Grok account has `status: ok`, an empty `limits` and the sentence "xAI returns no credit limit for this account." in `message`.
 
 ### Example
 
@@ -259,5 +259,5 @@ If a provider gives no limit Brimline can read (a free Grok account, or Gemini w
 - Check `age_seconds` and `stale` before trusting a number.
 - Treat `unavailable` and `format_changed` as "unknown", not as "free".
 - Name the `provider` you want in `best_account`: the default is Claude.
-- Treat `not_readable` as "no number exists", not as "free": a free Grok account, for one, gets no limit from xAI.
+- Treat `not_readable`, and an `ok` account with no `limits`, as "no number exists", not as "free": a free Grok account, for one, gets no limit from xAI.
 - The numbers come from the providers' own internal endpoints, which none of them documents (see the [FAQ](faq.md) and [providers](providers.md), which says for each one what was tried): use them to choose, not as a guarantee.

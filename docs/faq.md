@@ -2,7 +2,7 @@
 
 ## Which providers does Brimline support?
 
-Five, each tried on a real account on 27 October 2026, **on the plan named in the [table of the README](../README.md#providers) and nowhere else**:
+Five (Claude since v0.1.0, the four others each tried on a real account on 27 October 2026), **on the plan named in the [table of the README](../README.md#providers) and nowhere else**:
 
 - **Claude**, through the Claude Code sign-ins (the Keychain).
 - **ChatGPT**, through Codex: the sign-in Codex keeps in `~/.codex/auth.json` (the 5 hour session and the week that Codex shows with `/status`). Tried on ChatGPT Free.

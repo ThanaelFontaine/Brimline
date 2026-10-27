@@ -39,7 +39,7 @@ Pourquoi un outil de plus, quand de bons existent (CodexBar, ClaudeBar, Claude U
   <img src="docs/images/panel-providers-fr-light.png" width="364" alt="La fenêtre de Brimline avec un compte par fournisseur : Claude, ChatGPT par Codex, Grok, Cursor et Gemini, regroupés par fournisseur (chiffres inventés)">
 </p>
 
-Chaque fournisseur a été essayé le **27 octobre 2026** sur le compte de l'auteur, **sur le seul forfait du tableau**. Rien n'est affirmé pour un forfait qui n'a pas été essayé, un forfait payant surtout. Les chiffres des images sont inventés.
+Chaque nouveau fournisseur a été essayé le **27 octobre 2026** sur le compte de l'auteur, **sur le seul forfait du tableau**. Rien n'est affirmé pour un forfait qui n'a pas été essayé, un forfait payant surtout. Les chiffres des images sont inventés.
 
 | Fournisseur | Lu par | Source | Forfait essayé (27/10/2026) | État |
 |---|---|---|---|---|
@@ -87,7 +87,7 @@ claude mcp add --scope user brimline -- ~/.local/bin/brimline mcp   # outils MCP
 brimline status --provider chatgpt --json                           # un seul fournisseur (claude, chatgpt, gemini, grok, cursor)
 ```
 
-Les deux lisent le cache écrit par l'app et ne voient jamais de jeton (seule `brimline status --live` lit le Trousseau, comme l'app). Détails et format JSON : [docs/agents.md](docs/agents.md) (en anglais).
+Les trois lisent le cache écrit par l'app et ne voient jamais de jeton (seule `brimline status --live` lit le Trousseau, comme l'app). Détails et format JSON : [docs/agents.md](docs/agents.md) (en anglais).
 
 ## Les conditions d'Anthropic
 
