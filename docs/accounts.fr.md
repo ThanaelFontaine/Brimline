@@ -54,6 +54,10 @@ Pour chaque dossier, Brimline lit :
 
 De la connexion, seul le jeton d'accès sert, en mémoire, le temps d'une requête vers `https://api.anthropic.com/api/oauth/usage`. Brimline n'utilise jamais le jeton de renouvellement, ne renouvelle jamais une connexion, n'écrit jamais dans le Trousseau et n'écrit jamais un jeton dans un fichier, un journal ou ses réponses aux agents.
 
+## Gemini
+
+Gemini n'a pas de compte à relier : Google ne publie aucune limite que Brimline puisse lire. Allumez Gemini dans **Réglages, Comptes** (ou `brimline providers enable gemini`) et, si `~/.gemini` existe sur votre Mac, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation, et `/stats model` dans Gemini CLI). Brimline vérifie seulement que le dossier existe et n'y ouvre rien. Détails dans [providers](providers.md) (en anglais).
+
 ## Situations courantes
 
 | Ce que vous voyez | Ce que ça veut dire | Que faire |

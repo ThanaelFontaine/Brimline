@@ -4,10 +4,10 @@ import Testing
 
 @Suite("Provider registry")
 struct RegistryTests {
-    @Test("Claude is the only provider read for now")
-    func claudeOnly() {
-        #expect(Providers.all.map(\.provider) == [.claude])
-        #expect(Providers.make(credentials: FakeCredentials([:]), http: FakeHTTP([:])).map(\.provider) == [.claude])
+    @Test("Claude and Gemini (a sentence only) are the providers with a reader")
+    func readers() {
+        #expect(Providers.all.map(\.provider) == [.claude, .gemini])
+        #expect(Providers.make(credentials: FakeCredentials([:]), http: FakeHTTP([:])).map(\.provider) == [.claude, .gemini])
     }
 
     @Test("Discovery through the registry gives the accounts of the Claude reader")

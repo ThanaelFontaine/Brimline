@@ -45,10 +45,10 @@ struct HTTPAllowListTests {
         await #expect(throws: URLError.self) { try await URLSessionHTTPClient().send(request("http://example.test/")) }
     }
 
-    @Test("Every reader of the registry declares https URLs, with no secret in them")
+    @Test("Every reader of the registry declares https URLs, with no secret in them (Gemini none: it calls nothing)")
     func registryLists() {
         for reader in Providers.all {
-            #expect(!reader.allowedURLs.isEmpty, "\(reader.provider)")
+            #expect(reader.allowedURLs.isEmpty == (reader.provider == .gemini), "\(reader.provider)")
             for url in reader.allowedURLs {
                 #expect(url.scheme == "https")
                 #expect(url.user == nil && url.password == nil)

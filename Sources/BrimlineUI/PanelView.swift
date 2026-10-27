@@ -215,7 +215,7 @@ struct AccountCard: View {
             let head = strings.unavailableShort
             return parts.isEmpty ? head : strings.colon(head, parts.joined(separator: ", "))
         default:
-            return strings.statusMessage(usage.status)
+            return strings.message(for: usage)
         }
     }
 

@@ -115,6 +115,11 @@ public struct Strings: Sendable {
     public var notReadableMessage: String {
         t("Brimline cannot read the limits of this account.", "Brimline ne peut pas lire les limites de ce compte.")
     }
+    /// What Google says about Gemini: the sentence of an account that has no readable limit.
+    public var geminiNotReadableMessage: String {
+        t("Google does not publish Gemini limits in a form Brimline can read. They are in the Gemini app (Settings, Usage limits) and in Gemini CLI (/stats model).",
+          "Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire. Elles sont dans l'app Gemini (Réglages, Limites d'utilisation) et dans Gemini CLI (/stats model).")
+    }
     public func lastKnown(_ age: String) -> String { t("Last known values, \(age)", "Dernières valeurs connues, \(age)") }
     public func dataAge(_ age: String) -> String { t("Data from \(age)", "Données d'\(age)") }
 
@@ -142,6 +147,15 @@ public struct Strings: Sendable {
         case .notReadable: return notReadableMessage
         case .formatChanged: return formatChangedMessage
         }
+    }
+
+    /// The message of an account: the sentence of its provider when it is not readable by design, the
+    /// message of its status otherwise.
+    public func message(for usage: AccountUsage) -> String? {
+        if usage.status == .notReadable, usage.account.provider == .gemini, usage.reason == .consumerPlan {
+            return geminiNotReadableMessage
+        }
+        return statusMessage(usage.status)
     }
 
     // Panel.
