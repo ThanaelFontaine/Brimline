@@ -14,13 +14,13 @@ struct AgentsSnippetsTests {
 
     @Test("the Claude Code command is added for the user, so every project sees the server")
     func mcpAddCommandIsUserScoped() {
-        let m = model(home: "/Users/someone")
-        #expect(m.mcpAddCommand == "claude mcp add --scope user brimline -- /Users/someone/.local/bin/brimline mcp")
+        let m = model(home: "/tmp/someone")
+        #expect(m.mcpAddCommand == "claude mcp add --scope user brimline -- /tmp/someone/.local/bin/brimline mcp")
     }
 
     @Test("a path with a space is quoted, after the scope")
     func mcpAddCommandQuotesThePath() {
-        let m = model(home: "/Users/some one")
-        #expect(m.mcpAddCommand == "claude mcp add --scope user brimline -- '/Users/some one/.local/bin/brimline' mcp")
+        let m = model(home: "/tmp/some one")
+        #expect(m.mcpAddCommand == "claude mcp add --scope user brimline -- '/tmp/some one/.local/bin/brimline' mcp")
     }
 }
