@@ -120,6 +120,9 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
     public var unreadAccounts: [String] = []
     /// The user dismissed the hint that other providers exist (shown while only Claude is on).
     public var providerHintDismissed: Bool = false
+    /// The color of each account, by account id (QUOTA-72). Given when an account is first seen and then kept, so it
+    /// does not change when another account appears. A user entry: read one by one, an invalid one is ignored.
+    public var accountColors: [String: AccountColor] = [:]
 
     public init() {}
 
@@ -131,6 +134,20 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
 
     /// May Brimline read this account at all: its provider is on and the account is not "Do not read".
     public func mayRead(_ account: Account) -> Bool { isEnabled(account.provider) && !isUnread(account.id) }
+
+    /// Gives a palette slot to every account that has no color yet, and keeps the colors already there. Accounts are
+    /// handled in order, each one seeing the colors given before it.
+    public mutating func assignDefaultColors(to accounts: [Account]) {
+        for account in accounts where accountColors[account.id] == nil {
+            accountColors[account.id] = AccountPalette.defaultColor(for: account, among: accounts, assigned: accountColors)
+        }
+    }
+
+    /// "Back to default": the color the rule gives this account now, kept like any other.
+    public mutating func resetColor(for account: Account, accounts: [Account]) {
+        accountColors[account.id] = nil
+        accountColors[account.id] = AccountPalette.defaultColor(for: account, among: accounts, assigned: accountColors)
+    }
 
     public func label(for accountID: String) -> String? {
         guard let l = labels[accountID]?.trimmingCharacters(in: .whitespacesAndNewlines), !l.isEmpty else { return nil }
@@ -152,6 +169,15 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
         enabledProviders = try c.decodeIfPresent([String].self, forKey: .enabledProviders) ?? defaults.enabledProviders
         unreadAccounts = try c.decodeIfPresent([String].self, forKey: .unreadAccounts) ?? defaults.unreadAccounts
         providerHintDismissed = try c.decodeIfPresent(Bool.self, forKey: .providerHintDismissed) ?? defaults.providerHintDismissed
+        // A file written before the colors has no key; a color that is not one of ours is dropped, the others stay.
+        let colors = (try? c.decodeIfPresent([String: LossyColor].self, forKey: .accountColors)) ?? nil
+        accountColors = (colors ?? [:]).compactMapValues(\.color)
+    }
+
+    /// One color of `accountColors`, decoded without failing the whole file when it is not valid.
+    private struct LossyColor: Decodable {
+        var color: AccountColor?
+        init(from decoder: any Decoder) throws { color = try? AccountColor(from: decoder) }
     }
 }
 

@@ -549,6 +549,35 @@ public struct Strings: Sendable {
         guard percent != nil else { return "Brimline" }
         return ([menuBarAccessibility(percent)] + [provider?.displayName, account].compactMap { $0 }).joined(separator: ", ")
     }
+    /// What VoiceOver reads for the gauge of the menu bar: the alert first ("Alert: Claude Agency at 94%."), then the
+    /// average and each account with its percentage, then the accounts that have no figure. One element, one sentence.
+    public func menuBarAccessibility(_ gauge: GaugeModel, names: (String) -> String) -> String {
+        var parts: [String] = []
+        if !gauge.alerts.isEmpty {
+            let list = gauge.alerts.map { segment in
+                t("\(names(segment.accountID)) at \(percentText(segment.percent))",
+                  "\(names(segment.accountID)) à \(percentText(segment.percent))")
+            }.joined(separator: ", ")
+            parts.append(t("Alert: \(list).", "Alerte : \(list)."))
+        }
+        let count = gauge.segments.count
+        if count > 0 {
+            let average = percentText(gauge.total * 100)
+            let accounts = t(count == 1 ? "1 account" : "\(count) accounts", count == 1 ? "1 compte" : "\(count) comptes")
+            let each = gauge.segments.map { segment in
+                let text = "\(names(segment.accountID)) \(percentText(segment.percent))"
+                return segment.stale ? "\(text) (\(t("last known value", "dernière valeur connue")))" : text
+            }.joined(separator: ", ")
+            parts.append(t("Brimline, \(average) used on average across \(accounts): \(each).",
+                           "Brimline, utilisé \(average) en moyenne sur \(accounts) : \(each)."))
+        } else {
+            parts.append("Brimline.")
+        }
+        for id in gauge.withoutFigure {
+            parts.append(colon(names(id), t("no figure", "pas de chiffre")) + ".")
+        }
+        return parts.joined(separator: " ")
+    }
     public func reason(_ detail: String?) -> String? {
         guard let detail else { return nil }
         switch detail {
