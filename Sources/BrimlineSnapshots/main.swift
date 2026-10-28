@@ -221,6 +221,7 @@ func fakeMenuBar() -> MenuBarEnvironment {
 final class PictureBar: MenuBarSeparating {
     var answer: MenuBarHiding.Decision
     var onRecheck: ((MenuBarHiding.Decision) -> Void)?
+    var onClick: (() -> Void)?
     init(_ answer: MenuBarHiding.Decision) { self.answer = answer }
     func setPresent(_ present: Bool) {}
     func hide() -> MenuBarHiding.Decision { answer }
@@ -256,7 +257,7 @@ struct HidingGesturePicture: View {
                 }
             }
             step(strings.menuBarHidingPictureAfter) { strip { tiles(); bar; rest } }
-            step(strings.menuBarHidingPictureHidden) { strip { rest } }
+            step(strings.menuBarHidingPictureHidden) { strip { arrow; rest } }
         }
         .padding(20)
         .frame(width: 600, alignment: .leading)
@@ -291,6 +292,11 @@ struct HidingGesturePicture: View {
 
     private var bar: some View {
         Capsule().fill(SGTheme.accent).frame(width: 2.5, height: 20)
+    }
+
+    /// The bar while the icons are hidden: an arrow, beside the icons that stay.
+    private var arrow: some View {
+        Image(systemName: "chevron.left.2").font(.system(size: 12, weight: .semibold)).foregroundStyle(SGTheme.accent)
     }
 
     private var rest: some View {

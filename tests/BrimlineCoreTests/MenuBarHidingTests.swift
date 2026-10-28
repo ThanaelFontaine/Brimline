@@ -110,7 +110,7 @@ struct MenuBarHidingTests {
             let s = Strings(language)
             let all = [s.menuBarHidingTitle, s.menuBarHidingToggle, s.menuBarHidingHowTo, s.menuBarHidingHide,
                        s.menuBarHidingShow, s.menuBarHidingNote, s.menuBarHidingGuide, s.menuBarHidingBarName,
-                       s.menuBarHidingBarHelp, s.menuBarHidingDiagramHidden, s.menuBarHidingDiagramShown,
+                       s.menuBarHidingBarHelp, s.menuBarHidingBarHelpHidden, s.menuBarHidingDiagramHidden, s.menuBarHidingDiagramShown,
                        s.menuBarHidingDiagramGesture, s.menuBarHidingDiagramSpoken, s.menuBarHidingPartial]
                 + [MenuBarHiding.Refusal.placeUnknown, .brimlineLeftOfBar].map(s.menuBarHidingRefusal)
             for text in all {

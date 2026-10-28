@@ -17,6 +17,7 @@ struct MenuBarHidingModelTests {
         var shows = 0
         var hidden = false
         var onRecheck: ((MenuBarHiding.Decision) -> Void)?
+        var onClick: (() -> Void)?
 
         func setPresent(_ present: Bool) {
             self.present.append(present)
@@ -104,6 +105,32 @@ struct MenuBarHidingModelTests {
         #expect(bar.present == [true, false])
         #expect(!m.menuBarIconsHidden && m.menuBarHidingRefusal == nil)
         #expect(!m.settings.menuBarHiding.enabled)
+    }
+
+    @Test("a click on the bar hides the icons, a click on the arrow it becomes shows them again")
+    func clickToggles() {
+        let m = model(enabled: true)
+        let bar = FakeBar()
+        m.attachSeparator(bar)
+        m.showMenuBarIcons()
+        bar.onClick?()
+        #expect(bar.hidden && m.menuBarIconsHidden)
+        bar.onClick?()
+        #expect(!bar.hidden && !m.menuBarIconsHidden)
+    }
+
+    @Test("a refusal after a click on the bar opens Settings on Menu Bar, where it is written")
+    func clickRefusedOpensSettings() {
+        let m = model(enabled: true)
+        let bar = FakeBar()
+        bar.answer = .refuse(.brimlineLeftOfBar)
+        var opened = 0
+        m.openSettingsAction = { opened += 1 }
+        m.attachSeparator(bar)
+        m.showMenuBarIcons()
+        bar.onClick?()
+        #expect(!m.menuBarIconsHidden && m.menuBarHidingRefusal == .brimlineLeftOfBar)
+        #expect(opened == 1 && m.settingsTab == .menuBar)
     }
 
     @Test("showing the icons (quit, reopening the app) always gives the bar its normal length")

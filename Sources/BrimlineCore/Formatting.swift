@@ -550,8 +550,8 @@ public struct Strings: Sendable {
         t("Hide the icons placed left of the bar", "Cacher les icônes placées à gauche du trait")
     }
     public var menuBarHidingHowTo: String {
-        t("Once: hold Command and drag the icons to hide (Claude, ChatGPT, Cursor, Gemini) to the left of Brimline's bar in the menu bar. Then the “Hide the icons” button of the Brimline window hides and shows them. No permission is asked.",
-          "Une fois : maintenez Cmd et glissez dans la barre des menus les icônes à cacher (Claude, ChatGPT, Cursor, Gemini) à gauche du trait de Brimline. Ensuite, le bouton « Cacher les icônes » de la fenêtre de Brimline les cache et les montre. Aucune autorisation n'est demandée.")
+        t("Once: hold Command and drag the icons to hide (Claude, ChatGPT, Cursor, Gemini) to the left of Brimline's bar in the menu bar. Then a click on the bar, or the “Hide the icons” button of the Brimline window, hides them; the bar becomes an arrow «, and a click on it shows them again. No permission is asked.",
+          "Une fois : maintenez Cmd et glissez dans la barre des menus les icônes à cacher (Claude, ChatGPT, Cursor, Gemini) à gauche du trait de Brimline. Ensuite, un clic sur le trait, ou le bouton « Cacher les icônes » de la fenêtre de Brimline, les cache ; le trait devient une flèche «, et un clic dessus les montre à nouveau. Aucune autorisation n'est demandée.")
     }
     public var menuBarHidingHide: String { t("Hide the icons", "Cacher les icônes") }
     public var menuBarHidingShow: String { t("Show the hidden icons", "Montrer les icônes cachées") }
@@ -579,8 +579,12 @@ public struct Strings: Sendable {
     /// The name VoiceOver reads for the bar, and its help tag.
     public var menuBarHidingBarName: String { t("Brimline's bar", "Trait de Brimline") }
     public var menuBarHidingBarHelp: String {
-        t("Brimline: the icons left of this bar can be hidden from the Brimline window.",
-          "Brimline : les icônes à gauche de ce trait peuvent être cachées depuis la fenêtre de Brimline.")
+        t("Brimline: click to hide the icons left of this bar.",
+          "Brimline : cliquez pour cacher les icônes à gauche de ce trait.")
+    }
+    /// The help tag of the arrow that takes the bar's place while the icons are hidden.
+    public var menuBarHidingBarHelpHidden: String {
+        t("Brimline: click to show the hidden icons.", "Brimline : cliquez pour montrer les icônes cachées.")
     }
     /// The drawing of the gesture.
     public var menuBarHidingDiagramHidden: String { t("Hidden", "Cachées") }
@@ -597,8 +601,8 @@ public struct Strings: Sendable {
         t("2. After the gesture (once): the icons to hide are left of the bar.", "2. Après le geste (une fois) : les icônes à cacher sont à gauche du trait.")
     }
     public var menuBarHidingPictureHidden: String {
-        t("3. “Hide the icons”: they leave the menu bar, Brimline stays. “Show the hidden icons” brings them back.",
-          "3. « Cacher les icônes » : elles quittent la barre, Brimline reste. « Montrer les icônes cachées » les fait revenir.")
+        t("3. A click on the bar: the icons leave the menu bar, Brimline stays, and the bar becomes an arrow beside the icons that stay. A click on the arrow brings them back.",
+          "3. Un clic sur le trait : les icônes quittent la barre, Brimline reste, et le trait devient une flèche à côté des icônes qui restent. Un clic sur la flèche les fait revenir.")
     }
     public var menuBarHidingDiagramSpoken: String {
         t("Drawing of the menu bar: Claude, ChatGPT, Cursor and Gemini left of Brimline's bar are hidden; the icons right of it, Brimline too, are always shown.",
