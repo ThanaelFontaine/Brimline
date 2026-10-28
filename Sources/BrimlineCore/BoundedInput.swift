@@ -63,17 +63,32 @@ public enum BoundedInput {
         _ = readBlocks(descriptor) { _ in }
     }
 
-    /// Reads blocks until the end; false when a read fails (other than an interruption).
+    /// Reads blocks until the end; false when a read fails (other than an interruption, or nothing to read yet).
     private static func readBlocks(_ descriptor: Int32, _ body: (Data) -> Void) -> Bool {
         var chunk = [UInt8](repeating: 0, count: blockSize)
         while true {
             let count = chunk.withUnsafeMutableBytes { Darwin.read(descriptor, $0.baseAddress, $0.count) }
             if count < 0 {
                 if errno == EINTR { continue }
+                // An input the program before left non-blocking (`O_NONBLOCK` belongs to the open file, shared with
+                // it) says "nothing yet" while that program has not written: wait for data or for the end, never
+                // take it for a failure. The flag is not changed: it is the other program's too.
+                if errno == EAGAIN || errno == EWOULDBLOCK, waitForInput(descriptor) { continue }
                 return false
             }
             if count == 0 { return true }
             body(Data(chunk[0..<count]))
+        }
+    }
+
+    /// Waits, as a blocking read would, until the descriptor has data, its end or an error; false when it
+    /// cannot be waited on.
+    private static func waitForInput(_ descriptor: Int32) -> Bool {
+        var request = pollfd(fd: descriptor, events: Int16(POLLIN), revents: 0)
+        while true {
+            let ready = poll(&request, 1, -1)
+            if ready < 0 && errno == EINTR { continue }
+            return ready > 0 && (Int32(request.revents) & POLLNVAL) == 0
         }
     }
 }

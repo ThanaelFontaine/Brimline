@@ -111,10 +111,11 @@ public struct ClaudeReportCommand: Sendable {
         if statusline {
             guard let data = BoundedInput.readAll(descriptor: input, limit: Self.maxStatuslineBytes) else { return Outcome(code: 0) }
             // `auto` takes the folder from this command's environment; the session's transcript says the folder of
-            // the session. When they differ, the numbers belong to another account: nothing is written or shown.
-            if let autoFolder, let transcript = ClaudeCodeReportParser.transcriptPath(data),
-               !ClaudeReportEmail.transcript(transcript, isIn: autoFolder) {
-                return Outcome(code: 0)
+            // the session. When they differ, the numbers belong to another account; without an absolute transcript
+            // path, nothing says whose they are. Either way, nothing is written or shown.
+            if let autoFolder {
+                guard let transcript = ClaudeCodeReportParser.transcriptPath(data),
+                      ClaudeReportEmail.transcript(transcript, isIn: autoFolder) else { return Outcome(code: 0) }
             }
             extraction = ClaudeCodeReportParser.parseStatusline(data, now: now)
         } else {

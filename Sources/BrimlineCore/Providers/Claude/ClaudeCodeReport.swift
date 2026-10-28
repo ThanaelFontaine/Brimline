@@ -203,16 +203,34 @@ public enum ClaudeCodeReportParser {
     }
 
     /// Reads stream-json from a file descriptor (the standard input) to its end, in blocks: a line longer than
-    /// `maxLineBytes` is dropped without being held whole, and only the lines that name `rate_limit_event` are
-    /// decoded.
+    /// `maxLineBytes` is dropped without being held whole, and only the lines whose `type` is `rate_limit_event`
+    /// are decoded, one at a time.
     public static func parseStream(descriptor: Int32, now: Date) -> ClaudeCodeExtraction {
         var reader = StreamReader(now: now)
-        let marker = Data("rate_limit_event".utf8)
         BoundedInput.forEachLine(descriptor: descriptor, maxLineBytes: maxLineBytes) { line in
-            guard line.range(of: marker) != nil else { return }
+            guard namesEventType(line) else { return }
             reader.add(String(decoding: line, as: UTF8.self))
         }
         return reader.extraction
+    }
+
+    /// True when the line has `"type"`, then `:` and `"rate_limit_event"`, with only blanks between. The words
+    /// in a text (a message that quotes an event, its quotes escaped) never match, so such a line is not decoded.
+    static func namesEventType(_ line: Data) -> Bool {
+        let value = Data(#""rate_limit_event""#.utf8)
+        let key = Data(#""type""#.utf8)
+        func isBlank(_ byte: UInt8) -> Bool { byte == 0x20 || byte == 0x09 || byte == 0x0A || byte == 0x0D }
+        var from = line.startIndex
+        while let found = line.range(of: value, in: from..<line.endIndex) {
+            from = found.upperBound
+            var index = found.lowerBound
+            while index > line.startIndex, isBlank(line[index - 1]) { index -= 1 }
+            guard index > line.startIndex, line[index - 1] == UInt8(ascii: ":") else { continue }
+            index -= 1
+            while index > line.startIndex, isBlank(line[index - 1]) { index -= 1 }
+            if index - line.startIndex >= key.count, line[(index - key.count)..<index] == key { return true }
+        }
+        return false
     }
 
     /// The stream-json lines one by one.
@@ -226,8 +244,10 @@ public enum ClaudeCodeReportParser {
         init(now: Date) { self.now = now }
 
         mutating func add(_ line: String) {
-            guard line.utf8.count <= maxLineBytes, line.contains("rate_limit_event") else { return }
-            switch parseEvent(line, now: now) {
+            guard line.utf8.count <= maxLineBytes, namesEventType(Data(line.utf8)) else { return }
+            // The decoded objects go with their line: a long stream of events never piles them up.
+            let event = autoreleasepool { parseEvent(line, now: now) }
+            switch event {
             case .notAnEvent:
                 return
             case .unreadable:
@@ -250,7 +270,8 @@ public enum ClaudeCodeReportParser {
         }
     }
 
-    /// The `transcript_path` of a status line JSON, when it is a non-empty string.
+    /// The `transcript_path` of a status line JSON, when it is a non-empty string (`ClaudeReportEmail.transcript`
+    /// then requires an absolute path).
     public static func transcriptPath(_ data: Data) -> String? {
         guard let object = try? JSONSerialization.jsonObject(with: data), let root = object as? [String: Any],
               let path = root["transcript_path"] as? String, !path.isEmpty else { return nil }
@@ -369,14 +390,34 @@ public enum ClaudeReportEmail {
     }
 
     /// True when a status line's `transcript_path` lies in `<configDirectory>/projects/`, where Claude Code keeps
-    /// the session history of that folder (https://code.claude.com/docs/en/env-vars, `CLAUDE_CONFIG_DIR`). Paths
-    /// are compared as written and with their links resolved.
+    /// the session history of that folder (https://code.claude.com/docs/en/env-vars, `CLAUDE_CONFIG_DIR`). The
+    /// transcript must be an absolute path with no `.` or `..` in it (Claude Code writes it so), never resolved
+    /// against the current folder. Paths are compared as written and with their links resolved: a transcript not
+    /// created yet is placed by the folders above it that exist.
     public static func transcript(_ transcriptPath: String, isIn configDirectory: String) -> Bool {
-        let transcripts = [KeychainServiceName.normalize(transcriptPath),
-                           (KeychainServiceName.normalize(transcriptPath) as NSString).resolvingSymlinksInPath]
-        let folders = [KeychainServiceName.normalize(configDirectory),
-                       (KeychainServiceName.normalize(configDirectory) as NSString).resolvingSymlinksInPath]
-        return transcripts.contains { t in folders.contains { t.hasPrefix($0 + "/projects/") } }
+        guard transcriptPath.hasPrefix("/"),
+              !transcriptPath.split(separator: "/").contains(where: { $0 == "." || $0 == ".." }) else { return false }
+        let written = KeychainServiceName.normalize(transcriptPath)
+        let projects = KeychainServiceName.normalize(configDirectory) + "/projects"
+        let transcripts = [written, resolvingLinks(written)].compactMap { $0 }
+        let folders = [projects, resolvingLinks(projects)].compactMap { $0 }
+        return transcripts.contains { t in folders.contains { t.hasPrefix($0 + "/") } }
+    }
+
+    /// The path with its links resolved by the system (`realpath`) up to the deepest folder that exists, the
+    /// names below it kept as written; nil when it cannot be resolved (a loop, a part that is not a folder).
+    static func resolvingLinks(_ path: String) -> String? {
+        var existing = path
+        var missing: [String] = []
+        while true {
+            if let resolved = realpath(existing, nil) {
+                defer { free(resolved) }
+                return missing.reversed().reduce(String(cString: resolved)) { ($0 as NSString).appendingPathComponent($1) }
+            }
+            guard errno == ENOENT, existing != "/" else { return nil }
+            missing.append((existing as NSString).lastPathComponent)
+            existing = (existing as NSString).deletingLastPathComponent
+        }
     }
 }
 
