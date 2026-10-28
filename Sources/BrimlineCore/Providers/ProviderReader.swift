@@ -19,6 +19,10 @@ public enum ProviderReading: Sendable {
     case limits([UsageLimit], shape: String)
     /// Like `limits`, with one thing to say next to them (or in their place when there are none).
     case annotated([UsageLimit], shape: String, note: AccountNote)
+    /// Numbers Claude Code saw itself, from its report (`brimline report claude`), at `observedAt`. `instead` is
+    /// the state the direct reading gave (an expired session) when the report is a fallback: the service keeps
+    /// the last numbers read from the provider when they are more recent than the report.
+    case observed([UsageLimit], observedAt: Date, instead: AccountStatus?)
     /// This account cannot be read, by design (not a failure, no retry delay).
     case notReadable(reason: NotReadableReason)
     /// The official tool's sign-in has expired: Brimline never sends it nor renews it.

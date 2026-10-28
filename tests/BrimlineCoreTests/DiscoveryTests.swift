@@ -101,4 +101,33 @@ struct DiscoveryTests {
         #expect(found.allSatisfy { !$0.addedByHand })
         #expect(AccountDiscovery(home: home.url).discover() == found)   // same order every time
     }
+
+    @Test("Reports merge with the folders by address, whatever the case; an address with no folder becomes its own account")
+    func reportsMerge() throws {
+        let home = try TemporaryHome()
+        try home.write(".claude.json", claudeJSON(email: "Main@Example.com"))
+        try home.mkdir(".claude")
+        try home.write(".claude-work/.claude.json", claudeJSON(email: "work@example.org"))
+        let reports = home.url.appendingPathComponent("reports")
+        let store = ClaudeReportStore(directory: reports)
+        let window = ClaudeCodeObservation(source: .statusline, fiveHour: ClaudeCodeWindow(percent: 1, resetsAt: nil), sevenDay: nil)
+        for email in ["main@example.com", "zeta@example.net", "alpha@example.net"] {
+            try store.record(.observed(window), email: email, now: date("2026-10-28T00:00:00Z"))
+        }
+
+        let found = AccountDiscovery(home: home.url, reportsDirectory: reports).discover()
+
+        #expect(found.map(\.email) == ["Main@Example.com", "work@example.org", "alpha@example.net", "zeta@example.net"])
+        #expect(found[0].claudeReport == store.file(for: "main@example.com").path)
+        #expect(found[0].keychainService == "Claude Code-credentials")
+        #expect(!found[0].readsReportOnly)
+        #expect(found[1].claudeReport == nil)
+        #expect(found[2].readsReportOnly && found[3].readsReportOnly)
+        #expect(found[2].keychainService == nil)
+        #expect(found[2].source == store.file(for: "alpha@example.net").path)
+        #expect(Set(found.map(\.id)).count == 4)
+        // Without the reports folder, or with none in it, the folders only, as before.
+        #expect(AccountDiscovery(home: home.url).discover().count == 2)
+        #expect(AccountDiscovery(home: home.url, reportsDirectory: home.url.appendingPathComponent("none")).discover().count == 2)
+    }
 }
