@@ -176,6 +176,9 @@ public struct PanelView: View {
             if let refusal = model.menuBarHidingRefusal {
                 MenuBarNote(text: s.menuBarHidingRefusal(refusal), symbol: "exclamationmark.triangle")
             }
+            if model.menuBarIconsHidden && model.menuBarHidingPartial {
+                MenuBarNote(text: s.menuBarHidingPartial, symbol: "info.circle")
+            }
         }
         .buttonStyle(.borderless)
         .font(.system(size: 12))

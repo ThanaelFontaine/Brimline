@@ -6,6 +6,15 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-28
+
+Brimline 0.2.2 fixes "Hide without removing" when Brimline's bar sits far right in the menu bar, and makes the gauge as bold on a regular screen as on a Retina one. The full notes are in [docs/releases/v0.2.2.md](docs/releases/v0.2.2.md).
+
+### Fixed
+
+- **The bar far right no longer refuses to hide.** Up to 0.2.1, a bar whose left edge was more than 45 % of the screen plus 50 pt from the left was refused with "The bar is too far right to hide reliably", which, with many icons in the menu bar, meant always. Measured again on 28 October 2026 with a bar at 1512 pt of a 1920 pt screen: macOS pushes the icons with a length of 864 pt and takes the bar out from 1000 pt, wherever the bar is. Brimline now always hides what it can, with **48 % of the narrowest screen** (921 pt on 1920, it was 45 %), and when the bar is far right it says that the icons nearest the bar may stay visible, and how to keep only the icons to hide left of it. The refusal "too far right" is gone; the two others stay (Brimline's icon left of the bar, a place that cannot be read).
+- **The gauge on a regular screen.** On a screen that is not Retina (1x), the gauge, its limit line and the glyph were drawn thinner than on Retina; they now have the same bold look (2 pt lines). The pictures of the README and the docs are made again.
+
 ## [0.2.1] - 2026-10-28
 
 Brimline 0.2.1 changes nothing in what the app does: it is the version you can install without building it. Each release now carries a disk image, `Brimline.dmg`, built by the release workflow, and a one-line installer downloads it. Still private: the repository and the site are not public yet, so the download links only work once they are. The full notes are in [docs/releases/v0.2.1.md](docs/releases/v0.2.1.md).

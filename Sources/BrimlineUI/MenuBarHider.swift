@@ -34,6 +34,7 @@ public final class MenuBarHider: MenuBarSeparating {
     private var item: NSStatusItem?
     private var screenObserver: (any NSObjectProtocol)?
     private var recheck: Task<Void, Never>?
+    private var lastDecision: MenuBarHiding.Decision?
 
     public init(strings: Strings) {
         self.strings = strings
@@ -69,14 +70,15 @@ public final class MenuBarHider: MenuBarSeparating {
 
     public func hide() -> MenuBarHiding.Decision {
         guard let item else { return .refuse(.placeUnknown) }
-        if isHiding { return .hide(length: Double(item.length)) }
+        if isHiding { return lastDecision ?? .hide(length: Double(item.length)) }
         let decision = MenuBarHiding.decide(
             placement: placement(of: item),
             screenWidths: NSScreen.screens.map { Double($0.frame.width) },
             macOSMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion)
-        if case .hide(let length) = decision {
+        if case .hide(let length, _) = decision {
             item.length = CGFloat(length)
             isHiding = true
+            lastDecision = decision
         }
         return decision
     }
@@ -86,6 +88,7 @@ public final class MenuBarHider: MenuBarSeparating {
         recheck = nil
         item?.length = NSStatusItem.variableLength
         isHiding = false
+        lastDecision = nil
     }
 
     /// A screen came, went or changed size: the length that hides depends on the screens, and the place read before

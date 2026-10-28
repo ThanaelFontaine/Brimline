@@ -2,7 +2,7 @@ import Foundation
 
 public enum BrimlineVersion {
     /// Must equal the VERSION file at the root of the repository (a test checks it).
-    public static let source = "0.2.1"
+    public static let source = "0.2.2"
 
     /// The version of the running app or command: the Info.plist of Brimline.app when there is
     /// one (the command lives in Brimline.app/Contents/Helpers), else `source`.

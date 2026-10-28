@@ -2,7 +2,8 @@ import Foundation
 import Testing
 @testable import BrimlineCore
 
-/// Hiding the icons placed left of Brimline's bar (QUOTA-73): the length of the bar, and when hiding is refused.
+/// Hiding the icons placed left of Brimline's bar (QUOTA-73): the length of the bar, when hiding is refused, and when
+/// it may leave some icons shown.
 /// The numbers come from the measures of 28/10/2026 on macOS 27.0.1 (a 1920 pt screen, no notch).
 @Suite("Menu bar hiding: length and checks")
 struct MenuBarHidingTests {
@@ -10,29 +11,32 @@ struct MenuBarHidingTests {
         MenuBarHiding.Placement(barLeft: bar, screenWidth: screen, brimlineLefts: brimline)
     }
 
-    @Test("a bar at 838 pt on a 1920 pt screen hides with a length of 864 pt (45 %)")
+    @Test("a bar at 838 pt on a 1920 pt screen hides with a length of 921 pt (48 %)")
     func measuredCase() {
         let decision = MenuBarHiding.decide(placement: placement(bar: 838), screenWidths: [1920], macOSMajor: 27)
-        #expect(decision == .hide(length: 864))
-        // Inside the range that hid in the measures (380 to 940 pt), under the 960 pt where macOS takes the bar out.
-        #expect((380...940).contains(864.0))
+        #expect(decision == .hide(length: 921, partial: false))
+        // Inside the range that pushed in the measures (380 to 940 pt), under the 960 pt where macOS takes the bar out.
+        #expect((380...940).contains(921.0))
     }
 
-    @Test("a bar too far right is refused: the icons stay shown")
-    func tooFarRight() {
-        // 864 + 50 = 914: the last place that still hides.
-        #expect(MenuBarHiding.decide(placement: placement(bar: 914), screenWidths: [1920], macOSMajor: 27) == .hide(length: 864))
-        #expect(MenuBarHiding.decide(placement: placement(bar: 915), screenWidths: [1920], macOSMajor: 27) == .refuse(.barTooFarRight))
-        #expect(MenuBarHiding.decide(placement: placement(bar: 1400), screenWidths: [1920], macOSMajor: 27) == .refuse(.barTooFarRight))
+    @Test("a bar far right still hides, and says that some icons may stay shown")
+    func farRightIsPartial() {
+        // 921 + 50 = 971: the last place where every icon is surely pushed out.
+        #expect(MenuBarHiding.decide(placement: placement(bar: 971), screenWidths: [1920], macOSMajor: 27) == .hide(length: 921, partial: false))
+        #expect(MenuBarHiding.decide(placement: placement(bar: 972), screenWidths: [1920], macOSMajor: 27) == .hide(length: 921, partial: true))
+        // The bar measured on 28/10/2026 at 1512 pt: macOS pushed it by 864 pt, and took it out from 1000 pt.
+        #expect(MenuBarHiding.decide(placement: placement(bar: 1512, brimline: [1660]), screenWidths: [1920], macOSMajor: 27)
+                == .hide(length: 921, partial: true))
     }
 
     @Test("with several screens, the narrowest one counts, for the length and for the place")
     func narrowestScreenCounts() {
-        #expect(MenuBarHiding.hidingLength(screenWidths: [1920, 1280, 2560], macOSMajor: 27) == 576)
-        // 838 pt on the 1920 pt screen is 1082 pt from its right edge, so 198 pt on the 1280 pt one: it hides.
-        #expect(MenuBarHiding.decide(placement: placement(bar: 838), screenWidths: [1920, 1280], macOSMajor: 27) == .hide(length: 576))
-        // 1300 pt on the 1920 pt screen is 660 pt on the 1280 pt one: more than 576 + 50, refused.
-        #expect(MenuBarHiding.decide(placement: placement(bar: 1300), screenWidths: [1920, 1280], macOSMajor: 27) == .refuse(.barTooFarRight))
+        #expect(MenuBarHiding.hidingLength(screenWidths: [1920, 1280, 2560], macOSMajor: 27) == 614)
+        // 838 pt on the 1920 pt screen is 1082 pt from its right edge, so 198 pt on the 1280 pt one: every icon is pushed.
+        #expect(MenuBarHiding.decide(placement: placement(bar: 838), screenWidths: [1920, 1280], macOSMajor: 27) == .hide(length: 614))
+        // 1400 pt on the 1920 pt screen is 760 pt on the 1280 pt one: more than 614 + 50, partial.
+        #expect(MenuBarHiding.decide(placement: placement(bar: 1400), screenWidths: [1920, 1280], macOSMajor: 27)
+                == .hide(length: 614, partial: true))
     }
 
     @Test("macOS 26 and before keep the formula of Hidden Bar")
@@ -50,9 +54,9 @@ struct MenuBarHidingTests {
         for width in [1024.0, 1280, 1440, 1512, 1728, 1920, 2560, 3008, 5120] {
             let length = MenuBarHiding.hidingLength(screenWidths: [width], macOSMajor: 27)!
             #expect(length < width / 2, "\(width)")
-            #expect(length == (width * 0.45).rounded(.down))
+            #expect(length == (width * 0.48).rounded(.down))
         }
-        #expect(MenuBarHiding.hidingLength(screenWidths: [1920], macOSMajor: 28) == 864)
+        #expect(MenuBarHiding.hidingLength(screenWidths: [1920], macOSMajor: 28) == 921)
     }
 
     @Test("Brimline left of its bar is never hidden: refused")
@@ -107,8 +111,8 @@ struct MenuBarHidingTests {
             let all = [s.menuBarHidingTitle, s.menuBarHidingToggle, s.menuBarHidingHowTo, s.menuBarHidingHide,
                        s.menuBarHidingShow, s.menuBarHidingNote, s.menuBarHidingGuide, s.menuBarHidingBarName,
                        s.menuBarHidingBarHelp, s.menuBarHidingDiagramHidden, s.menuBarHidingDiagramShown,
-                       s.menuBarHidingDiagramGesture, s.menuBarHidingDiagramSpoken]
-                + [MenuBarHiding.Refusal.placeUnknown, .brimlineLeftOfBar, .barTooFarRight].map(s.menuBarHidingRefusal)
+                       s.menuBarHidingDiagramGesture, s.menuBarHidingDiagramSpoken, s.menuBarHidingPartial]
+                + [MenuBarHiding.Refusal.placeUnknown, .brimlineLeftOfBar].map(s.menuBarHidingRefusal)
             for text in all {
                 #expect(!text.isEmpty)
                 #expect(!text.contains("\u{2014}") && !text.contains("\u{2013}"), "\(text)")
@@ -116,8 +120,8 @@ struct MenuBarHidingTests {
         }
         #expect(Strings(.fr).menuBarHidingToggle == "Cacher les icônes placées à gauche du trait")
         #expect(Strings(.en).menuBarHidingToggle == "Hide the icons placed left of the bar")
-        #expect(Strings(.fr).menuBarHidingRefusal(.barTooFarRight)
-                == "Le trait est trop à droite pour cacher de façon fiable : glissez-le plus à gauche.")
+        #expect(Strings(.en).menuBarHidingPartial.hasPrefix("Some icons may stay visible"))
+        #expect(!Strings(.en).menuBarHidingRefusal(.brimlineLeftOfBar).contains("too far right"))
         #expect(Links.menuBarDoc(.fr).lastPathComponent == "menu-bar.fr.md")
         #expect(Links.menuBarDoc(.en).lastPathComponent == "menu-bar.md")
     }

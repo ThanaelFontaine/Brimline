@@ -30,6 +30,8 @@ public final class AppModel {
     public private(set) var menuBarIconsHidden = false
     /// Why the last try did not hide them, for the note in the window and in the Menu Bar tab.
     public private(set) var menuBarHidingRefusal: MenuBarHiding.Refusal?
+    /// The icons are hidden, but the bar is so far right that the ones nearest it may stay shown.
+    public private(set) var menuBarHidingPartial = false
 
     public let strings: Strings
     public let time: TimeFormatter
@@ -403,6 +405,7 @@ public final class AppModel {
         if !on {
             menuBarIconsHidden = false
             menuBarHidingRefusal = nil
+            menuBarHidingPartial = false
         }
         if !on { separator?.show() }
         separator?.setPresent(on)
@@ -420,6 +423,7 @@ public final class AppModel {
         separator?.show()
         menuBarIconsHidden = false
         menuBarHidingRefusal = nil
+        menuBarHidingPartial = false
     }
 
     public func toggleMenuBarIcons() {
@@ -428,12 +432,14 @@ public final class AppModel {
 
     private func applyHiding(_ decision: MenuBarHiding.Decision) {
         switch decision {
-        case .hide:
+        case .hide(_, let partial):
             menuBarIconsHidden = true
             menuBarHidingRefusal = nil
+            menuBarHidingPartial = partial
         case .refuse(let refusal):
             menuBarIconsHidden = false
             menuBarHidingRefusal = refusal
+            menuBarHidingPartial = false
         }
     }
 
