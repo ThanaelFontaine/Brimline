@@ -293,14 +293,14 @@ struct AccountColorsSettingsTests {
         try JSONDecoder().decode(BrimlineSettings.self, from: Data(json.utf8))
     }
 
-    @Test("A file of 0.2.0, without the key, reads as before and has no colors")
+    @Test("A file of an earlier version, without the key, reads as before and has no colors")
     func fileWithoutTheKey() throws {
         let settings = try decode(#"{"schemaVersion":1,"refreshMinutes":10,"labels":{"claude:/a":"Work"},"enabledProviders":["claude"]}"#)
         #expect(settings.accountColors.isEmpty && settings.schemaVersion == 1 && settings.refreshMinutes == 10)
         #expect(settings.label(for: "claude:/a") == "Work")
     }
 
-    @Test("A complete settings.json of 0.2.0 (every key it wrote) reads without losing a value, and stays the same once saved")
+    @Test("A complete settings.json of an earlier version (every key it wrote) reads without losing a value, and stays the same once saved")
     func completeFileOfVersion020() throws {
         let json = """
         {"schemaVersion":1,"extraFolders":["/tmp/qa/.claude-x"],"extraCodexFolders":["/tmp/qa/.codex-y"],

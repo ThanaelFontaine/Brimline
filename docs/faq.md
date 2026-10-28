@@ -55,7 +55,7 @@ Brimline finds `~/.claude` and every `~/.claude-*` folder that contains a `.clau
 
 ## I signed in over SSH and Brimline says "Not signed in"
 
-When the Keychain is locked (for example in an SSH session), Claude Code keeps the sign-in in a `.credentials.json` file inside the folder instead ([Claude Code documentation](https://code.claude.com/docs/en/authentication#credential-management)). Brimline v0.1 reads the Keychain only. Claude Code's documentation explains how to move the sign-in back to the Keychain ([recovery steps](https://code.claude.com/docs/en/troubleshoot-install#not-logged-in-or-token-expired)).
+When the Keychain is locked (for example in an SSH session), Claude Code keeps the sign-in in a `.credentials.json` file inside the folder instead ([Claude Code documentation](https://code.claude.com/docs/en/authentication#credential-management)). Brimline reads the Keychain only, so it does not read that file directly; the account can still be shown through [Claude Code reports](accounts.md#claude-code-reports-an-account-brimline-cannot-read-directly). Claude Code's documentation explains how to move the sign-in back to the Keychain ([recovery steps](https://code.claude.com/docs/en/troubleshoot-install#not-logged-in-or-token-expired)).
 
 ## Can my agents use it?
 
