@@ -66,6 +66,24 @@ La couleur n'est jamais le seul signal : chaque compte est nommé à côté de s
 
 Le choix est enregistré dans `settings.json` (`accountColors`, par compte) et relu à chaque lancement. Une valeur qui n'est ni un emplacement de la palette ni six chiffres hexadécimaux est ignorée, et le compte reçoit sa couleur par défaut.
 
+## Plusieurs comptes
+
+Chaque fournisseur distingue ses comptes à sa façon, et Brimline montre une ligne par compte trouvé :
+
+| Fournisseur | Un compte, c'est | Pour en ajouter un |
+|---|---|---|
+| Claude | un dossier de Claude Code (`~/.claude`, `~/.claude-*`, ou un dossier ajouté) | lui donner son propre dossier et s'y connecter (étapes 1 à 3 ci-dessus) |
+| ChatGPT | un dossier de Codex (`~/.codex`, ou un dossier `CODEX_HOME` ajouté) | **Ajouter un dossier Codex…**, sous ChatGPT dans **Réglages, Comptes** |
+| Grok | la connexion du Grok CLI dans `~/.grok` : un seul compte | rien : Brimline ne lit que `~/.grok` (un dossier `GROK_HOME` n'est pas lu) |
+| Cursor | la connexion de l'app Cursor : un seul compte | rien : Brimline lit la seule connexion de l'app |
+| Gemini | la connexion d'Antigravity : un seul compte | rien : Brimline lit la seule connexion d'Antigravity |
+
+Avec quatre comptes Claude, faites quatre dossiers (par exemple `~/.claude-premier`, `~/.claude-deuxieme`, `~/.claude-troisieme`, et `~/.claude` pour le quatrième), connectez-vous une fois dans chacun, et Brimline liste les quatre. Donnez à chacun un libellé court dans **Réglages, Comptes** si son adresse est longue.
+
+**Une connexion faite avec `claude setup-token` n'est pas lue.** Cette commande fabrique un jeton de longue durée pour des scripts. Le 27 octobre 2026, nous avons essayé trois jetons de ce genre sur l'adresse que Brimline interroge pour les limites (une requête chacun, et une seconde une heure plus tard pour les deux qui ont reçu HTTP 429 ; rien d'autre lu ni gardé) : aucun n'a renvoyé de limites (une réponse était un refus, HTTP 403, et deux étaient « trop de requêtes », HTTP 429, les deux fois). Brimline ne lit donc que des dossiers, et n'affirme rien sur ces jetons. Si vous n'avez qu'un tel jeton, connectez-vous plutôt avec `/login` dans un dossier à part.
+
+**Un dossier que vous n'utilisez plus reste « Session expirée ».** Brimline ne renouvelle jamais une connexion : seul Claude Code le fait, quand vous utilisez ce compte. Ses derniers chiffres restent, en gris, avec leur âge.
+
 ## Ce que Brimline lit, et ce qu'il ne fait jamais
 
 Pour chaque dossier, Brimline lit :
