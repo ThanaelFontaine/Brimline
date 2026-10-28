@@ -123,12 +123,12 @@ struct AccountColorWarningsTests {
 
     @Test("The sentences of the warnings, French and English, with the decimal comma in French")
     func sentences() {
-        let name: (String) -> String = { _ in "Asso" }
+        let name: (String) -> String = { _ in "Client" }
         let fr = Strings(.fr), en = Strings(.en)
         #expect(fr.colorWarning(.close(accountID: "x"), account: name)
-            == "Proche de la couleur de Asso : leurs deux parts se distinguent mal dans la jauge.")
+            == "Proche de la couleur de Client : leurs deux parts se distinguent mal dans la jauge.")
         #expect(en.colorWarning(.close(accountID: "x"), account: name)
-            == "Close to Asso's color: their two shares are hard to tell apart in the gauge.")
+            == "Close to Client's color: their two shares are hard to tell apart in the gauge.")
         #expect(fr.colorWarning(.lowContrast(dark: false, ratio: 1.4), account: name)
             == "Peu visible en mode clair : contraste de 1,4:1 sur la jauge, 3:1 conseillé.")
         #expect(en.colorWarning(.lowContrast(dark: true, ratio: 2.5), account: name)

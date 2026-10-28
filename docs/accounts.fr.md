@@ -60,7 +60,7 @@ Brimline prévient, et ne refuse jamais :
 - **proche de la couleur d'un autre compte** : les deux comptes sont désignés, et leurs parts se distinguent mal dans la jauge (une distance CIEDE2000 sous 10, en clair ou en sombre). Les comptes masqués et ceux d'un fournisseur coupé ne sont pas comparés ;
 - **peu visible** : une couleur libre trop pâle ou trop sombre pour la piste vide d'une jauge (contraste sous 3:1, la limite WCAG 2.2 pour les éléments graphiques), en mode clair ou sombre, avec son rapport écrit. Les dix couleurs de la palette atteignent toutes 3:1.
 
-La couleur n'est jamais le seul signal : chaque compte est nommé à côté de sa pastille. Au clavier, chaque couleur est un bouton atteint avec Tab (avec l'accès complet au clavier activé dans Réglages Système) et choisi avec la barre d'espace. VoiceOver lit un groupe par compte (« Couleur de Asso ») avec un choix nommé par couleur.
+La couleur n'est jamais le seul signal : chaque compte est nommé à côté de sa pastille. Au clavier, chaque couleur est un bouton atteint avec Tab (avec l'accès complet au clavier activé dans Réglages Système) et choisi avec la barre d'espace. VoiceOver lit un groupe par compte (« Couleur de Client ») avec un choix nommé par couleur.
 
 ![Les couleurs dans les réglages](images/settings-colors-fr-light.png)
 

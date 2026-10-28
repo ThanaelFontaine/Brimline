@@ -60,7 +60,7 @@ Brimline warns, and never refuses:
 - **close to another account's color**: the two accounts are shown, and their parts are hard to tell apart in the gauge (a CIEDE2000 distance under 10, in light or in dark). Hidden accounts and accounts of a provider that is off are not compared;
 - **hard to see**: a free color too pale or too dark for the empty track of a gauge (under 3:1 contrast, the WCAG 2.2 limit for graphics), in light or in dark mode, with its ratio written. The ten colors of the palette all reach 3:1.
 
-The color is never the only signal: every account is named beside its dot. With the keyboard, each color is a button reached with Tab (with Full Keyboard Access on in System Settings) and chosen with Space. VoiceOver reads one group per account ("Color of Asso") with one named choice per color.
+The color is never the only signal: every account is named beside its dot. With the keyboard, each color is a button reached with Tab (with Full Keyboard Access on in System Settings) and chosen with Space. VoiceOver reads one group per account ("Color of Client") with one named choice per color.
 
 ![Colors in the settings](images/settings-colors-light.png)
 

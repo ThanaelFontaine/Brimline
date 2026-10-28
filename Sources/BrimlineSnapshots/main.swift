@@ -410,27 +410,27 @@ var accountsTabSettings: BrimlineSettings {
 
 let accountsTabUsages = [providerAccounts[0], providerAccounts[1], providerAccounts[2], providerAccounts[3], providerAccounts[6]]
 
-// Four Claude accounts of one person (QUOTA-72): the dots of the panel and the colors in the settings. Asso has a
-// free violet close to Principal's (in the dark appearance), Secours a free grey too pale for the light mode, to show both warnings.
-let principal = account("main@claude.ai", ".claude", org: "Example", seat: "max")
-let asso = account("asso@claude.ai", ".claude-asso", org: "Example Association", seat: "max")
-let agence = account("agency@claude.ai", ".claude-agence", org: "Example Agency", seat: "max")
-let secours = account("backup@claude.ai", ".claude-secours", org: "Example Backup", seat: "max")
+// Four Claude accounts of one person (QUOTA-72): the dots of the panel and the colors in the settings. Work has a
+// free violet close to Personal's (in the dark appearance), Side project a free grey too pale for the light mode, to show both warnings.
+let personal = account("you@claude.ai", ".claude", org: "Example", seat: "max")
+let work = account("work@claude.ai", ".claude-work", org: "Example Team", seat: "max")
+let client = account("client@claude.ai", ".claude-client", org: "Example Client", seat: "max")
+let side = account("side@claude.ai", ".claude-side", org: "Example Side", seat: "max")
 
 let fourClaude: [AccountUsage] = [
-    AccountUsage(account: principal, status: .ok, limits: [
+    AccountUsage(account: personal, status: .ok, limits: [
         UsageLimit(kind: .session, percent: 34, resetsAt: minutes(130)),
         UsageLimit(kind: .weekly, percent: 58, resetsAt: minutes(60 * 24 * 2 + 40)),
     ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
-    AccountUsage(account: asso, status: .ok, limits: [
+    AccountUsage(account: work, status: .ok, limits: [
         UsageLimit(kind: .session, percent: 12, resetsAt: minutes(130)),
         UsageLimit(kind: .weekly, percent: 22, resetsAt: minutes(60 * 24 * 2 + 40)),
     ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
-    AccountUsage(account: agence, status: .ok, limits: [
+    AccountUsage(account: client, status: .ok, limits: [
         UsageLimit(kind: .session, percent: 94, resetsAt: minutes(38)),
         UsageLimit(kind: .weekly, percent: 61, resetsAt: minutes(60 * 24 * 2 + 40)),
     ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
-    AccountUsage(account: secours, status: .expired, limits: [
+    AccountUsage(account: side, status: .expired, limits: [
         UsageLimit(kind: .weekly, percent: 9, resetsAt: minutes(60 * 24 * 4)),
     ], fetchedAt: minutes(-180), checkedAt: minutes(-2)),
 ]
@@ -440,21 +440,21 @@ var colorsSettings: BrimlineSettings {
     var s = BrimlineSettings()
     s.providerHintDismissed = true
     s.enabledProviders = [Provider.claude, .chatgpt, .gemini].map(\.rawValue)
-    s.labels = [principal.id: "Main", asso.id: "Asso", agence.id: "Agency", secours.id: "Backup"]
+    s.labels = [personal.id: "Personal", work.id: "Work", client.id: "Client", side.id: "Side project"]
     return s
 }
 
-/// The same, in French, with the names the board of lot D uses.
+/// The same, in French.
 var colorsSettingsFR: BrimlineSettings {
     var s = colorsSettings
-    s.labels = [principal.id: "Principal", asso.id: "Asso", agence.id: "Agence", secours.id: "Secours"]
+    s.labels = [personal.id: "Perso", work.id: "Travail", client.id: "Client", side.id: "Projet perso"]
     return s
 }
 
-/// With the two warnings: Asso's free violet is close to Principal's, Secours' free grey is too pale for light mode.
+/// With the two warnings: Work's free violet is close to Personal's, Side project's free grey is too pale for light mode.
 func withWarnings(_ settings: BrimlineSettings) -> BrimlineSettings {
     var s = settings
-    s.accountColors = [asso.id: .custom("9870E6"), secours.id: .custom("D9DEE3")]
+    s.accountColors = [work.id: .custom("9870E6"), side.id: .custom("D9DEE3")]
     return s
 }
 

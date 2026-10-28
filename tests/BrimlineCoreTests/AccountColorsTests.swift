@@ -172,7 +172,7 @@ struct AccountColorsTests {
 
     @Test("Four Claude accounts get four different colors, the first one the violet")
     func fourClaude() {
-        let accounts = ["main", "asso", "agence", "secours"].map { acct(.claude, $0) }
+        let accounts = ["personal", "work", "client", "side"].map { acct(.claude, $0) }
         var settings = BrimlineSettings()
         settings.assignDefaultColors(to: accounts)
         let slots = accounts.map { slot(settings.accountColors[$0.id]) }
