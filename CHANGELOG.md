@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+### Changed
+
+- **A click on Brimline's bar hides the icons, and the bar becomes an arrow «.** The arrow sits where the bar was, right beside the icons that stay shown, and a click on it shows the hidden icons again, without opening the Brimline window (the buttons of the window and of Settings still work). Before, the hidden state left only the « that macOS draws right after the menus of the app in front, far from the other icons; that one is still there, as it belongs to macOS. Tried on 28 October 2026 by real clicks on the maintainer's Mac, with the bar at 1442 pt: a click on the bar hides, a click on the arrow shows, and a click on the arrow with the Brimline window open closes it and shows the icons.
+
 ## [0.2.2] - 2026-10-28
 
 Brimline 0.2.2 fixes "Hide without removing" with the bar far right and the "Other color…" button, and makes the gauge as bold on a regular screen as on a Retina one. The full notes are in [docs/releases/v0.2.2.md](docs/releases/v0.2.2.md).

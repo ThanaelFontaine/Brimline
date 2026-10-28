@@ -391,6 +391,7 @@ public final class AppModel {
     public func attachSeparator(_ separator: any MenuBarSeparating) {
         self.separator = separator
         separator.onRecheck = { [weak self] decision in self?.applyHiding(decision) }
+        separator.onClick = { [weak self] in self?.toggleMenuBarIcons() }
         separator.setPresent(settings.menuBarHiding.enabled)
     }
 

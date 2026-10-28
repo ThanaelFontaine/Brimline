@@ -13,6 +13,8 @@ public protocol MenuBarSeparating: AnyObject {
     func show()
     /// Told when the bar decided again by itself (the screens changed while the icons were hidden).
     var onRecheck: ((MenuBarHiding.Decision) -> Void)? { get set }
+    /// Told when the person clicks the bar: it hides or shows the icons, without opening the Brimline window.
+    var onClick: (() -> Void)? { get set }
 }
 
 /// Brimline's bar: one more `NSStatusItem` of Brimline's own, a thin vertical bar, that hides the icons placed left
@@ -26,8 +28,9 @@ public protocol MenuBarSeparating: AnyObject {
 /// - When the screens change while the icons are hidden, it shows them, reads its place again, and hides them again
 ///   only if the check passes.
 @MainActor
-public final class MenuBarHider: MenuBarSeparating {
+public final class MenuBarHider: NSObject, MenuBarSeparating {
     public var onRecheck: ((MenuBarHiding.Decision) -> Void)?
+    public var onClick: (() -> Void)?
     public private(set) var isHiding = false
 
     private let strings: Strings
@@ -38,6 +41,7 @@ public final class MenuBarHider: MenuBarSeparating {
 
     public init(strings: Strings) {
         self.strings = strings
+        super.init()
     }
 
     public func setPresent(_ present: Bool) {
@@ -51,6 +55,8 @@ public final class MenuBarHider: MenuBarSeparating {
                 button.image = Self.barImage
                 button.toolTip = strings.menuBarHidingBarHelp
                 button.setAccessibilityLabel(strings.menuBarHidingBarName)
+                button.target = self
+                button.action = #selector(clicked)
             }
             self.item = item
             screenObserver = NotificationCenter.default.addObserver(
@@ -79,6 +85,8 @@ public final class MenuBarHider: MenuBarSeparating {
             item.length = CGFloat(length)
             // The thin bar stays where the person put it, at the right end of the long item, not in its middle.
             item.button?.image = Self.hidingImage(length: CGFloat(length))
+            item.button?.toolTip = strings.menuBarHidingBarHelpHidden
+            item.button?.setAccessibilityLabel(strings.menuBarHidingShow)
             isHiding = true
             lastDecision = decision
         }
@@ -90,6 +98,8 @@ public final class MenuBarHider: MenuBarSeparating {
         recheck = nil
         item?.length = NSStatusItem.variableLength
         item?.button?.image = Self.barImage
+        item?.button?.toolTip = strings.menuBarHidingBarHelp
+        item?.button?.setAccessibilityLabel(strings.menuBarHidingBarName)
         isHiding = false
         lastDecision = nil
     }
@@ -132,13 +142,34 @@ public final class MenuBarHider: MenuBarSeparating {
         return view.subviews.contains { holdsStatusButton($0, depth: depth + 1) }
     }
 
+    @objc private func clicked() {
+        onClick?()
+    }
+
     /// A thin vertical bar, drawn in the color of the menu bar (template image).
     static let barImage: NSImage = barImage(width: 8)
 
-    /// The same bar at the right end of an image as long as the hiding item, so that it stays in place: AppKit centers
-    /// the image in the item, with the same margin on each side as for the short one.
+    /// While the icons are hidden: an arrow « at the right end of an image as long as the hiding item, so that it sits
+    /// where the bar was, next to the icons still shown (AppKit centers the image in the item, with the same margin on
+    /// each side as for the short one). A click on it shows the hidden icons.
     static func hidingImage(length: CGFloat) -> NSImage {
-        barImage(width: max(8, length))
+        let image = NSImage(size: NSSize(width: max(12, length), height: 16), flipped: false) { rect in
+            let arrows = NSBezierPath()
+            for dx in [0.0, 4.5] {
+                let tip = rect.maxX - 9.5 + dx
+                arrows.move(to: NSPoint(x: tip + 3.5, y: rect.midY + 4))
+                arrows.line(to: NSPoint(x: tip, y: rect.midY))
+                arrows.line(to: NSPoint(x: tip + 3.5, y: rect.midY - 4))
+            }
+            arrows.lineWidth = 1.5
+            arrows.lineCapStyle = .round
+            arrows.lineJoinStyle = .round
+            NSColor.black.setStroke()
+            arrows.stroke()
+            return true
+        }
+        image.isTemplate = true
+        return image
     }
 
     private static func barImage(width: CGFloat) -> NSImage {
