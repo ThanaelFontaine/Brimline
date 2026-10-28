@@ -22,6 +22,12 @@
   --sg-provider-gemini: #B03A86;
   --sg-provider-grok: #5E7A12;
   --sg-provider-cursor: #15191D;
+  /* Couleurs des comptes (lot 0.3.0) : palette de dix = les cinq des fournisseurs, puis ces cinq-ci */
+  --sg-account-pine: #1B6B4C;
+  --sg-account-gold: #8C7400;
+  --sg-account-navy: #1D3270;
+  --sg-account-cocoa: #703821;
+  --sg-account-lilac: #7A6A96;
 
   /* Typographie */
   --sg-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -77,6 +83,11 @@
     --sg-provider-gemini: #F08BCB;
     --sg-provider-grok: #B3CC5C;
     --sg-provider-cursor: #ECEFF2;
+    --sg-account-pine: #5CCB98;
+    --sg-account-gold: #F4D63A;
+    --sg-account-navy: #B9CAFE;
+    --sg-account-cocoa: #CA9678;
+    --sg-account-lilac: #E9C6F6;
   }
 }
 

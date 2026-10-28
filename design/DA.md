@@ -1,6 +1,6 @@
 # Brimline : direction artistique
 
-Version 1, 25/10/2026. Vue d'ensemble : `apercu.png`.
+Version 1, 25/10/2026, amendée le 27/10/2026 (lot 0.3.0 : jauge par compte dans la barre des menus, couleurs des comptes). Vue d'ensemble : `apercu.png`.
 
 ## Intention
 
@@ -10,7 +10,7 @@ Trois règles fondent tout le reste :
 
 1. **Le chiffre d'abord.** Chaque jauge a son pourcentage écrit en texte. La couleur confirme, elle ne porte jamais seule l'information.
 2. **Le liquide, c'est ce qui est consommé.** La jauge et le glyphe montent vers la limite (le bord de la cuve et le trait au-dessus, le bout de la piste). Le vide au-dessus, c'est ce qui reste. Le pourcentage affiché est celui de l'API (part utilisée), pour qu'on puisse le comparer aux chiffres de Claude.
-3. **Natif avant tout.** L'app emprunte tout au système (SF Pro, matériaux, couleurs `.primary` et `.secondary`, boutons sans cadre). Brimline n'ajoute que l'accent et les couleurs de jauge.
+3. **Natif avant tout.** L'app emprunte tout au système (SF Pro, matériaux, couleurs `.primary` et `.secondary`, boutons sans cadre). Brimline n'ajoute que l'accent, les couleurs de jauge et les couleurs des comptes.
 
 ## Couleurs
 
@@ -110,8 +110,9 @@ Dans l'app, `BrimlineTheme.swift` fournit ces couleurs en `Color` dynamiques (cl
 
 Planche : `planche-fournisseurs.html` (QUOTA-35, lot D), captures dans `captures-fournisseurs/`. Variante A (regroupé par fournisseur) retenue le 27/10/2026 (THA-1313, tranchée par la session maître), construite au lot P1b (THA-1432).
 
-- **Le fournisseur s'écrit** : son nom en texte, toujours, avec une pastille ronde de 8 pt. Aucun logo de tiers.
-- **Pastilles** : couleurs propres à l'app, pas celles des marques, et aucune ne reprend l'accent ou une couleur de jauge.
+- **Le fournisseur s'écrit** : son nom en texte, toujours. Aucun logo de tiers.
+- **Pastilles** : depuis le lot 0.3.0, la pastille ronde de 8 pt est celle du **compte**, avant le titre de sa carte, à la couleur du compte (section « Couleurs des comptes »). L'en-tête de groupe du fournisseur garde son nom écrit, sans pastille, pour qu'une couleur ne veuille dire qu'une chose. Une carte à phrase seule (Gemini) prend le nom du fournisseur pour titre. Couleurs propres à l'app, pas celles des marques ; aucune ne reprend l'accent ou une couleur de jauge.
+- **Couleur d'un fournisseur** : celle de son premier compte par défaut.
 
 | Jeton | Clair | Sombre |
 |---|---|---|
@@ -128,6 +129,37 @@ Toutes passent 4,5:1 sur le fond et la surface.
 - **Sans limite lisible** (`not_readable`) : jamais de jauge. La première phrase tient en deux lignes, la suite se déplie par « En savoir plus ».
 - **Format changé** (`format_changed`) : derniers chiffres en gris avec leur âge, et la phrase.
 - **Ne pas lire** : derniers chiffres en gris, « Lecture coupée dans les Réglages ».
+
+## Couleurs des comptes
+
+Planche : `planche-comptes.html` (lot D de QUOTA-70, 71 et 72), captures dans `captures-comptes/`. Jetons : `tokens.json` (`accountPalette`) et `tokens.css` (`--sg-account-*`).
+
+Chaque compte a une couleur, choisie dans Réglages, Comptes, et gardée dans `settings.json` sous la clé du compte (`Account.id`). Elle sert à sa part dans la jauge de la barre des menus et à sa pastille dans le panneau. Les jauges des limites du panneau gardent leurs couleurs de seuil : là, la couleur confirme un niveau, pas un compte.
+
+**La palette** : dix couleurs, dans l'ordre des emplacements 0 à 9.
+
+| # | Nom (FR, EN) | Jeton | Clair | Sombre |
+|---|---|---|---|---|
+| 0 | Violet, Violet | `providerClaude` | `#7445D6` | `#B48CFF` |
+| 1 | Bleu, Blue | `providerChatgpt` | `#1C68C9` | `#62AEF5` |
+| 2 | Magenta, Magenta | `providerGemini` | `#B03A86` | `#F08BCB` |
+| 3 | Olive, Olive | `providerGrok` | `#5E7A12` | `#B3CC5C` |
+| 4 | Encre, Ink | `providerCursor` | `#15191D` | `#ECEFF2` |
+| 5 | Sapin, Pine | `accountPine` | `#1B6B4C` | `#5CCB98` |
+| 6 | Or, Gold | `accountGold` | `#8C7400` | `#F4D63A` |
+| 7 | Marine, Navy | `accountNavy` | `#1D3270` | `#B9CAFE` |
+| 8 | Cacao, Cocoa | `accountCocoa` | `#703821` | `#CA9678` |
+| 9 | Lilas, Lilac | `accountLilac` | `#7A6A96` | `#E9C6F6` |
+
+Règles, vérifiées par `tests/test_design_tokens.py` : au moins 3:1 sur la piste, le fond, la surface et la barre des menus (gris simulés de la planche), en clair et en sombre (le plus faible : or clair, 3,34:1 sur la barre) ; écart CIEDE2000 d'au moins 15 entre deux couleurs de la palette, dans chaque apparence (le plus petit : 15,2, bleu et marine en sombre) ; au moins 10 avec l'accent, les couleurs de seuil et le gris expiré.
+
+**Couleur par défaut.** Le premier compte d'un fournisseur prend la couleur de son fournisseur ; les suivants, la première couleur libre dans l'ordre sapin, or, marine, cacao, lilas, puis parmi les couleurs des fournisseurs qui n'ont aucun compte. Une fois donnée, elle est gardée : elle ne change plus quand un autre compte apparaît. « Revenir au défaut » redonne la couleur que cette règle donnerait à cet instant.
+
+**Couleur libre.** Le sélecteur de couleur du système, sans opacité, gardé en hex sRGB ; une seule valeur, servie en clair et en sombre. Avertissement (jamais un refus) sous 3:1 sur la piste dans l'une des deux apparences, avec le ratio écrit.
+
+**Couleurs trop proches.** Avertissement sur les deux comptes quand deux comptes visibles ont un écart CIEDE2000 sous 10 dans l'une des deux apparences.
+
+**Réglages.** Sous chaque compte, une ligne « Couleur » : les dix pastilles de 18 pt (6 pt d'écart, la choisie entourée d'un anneau de 1,5 pt à la couleur du texte), « Autre couleur… » (pastille en pointillés marquée « + », remplie de la couleur libre quand elle est choisie), puis « Revenir au défaut » (grisé, avec « Couleur par défaut », quand rien n'a changé). Avertissements sous la ligne : triangle en `gaugeWarn`, texte secondaire de 11 pt. VoiceOver : un groupe à choix unique « Couleur de <compte> », chaque option son nom.
 
 ## Espacements et mesures
 
@@ -152,25 +184,44 @@ Grille de 4 : 2, 4, 8, 12, 16, 24, 32, 48, 64.
 
 **Site :** largeur utile 1080 px, texte 680 px, gouttière 16 px sur téléphone, sections espacées de 64 px.
 
-## Le glyphe de la barre des menus
+## La barre des menus
 
-Fichiers : `BrimlineGlyph.swift` (app), `icons/menubar-template.svg` et `.pdf`, `glyph-level.svg` (site).
+Planche : `planche-comptes.html`, sections 1 à 4. Fichiers : `BrimlineGlyph.swift` et `MenuBarGaugeImage.swift` (app), `icons/menubar-template.svg` et `.pdf`, `glyph-level.svg` (site).
 
-- Image **gabarit** 18 x 18 pt, noir et transparence, `isTemplate = true` : macOS la teinte (clair, sombre, barre teintée, survol). Jamais de couleur dans la barre des menus.
+**Amendement du 27/10/2026 (QUOTA-70).** La barre des menus montre désormais une image **en couleurs** dès qu'un compte a un chiffre : la règle « jamais de couleur dans la barre des menus » est levée pour les parts des comptes et le repère d'alerte. C'est un écart assumé au conseil d'Apple (image modèle en noir et transparence) : Brimline fait elle-même ce que le système faisait (couleurs selon l'apparence réelle de la barre, contour à la couleur du texte de la barre). Le glyphe modèle reste quand aucun compte n'a de chiffre.
+
+### L'élément : « Ras couché »
+
+Le glyphe se couche et sa cuve devient la jauge : une cuve ouverte, fermée à gauche, dont le liquide est fait des parts des comptes, et à droite, sans la toucher, le trait de la limite. La marque reste la même (une cuve ouverte, un trait libre qui ne la touche jamais), lue à l'horizontale.
+
+- **Image** de 18 pt de haut, largeur = course + 10 pt (50 à 74 pt), centrée dans la barre de 24 pt. Non modèle (`isTemplate = false`).
+- **Cuve** : 12 pt de haut (y 3 à 15), rayon extérieur 2,5 à gauche, trait de 1,5 pt en 2x et 1 pt en 1x, en `NSColor.labelColor` résolu pour l'apparence du bouton.
+- **Liquide** : 6 pt de haut (y 6 à 12), à 1,5 pt (2x) ou 2 pt (1x) des parois ; la cuve dépasse la course du même écart à droite.
+- **Course** : 40 pt jusqu'à 4 comptes, 4 pt de plus par compte au-delà, 64 pt à 10 comptes et plus.
+- **Trait de la limite** : 16 pt de haut (y 1 à 17), 1,5 pt (2x) ou 1 pt (1x) de large, à 2 pt du bout de la cuve.
+- **Parts** : chaque compte compté a une part de p / N de la course (p : sa limite la plus serrée maintenant ; N : les comptes comptés), tassées à gauche dans l'ordre du panneau, jamais triées par taille. Le total est la moyenne, jamais plus de 100 %. Arrondi en pixels à la plus grande part de reste ; une part non nulle fait au moins 1 pixel, pris sur le vide. Part d'une dernière valeur connue (expiré, indisponible, à reconnecter) : couleur du compte à l'opacité 0,45.
+- **Alerte** : dès qu'un compte compté atteint 90 %, le trait devient un « ! » en `gaugeCrit` (barre de 2,5 x 10,5 pt et point de 2,5 pt en 2x ; 2 x 10 et 2 x 2 en 1x). Forme et couleur : jamais la couleur seule. La place du « ! » est toujours réservée, la largeur ne bouge pas. De 70 à 90 %, rien dans la barre.
+- **Pourcentage à côté** (réglage) : texte système de la barre, chiffres à chasse fixe, 4 pt après l'image ; c'est celui du compte le plus chargé, jamais la moyenne.
+- **Comptes sans chiffre** (phrase seule, jamais lu, illimité) : hors de N et hors de la jauge ; VoiceOver et le panneau les citent.
+- **Aucun compte compté** : le glyphe vertical ci-dessous, image modèle, cuve vide.
+- **Infobulle** : « Moyenne 45 % sur 5 comptes · Agence à 94 % ».
+- **VoiceOver** : un seul élément, l'alerte d'abord : « Alerte : Agence à 94 %. Brimline, utilisé 45 % en moyenne sur 5 comptes : Principal 58 %, …, Secours 9 %, valeur ancienne, ChatGPT Plus 41 %. Gemini : pas de chiffre. »
+
+Variantes montrées et écartées (planche, section 4) : « une case par compte » (le total ne se lit plus, 5 pt par case à dix comptes), « glyphe à côté » (deux objets, près de 80 pt), verticale (8 pt de course).
+
+### Le glyphe vertical (aucun compte compté, en-tête du panneau, site)
+
+- Image **gabarit** 18 x 18 pt, noir et transparence, `isTemplate = true` : macOS la teinte (clair, sombre, barre teintée, survol).
 - Dessin (piste A · Ras, choisie le 27/10/2026) : une cuve ouverte en U (10 pt de large, bord à 5 pt du haut, coins arrondis) et, au-dessus de son bord, un trait libre de 14 pt : la limite. Le liquide (4 pt de large) monte du fond de la cuve vers son bord (8 pt de course). Le trait ne touche jamais la cuve : c'est lui qui fait la marque, à protéger.
 - Netteté : géométrie au pixel près en 1x (traits de 1 pt) et en 2x (traits de 1,5 pt, la géométrie de `icons/menubar-template.svg`). Les tests de rendu (`BrimlineGlyphTests`) lisent les pixels : le trait, les parois et le fond sont pleins à tous les niveaux, rien entre le trait et le bord.
-- Niveau : celui de la limite **la plus proche de son plafond** parmi les comptes affichés. Au moins 1 pt de liquide dès que le niveau dépasse 0. La course pleine est réservée à 100 %, pour que 99 % ne se confonde pas avec la limite.
-- Pourcentage à côté (réglage) : texte système de la barre des menus, chiffres à chasse fixe, même valeur que le glyphe. Le glyphe n'a pas de couleur : à 90 % et plus, seuls le niveau et le chiffre parlent, c'est voulu.
-- Données expirées ou indisponibles : glyphe atténué (opacité 0,45, `dimmed: true`), avec la dernière valeur connue ou cuve vide si aucune.
-- Aucun compte : cuve vide, opacité pleine.
-- États de la planche : 0, 25, 72 et 95 %, puis expiré (opacité 0,45), en clair et en sombre.
-- Libellé VoiceOver : « Brimline, 72 % ».
+- Niveau (en-tête du panneau, site) : celui de la limite **la plus proche de son plafond**. Au moins 1 pt de liquide dès que le niveau dépasse 0. La course pleine est réservée à 100 %.
+- Données expirées ou indisponibles : glyphe atténué (opacité 0,45, `dimmed: true`).
 
 Usage :
 
 ```swift
-statusLabel = Image(nsImage: BrimlineGlyph.image(level: 0.72))
-BrimlineGlyph.image(level: last, dimmed: true)   // expiré ou indisponible
+statusLabel = Image(nsImage: BrimlineGlyph.image(level: nil))   // aucun compte compté
+BrimlineGlyph.image(level: last, dimmed: true)                  // en-tête, expiré ou indisponible
 ```
 
 ## L'icône de l'app
@@ -200,5 +251,7 @@ BrimlineGlyph.image(level: last, dimmed: true)   // expiré ou indisponible
 |---|---|
 | `tokens.json`, `tokens.css` | jetons (couleurs avec contrastes, rayons, espacements, polices) |
 | `BrimlineGlyph.swift` | glyphe gabarit, `NSImage` pour un niveau donné |
+| `MenuBarGaugeImage.swift` | élément « Ras couché » de la barre des menus, à partir du modèle de la jauge (lot L4) |
+| `planche-comptes.html`, `captures-comptes/`, `src/render-comptes.cjs` | planche de la jauge par compte, du panneau multi-comptes et des couleurs, ses captures et leur générateur |
 | `BrimlineTheme.swift` | couleurs dynamiques, seuils, mesures, vue `SGGauge` (vérifiés par `swiftc -typecheck`, macOS 14, Swift 6) |
 | `src/render-icons.swift` | générateur des PNG : à compiler comme `main.swift` avec `BrimlineGlyph.swift` et les sources de `BrimlineCore` dans un seul module (sans la ligne `import BrimlineCore`), puis `render <dossier da>` (binaire à ne pas versionner) |
