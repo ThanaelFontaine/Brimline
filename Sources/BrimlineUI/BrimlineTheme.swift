@@ -32,15 +32,10 @@ public enum SGTheme {
     static func critRGB(dark: Bool) -> UInt32 { dark ? critDark : critLight }
     public static let muted     = dynamic(0x56606A, 0x9BA5AF)   // expired (last known value)
 
-    /// The dot of a provider (QUOTA-35 board): Brimline's own colors, not the brands', always beside the written name.
-    public static func provider(_ provider: Provider) -> Color {
-        switch provider {
-        case .claude: dynamic(0x7445D6, 0xB48CFF)
-        case .chatgpt: dynamic(0x1C68C9, 0x62AEF5)
-        case .gemini: dynamic(0xB03A86, 0xF08BCB)
-        case .grok: dynamic(0x5E7A12, 0xB3CC5C)
-        case .cursor: dynamic(0x15191D, 0xECEFF2)
-        }
+    /// The color of an account (QUOTA-72): a slot of the palette, or a free color, the same in the panel and in the
+    /// settings. A palette color has one value on a light and one on a dark appearance; a free color has one.
+    public static func account(_ color: AccountColor) -> Color {
+        dynamic(color.rgb(dark: false), color.rgb(dark: true))
     }
 
     // MARK: Thresholds
@@ -83,7 +78,11 @@ public enum SGTheme {
     public static let gaugeHeight: CGFloat = 6
     /// The gauge of a sub-limit (one model, one pool): the same marks, 4 pt tall.
     public static let compactGaugeHeight: CGFloat = 4
-    public static let providerDot: CGFloat = 8
+    /// The dot of an account in the panel and in the settings.
+    public static let accountDot: CGFloat = 8
+    /// A swatch of the palette in the settings, and the space between two.
+    public static let swatch: CGFloat = 18
+    public static let swatchSpacing: CGFloat = 6
     public static let windowWidth: CGFloat = 340
 }
 
@@ -175,18 +174,26 @@ public struct SGGauge: View {
     }
 }
 
-/// The round dot of a provider, 8 pt. It is decoration: the provider's name is always written beside it.
-public struct SGProviderDot: View {
-    public var provider: Provider
+/// The round dot of an account, 8 pt, in its color. It is decoration: the account's name is always written beside it.
+public struct SGAccountDot: View {
+    public var color: AccountColor
 
-    public init(_ provider: Provider) {
-        self.provider = provider
+    public init(_ color: AccountColor) {
+        self.color = color
     }
 
     public var body: some View {
         Circle()
-            .fill(SGTheme.provider(provider))
-            .frame(width: SGTheme.providerDot, height: SGTheme.providerDot)
+            .fill(SGTheme.account(color))
+            .frame(width: SGTheme.accountDot, height: SGTheme.accountDot)
             .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    /// Lines a dot up with the first line of text beside it: its middle sits at the height of the lowercase letters
+    /// instead of its bottom resting on the baseline.
+    func alignedWithText() -> some View {
+        alignmentGuide(.firstTextBaseline) { $0.height / 2 + 4 }
     }
 }

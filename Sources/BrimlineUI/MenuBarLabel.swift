@@ -17,7 +17,7 @@ public struct MenuBarLabel: View {
         let gauge = model.menuBarGauge
         let names: (String) -> String = { model.gaugeName(forAccountID: $0) }
         let sentence = model.strings.menuBarAccessibility(gauge, names: names)
-        let image = MenuBarGaugeImage.image(gauge, colors: model.settings.accountColors, accessibilityDescription: sentence)
+        let image = MenuBarGaugeImage.image(gauge, colors: model.menuBarColors(for: gauge), accessibilityDescription: sentence)
         HStack(spacing: 4) {
             Image(nsImage: image)
                 .id(colorScheme)

@@ -45,6 +45,45 @@ In **Settings, Accounts** each provider has its own block: a switch, one line th
 
 ![Accounts settings](images/settings-accounts-light.png)
 
+## The color of an account
+
+Every account has a color: its dot in the menu bar window, and its part of the gauge in the menu bar. Brimline gives one the first time it sees an account and keeps it, so it does not change when another account appears: the first account of a provider has that provider's color (Claude's is violet), the next ones the first free color of the palette (pine, gold, navy, cocoa, lilac). The limit gauges of the window keep their own colors (teal, amber, red): there, the color says how full a limit is, not whose it is.
+
+In **Settings, Accounts**, the **Color** line under each account lets you change it:
+
+- **the ten colors of the palette**: violet, blue, magenta, olive, ink, pine, gold, navy, cocoa and lilac. Each one has a value for the light and one for the dark appearance, so it stays readable on both;
+- **Other color…** opens the system color picker (without opacity). The color you pick is kept as six digits (`RRGGBB`, sRGB) and is the same in light and in dark;
+- **Reset to default** gives back the color Brimline would give this account now. It is greyed, with "Default color" beside it, when the account already has it.
+
+Brimline warns, and never refuses:
+
+- **close to another account's color**: the two accounts are shown, and their parts are hard to tell apart in the gauge (a CIEDE2000 distance under 10, in light or in dark). Hidden accounts and accounts of a provider that is off are not compared;
+- **hard to see**: a free color too pale or too dark for the empty track of a gauge (under 3:1 contrast, the WCAG 2.2 limit for graphics), in light or in dark mode, with its ratio written. The ten colors of the palette all reach 3:1.
+
+The color is never the only signal: every account is named beside its dot. With the keyboard, each color is a button reached with Tab (with Full Keyboard Access on in System Settings) and chosen with Space. VoiceOver reads one group per account ("Color of Asso") with one named choice per color.
+
+![Colors in the settings](images/settings-colors-light.png)
+
+The choice is saved in `settings.json` (`accountColors`, by account), and read again at each launch. A value that is not a palette slot or six hexadecimal digits is ignored, and the account gets its default color.
+
+## Several accounts
+
+Each provider tells its accounts apart in its own way, and Brimline shows one line per account it finds:
+
+| Provider | One account is | To add another |
+|---|---|---|
+| Claude | one Claude Code folder (`~/.claude`, `~/.claude-*`, or a folder you added) | give it its own folder and sign in there (steps 1 to 3 above) |
+| ChatGPT | one Codex folder (`~/.codex`, or a `CODEX_HOME` folder you added) | **Add a Codex folder…**, under ChatGPT in **Settings, Accounts** |
+| Grok | the sign-in of the Grok CLI in `~/.grok`: one account | none: Brimline reads `~/.grok` only (a `GROK_HOME` folder is not read) |
+| Cursor | the sign-in of the Cursor app: one account | none: Brimline reads the one sign-in of the app |
+| Gemini | the sign-in of Antigravity: one account | none: Brimline reads the one sign-in of Antigravity |
+
+With four Claude accounts, make four folders (for example `~/.claude-first`, `~/.claude-second`, `~/.claude-third`, and `~/.claude` for the fourth), sign in once in each, and Brimline lists the four. Give each a short label in **Settings, Accounts** if its address is long.
+
+**A sign-in made with `claude setup-token` is not read.** That command makes a long-lived token for scripts. On 27 October 2026 we tried three such tokens against the address Brimline asks for limits (one request each, and a second one an hour later for the two that got HTTP 429; nothing else read or kept): none returned any limits (one answer was a refusal, HTTP 403, and two were "too many requests", HTTP 429, both times). Brimline therefore reads folders only, and claims nothing about those tokens. If you only have such a token, sign in with `/login` in a folder of its own instead.
+
+**A folder you no longer use stays "Session expired".** Brimline never renews a sign-in, and only Claude Code does, when you use that account. Its last numbers stay, in grey, with their age.
+
 ## What Brimline reads, and what it never does
 
 For each folder, Brimline reads:

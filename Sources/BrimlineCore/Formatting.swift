@@ -431,8 +431,8 @@ public struct Strings: Sendable {
           "Écrit un LaunchAgent dans ~/Library/LaunchAgents, retiré quand vous désactivez l'option.")
     }
     public var menuBarHelp: String {
-        t("The menu bar glyph follows the account closest to its limit.",
-          "Le glyphe de la barre des menus suit le compte le plus proche de sa limite.")
+        t("The menu bar gauge shows each account's share; the percentage next to it is the most loaded account's.",
+          "La jauge de la barre des menus montre la part de chaque compte ; le pourcentage à côté est celui du compte le plus chargé.")
     }
     public var agentsIntro: String {
         t("Your agents read the same numbers: a command with JSON output and a local MCP server. They read the cache written by the app and never see a token.",
@@ -479,11 +479,6 @@ public struct Strings: Sendable {
     public func menuBarAccessibility(_ percent: Double?) -> String {
         percent.map { "Brimline, \(percentText($0))" } ?? "Brimline"
     }
-    /// "Brimline, 91%, Claude, Research lab": the number, then whose it is.
-    public func menuBarAccessibility(_ percent: Double?, provider: Provider?, account: String?) -> String {
-        guard percent != nil else { return "Brimline" }
-        return ([menuBarAccessibility(percent)] + [provider?.displayName, account].compactMap { $0 }).joined(separator: ", ")
-    }
     /// What VoiceOver reads for the gauge of the menu bar: the alert first ("Alert: Claude Agency at 94%."), then the
     /// average and each account with its percentage, then the accounts that have no figure. One element, one sentence.
     public func menuBarAccessibility(_ gauge: GaugeModel, names: (String) -> String) -> String {
@@ -524,6 +519,44 @@ public struct Strings: Sendable {
                            "\(names(segment.accountID)) à \(percentText(segment.percent))"))
         }
         return parts.joined(separator: " · ")
+    }
+
+    // MARK: Colors of the accounts (QUOTA-72)
+
+    public var colorsIntro: String {
+        t("The color of an account is used for its share of the gauge in the menu bar and for its dot in the panel.",
+          "La couleur d'un compte sert à sa part dans la jauge de la barre des menus et à sa pastille dans le panneau.")
+    }
+    public var colorRow: String { t("Color", "Couleur") }
+    public var otherColor: String { t("Other color…", "Autre couleur…") }
+    public var customColorName: String { t("Custom color", "Couleur libre") }
+    public var resetColor: String { t("Reset to default", "Revenir au défaut") }
+    public var defaultColor: String { t("Default color", "Couleur par défaut") }
+    /// The name of a color, for VoiceOver and the tooltip of its dot.
+    public func colorName(_ color: AccountColor) -> String {
+        switch color {
+        case .palette(let slot):
+            let entries = AccountPalette.entries
+            let entry = entries[min(max(slot, 0), entries.count - 1)]
+            return t(entry.nameEN, entry.nameFR)
+        case .custom: return customColorName
+        }
+    }
+    /// The name of the group of choices of one account ("Color of Claude Agency").
+    public func colorGroup(_ account: String) -> String { t("Color of \(account)", "Couleur de \(account)") }
+    /// The sentence under a color that is not a good choice. `account` names the other account of a close pair.
+    public func colorWarning(_ warning: ColorWarning, account: (String) -> String) -> String {
+        switch warning {
+        case .close(let id):
+            let name = account(id)
+            return t("Close to \(name)'s color: their two shares are hard to tell apart in the gauge.",
+                     "Proche de la couleur de \(name) : leurs deux parts se distinguent mal dans la jauge.")
+        case .lowContrast(let dark, let ratio):
+            let number = String(format: "%.1f", ratio)
+            let fr = number.replacingOccurrences(of: ".", with: ",")
+            return t("Hard to see in \(dark ? "dark" : "light") mode: \(number):1 contrast on the gauge, 3:1 recommended.",
+                     "Peu visible en mode \(dark ? "sombre" : "clair") : contraste de \(fr):1 sur la jauge, 3:1 conseillé.")
+        }
     }
     public func reason(_ detail: String?) -> String? {
         guard let detail else { return nil }

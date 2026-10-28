@@ -27,7 +27,7 @@ If `brimline` is not found in a new terminal, add `~/.local/bin` to your `PATH` 
 
 ## What macOS shows
 
-- **No Dock icon.** Brimline lives in the menu bar only: look for the level glyph at the top right of the screen. Opening the app again (from Finder or Spotlight) while it runs opens its settings.
+- **No Dock icon.** Brimline lives in the menu bar only: look for the gauge at the top right of the screen (the upright glyph while no account has a number yet). Opening the app again (from Finder or Spotlight) while it runs opens its settings.
 - **No "unidentified developer" warning, in our tests.** The app is signed ad hoc, not with an Apple Developer identity. macOS mainly checks apps that carry the quarantine flag, which is set on downloaded files; an app you build yourself does not carry it. If you copy a built app to another Mac through a download, macOS will block it: build it on each Mac instead.
 - **Keychain.** Brimline reads each Claude Code sign-in with the `/usr/bin/security` tool. In our tests no prompt appeared; if macOS asks, read the prompt before allowing. See [accounts.md](accounts.md) and [SECURITY.md](../SECURITY.md).
 - **Open at login.** When you turn it on (Settings, General), Brimline writes `~/Library/LaunchAgents/eu.thanaelfontaine.brimline.plist`; macOS may then notify you that a background item was added. Turning the option off removes the file.

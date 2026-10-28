@@ -68,6 +68,10 @@ struct GaugeColorsModelTests {
         #expect(abs(gauge.total - 0.57) < 1e-9)
         #expect(model.gaugeName(forAccountID: b.id) == model.title(for: b))
         #expect(model.strings.menuBarAccessibility(gauge) { model.gaugeName(forAccountID: $0) }.hasPrefix("Alert: "))
+        // The bar uses the colors of the panel's dots, even for an account whose color is not kept yet.
+        let colors = model.menuBarColors(for: gauge)
+        #expect(colors[a.id] == model.color(for: a) && colors[b.id] == model.color(for: b))
+        #expect(colors[a.id] != colors[b.id])
         // Hiding an account takes its part out of the gauge.
         model.setHidden(true, accountID: a.id)
         #expect(model.menuBarGauge.segments.map(\.accountID) == [b.id])
