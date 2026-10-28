@@ -6,7 +6,7 @@ Five (Claude since v0.1.0, the four others each tried on a real account on 27 Oc
 
 - **Claude**, through the Claude Code sign-ins (the Keychain).
 - **ChatGPT**, through Codex: the sign-in Codex keeps in `~/.codex/auth.json` (the 5 hour session and the week that Codex shows with `/status`). Tried on ChatGPT Free.
-- **Gemini**, through Google's Antigravity CLI: Brimline launches its official command `agy --print /usage` and shows each group of models over 5 hours and over the week (it says where the limits are when Antigravity is not installed). Only the build verified on 27/10/2026, Antigravity CLI 1.4.8, is launched. Tried on a Google account (`agy` does not say the plan).
+- **Gemini**, through Google's Antigravity CLI: Brimline launches its official command `agy --print /usage` and shows each group of models over 5 hours and over the week (it says where the limits are when Antigravity is not installed). Only the verified builds, Antigravity CLI 1.4.8 and 1.4.9 (27 and 28/10/2026), are launched. Tried on a Google account (`agy` does not say the plan).
 - **Grok**, through the sign-in of the Grok CLI. Tried on a free account, for which xAI returns **no credit limit**: Brimline says so and shows no percentage. What a paid account gives was not tried.
 - **Cursor**, through the sign-in its app keeps (the cycle of your plan, when Cursor stores that sign-in in plain text; when it protects it, Brimline says where to see the usage). Tried on Cursor Free.
 
