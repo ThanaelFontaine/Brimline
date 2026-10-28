@@ -227,15 +227,15 @@ final class PictureBar: MenuBarSeparating {
     func show() {}
 }
 
-/// A model with hiding on (QUOTA-73), its icons hidden or not, or refused for `refusal`.
+/// A model with hiding on (QUOTA-73), its icons hidden or not (maybe partly), or refused for `refusal`.
 @MainActor
-func hidingModel(_ accounts: [AccountUsage], language: Language, hidden: Bool = false,
+func hidingModel(_ accounts: [AccountUsage], language: Language, hidden: Bool = false, partial: Bool = false,
                  refusal: MenuBarHiding.Refusal? = nil) -> AppModel {
     var s = settings
     s.menuBarHiding.enabled = true
     let m = model(accounts, language: language, settings: s)
-    m.attachSeparator(PictureBar(refusal.map { .refuse($0) } ?? .hide(length: 864)))
-    if hidden || refusal != nil { m.hideMenuBarIcons() }
+    m.attachSeparator(PictureBar(refusal.map { .refuse($0) } ?? .hide(length: 921, partial: partial)))
+    if hidden || partial || refusal != nil { m.hideMenuBarIcons() }
     return m
 }
 
@@ -710,7 +710,9 @@ func run() throws {
             try render(sheet([
                 AnyView(PanelFrame(content: PanelView(model: hidingModel(mainAccounts, language: language), opaqueBackground: true))),
                 AnyView(PanelFrame(content: PanelView(model: hidingModel(mainAccounts, language: language, hidden: true), opaqueBackground: true))),
-                AnyView(PanelFrame(content: PanelView(model: hidingModel(mainAccounts, language: language, refusal: .barTooFarRight),
+                AnyView(PanelFrame(content: PanelView(model: hidingModel(mainAccounts, language: language, partial: true),
+                                                      opaqueBackground: true))),
+                AnyView(PanelFrame(content: PanelView(model: hidingModel(mainAccounts, language: language, refusal: .brimlineLeftOfBar),
                                                       opaqueBackground: true))),
             ]), size: nil, dark: dark, name: "qa-panel-menubar-hiding\(lang)-\(suffix)")
         }

@@ -5,7 +5,7 @@
 // the liquid rises toward the rim of the tank, and the line above the rim stands for the limit.
 //
 // Geometry (in points, origin at the top left, 18 x 18 frame; same numbers as design/icons/menubar-template.svg):
-//   line        x 2 to 16, y 2, thickness t (1.5 pt at 2x, 1 pt at 1x), round ends
+//   line        x 2 to 16, y 2, thickness t (1.5 pt at 2x, 2 pt at 1x), round ends
 //   tank        open U, x 4 to 14, rim at y 5, bottom at y 16, outer corner radius 2.5, walls and floor of thickness t
 //   liquid      x 7 to 11, from y 13 up to y 5 at most (8 pt of travel)
 // Everything sits on the pixel grid at 1x and 2x to stay sharp.
@@ -58,9 +58,10 @@ public enum BrimlineGlyph {
 
         func snap(_ v: CGFloat) -> CGFloat { (v * scale).rounded() / scale }
 
-        // Stroke thickness: whole pixels at 1x, 1.5 pt at 2x and over.
+        // Stroke thickness: 1.5 pt at 2x and over; 2 whole pixels at 1x, so that a screen without Retina gets the
+        // same bold stroke instead of a thin 1 pixel one.
         let hiDPI = scale >= 2
-        let t: CGFloat = hiDPI ? 1.5 : 1
+        let t: CGFloat = hiDPI ? 1.5 : 2
         let outerRadius: CGFloat = 2.5
         let innerRadius = outerRadius - t
 

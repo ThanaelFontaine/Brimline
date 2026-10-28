@@ -114,10 +114,12 @@ jobs:
         if: ${{ steps.plan.outputs.action == 'publish' }}
         env:
           GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           TAG: ${{ steps.plan.outputs.tag }}
         run: |
           gh release upload "$TAG" build/Brimline.dmg build/Brimline.dmg.sha256 --clobber
-          gh release edit "$TAG" --draft=false
+          # A draft has no tag yet: it is made on this commit, the one the image was built from.
+          gh release edit "$TAG" --draft=false --target "$HEAD_SHA"
           echo "Release $TAG published with Brimline.dmg and its SHA-256."
 
       - name: Attach the disk image to the existing release

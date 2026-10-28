@@ -8,11 +8,12 @@ import Foundation
 /// beside it out of the visible part of the menu bar, where macOS does not draw them. To show them, the bar gets its
 /// normal length back. Hidden Bar and Dozer used the same technique before macOS 27.
 ///
-/// Apple does not document it. Measured on macOS 27.0.1 (a 1920 pt screen, no notch): a length between 380 and 940 pt
-/// hides the icons and the bar itself; from 960 pt, macOS takes the bar out and hides nothing (10,000, the length of
-/// Hidden Bar, no longer works); below the free space of the menu bar, nothing is hidden. So the length is computed
-/// from the screens, and hiding is refused when it would not be reliable. Not tried on a MacBook with a notch, nor
-/// with several screens.
+/// Apple does not document it. Measured on macOS 27.0.1 (a 1920 pt screen, no notch): with the bar at 838 pt, a length
+/// between 380 and 940 pt pushes the icons and from 960 pt macOS takes the bar out and hides nothing; with the bar at
+/// 1512 pt, 900 to 940 pt push and 950 pt takes it out (10,000, the length of
+/// Hidden Bar, no longer works). An icon pushed onto the menus of the app in front is not drawn; one that still fits
+/// beside them stays shown. So the length is computed from the screens, and when the bar is so far right that the push
+/// may leave some icons shown, the person is told. Not tried on a MacBook with a notch, nor with several screens.
 public enum MenuBarHiding {
     /// The name the bar's position is saved under by macOS. Never change it: the place the person dragged the bar to
     /// would be lost. (macOS 27 keeps it in its own file, under the name of the executable and this name; Brimline
@@ -20,15 +21,15 @@ public enum MenuBarHiding {
     public static let autosaveName = "brimline-separator"
 
     /// The share of the narrowest screen the bar takes when it hides, on macOS 27 and later: under the half of the
-    /// screen where macOS takes the bar out (960 pt of 1920 in the measures), above the free space of the menu bar.
-    public static let modernShare = 0.45
+    /// screen where macOS takes the bar out (950 pt of 1920 in the measures, 940 still pushed, 921 tried at both places).
+    public static let modernShare = 0.48
 
     /// What stays at the left of the menu bar whatever app is in front (the Apple menu, a short app menu), in points.
     public static let leftMargin = 50.0
 
     /// The length of the bar that hides, or nil when no screen is known.
     ///
-    /// macOS 27 and later: 45 % of the narrowest screen (rounded down). Before: the formula of Hidden Bar,
+    /// macOS 27 and later: 48 % of the narrowest screen (rounded down). Before: the formula of Hidden Bar,
     /// `max(500, min(2 × widest screen, 10000))`, which those versions accept.
     public static func hidingLength(screenWidths: [Double], macOSMajor: Int) -> Double? {
         let widths = screenWidths.filter { $0 > 0 }
@@ -61,12 +62,12 @@ public enum MenuBarHiding {
         /// Brimline's own icon is left of the bar: hiding would hide Brimline too, and its panel with the button that
         /// shows the icons again.
         case brimlineLeftOfBar
-        /// The bar is so far right that the length macOS accepts would not push every icon out.
-        case barTooFarRight
     }
 
     public enum Decision: Sendable, Equatable {
-        case hide(length: Double)
+        /// `partial`: the bar is so far right that the longest push macOS accepts may leave the icons nearest the bar
+        /// shown (which ones depends on the app in front). The bar still hides what it can.
+        case hide(length: Double, partial: Bool = false)
         case refuse(Refusal)
     }
 
@@ -74,8 +75,8 @@ public enum MenuBarHiding {
     ///
     /// The menu bar is drawn from the right edge of each screen, so a distance from the right edge is the same on
     /// every screen: the bar's place is carried over to the narrowest screen, the one where the icons have the least
-    /// room. There, the icon just left of the bar must be pushed past `leftMargin`: refused when
-    /// `bar's left edge − leftMargin > length`.
+    /// room. There, every icon is surely hidden only when the one just left of the bar is pushed past `leftMargin`:
+    /// the hiding is `partial` when `bar's left edge − leftMargin > length`.
     public static func decide(placement: Placement?, screenWidths: [Double], macOSMajor: Int) -> Decision {
         guard let placement, placement.screenWidth > 0,
               placement.barLeft >= 0, placement.barLeft <= placement.screenWidth,
@@ -86,8 +87,7 @@ public enum MenuBarHiding {
         guard placement.brimlineLefts.allSatisfy({ $0 > placement.barLeft }) else { return .refuse(.brimlineLeftOfBar) }
         let fromRight = placement.screenWidth - placement.barLeft
         let barLeftOnNarrowest = narrowest - fromRight
-        if barLeftOnNarrowest - leftMargin > length { return .refuse(.barTooFarRight) }
-        return .hide(length: length)
+        return .hide(length: length, partial: barLeftOnNarrowest - leftMargin > length)
     }
 }
 

@@ -69,14 +69,27 @@ struct MenuBarHidingModelTests {
         let m = model(enabled: true)
         let bar = FakeBar()
         m.attachSeparator(bar)
-        bar.answer = .refuse(.barTooFarRight)
+        bar.answer = .refuse(.brimlineLeftOfBar)
         m.hideMenuBarIcons()
         #expect(!m.menuBarIconsHidden)
-        #expect(m.menuBarHidingRefusal == .barTooFarRight)
+        #expect(m.menuBarHidingRefusal == .brimlineLeftOfBar)
         bar.answer = .hide(length: 864)
         m.hideMenuBarIcons()
         #expect(m.menuBarIconsHidden)
         #expect(m.menuBarHidingRefusal == nil)
+    }
+
+    @Test("a bar far right hides, with the note that some icons may stay shown, gone once shown again")
+    func partial() {
+        let m = model(enabled: true)
+        let bar = FakeBar()
+        m.attachSeparator(bar)
+        bar.answer = .hide(length: 921, partial: true)
+        m.hideMenuBarIcons()
+        #expect(m.menuBarIconsHidden && m.menuBarHidingPartial)
+        #expect(m.menuBarHidingRefusal == nil)
+        m.showMenuBarIcons()
+        #expect(!m.menuBarIconsHidden && !m.menuBarHidingPartial)
     }
 
     @Test("turning the setting off shows every icon, then takes the bar away")

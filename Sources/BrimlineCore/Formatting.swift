@@ -558,9 +558,6 @@ public struct Strings: Sendable {
     /// Why the icons were not hidden (they stay shown).
     public func menuBarHidingRefusal(_ refusal: MenuBarHiding.Refusal) -> String {
         switch refusal {
-        case .barTooFarRight:
-            t("The bar is too far right to hide reliably: drag it further left.",
-              "Le trait est trop à droite pour cacher de façon fiable : glissez-le plus à gauche.")
         case .brimlineLeftOfBar:
             t("Brimline's icon is left of the bar: drag it right of the bar, or it would be hidden too.",
               "L'icône de Brimline est à gauche du trait : glissez-la à droite du trait, sinon elle serait cachée aussi.")
@@ -568,6 +565,11 @@ public struct Strings: Sendable {
             t("Brimline couldn't read where the bar is, so nothing is hidden.",
               "Brimline n'a pas pu lire où est le trait : rien n'est caché.")
         }
+    }
+    /// After a hiding that may leave the icons nearest the bar shown.
+    public var menuBarHidingPartial: String {
+        t("Some icons may stay visible: macOS lets the bar push them by about half the screen. Keep only the icons to hide left of the bar (hold Command and drag the others to its right).",
+          "Des icônes peuvent rester visibles : macOS laisse le trait les pousser d'environ la moitié de l'écran. Ne gardez à gauche du trait que les icônes à cacher (maintenez Cmd et glissez les autres à sa droite).")
     }
     public var menuBarHidingNote: String {
         t("Apple doesn't document this technique: it was tried on macOS 27.0.1, on a screen without a notch. Brimline itself stays right of the bar, never hidden. Quitting Brimline or turning this off shows every icon again.",
