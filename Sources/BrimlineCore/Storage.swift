@@ -39,15 +39,18 @@ enum JSONCoding {
     /// existing file or a link), fixed with `fchmod` against the umask, then filled, synced and renamed.
     /// Any failure removes the temporary file and is thrown. With `replacing: false` the final
     /// step never replaces a file that is already there (`renamex_np` with `RENAME_EXCL`): the
-    /// call throws `EEXIST` instead and the existing file is untouched.
-    static func write(_ data: Data, to url: URL, replacing: Bool = true) throws {
+    /// call throws `EEXIST` instead and the existing file is untouched. `creationMode` is the mode
+    /// given to `open(2)` (the process umask only ever narrows it): tests pass a different one to
+    /// prove the `fchmod` alone makes the file 0600, without touching the umask of the process.
+    static func write(_ data: Data, to url: URL, replacing: Bool = true,
+                      creationMode: mode_t = 0o600) throws {
         let fm = FileManager.default
         let directory = url.deletingLastPathComponent()
         try fm.createDirectory(at: directory, withIntermediateDirectories: true,
                                attributes: [.posixPermissions: 0o700])
         try fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
         let temporary = directory.appendingPathComponent(".\(url.lastPathComponent).\(UUID().uuidString).tmp")
-        let descriptor = open(temporary.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0o600)
+        let descriptor = open(temporary.path, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, creationMode)
         guard descriptor >= 0 else { throw posixError(errno) }
         var closed = false
         func fail(_ code: Int32) -> POSIXError {

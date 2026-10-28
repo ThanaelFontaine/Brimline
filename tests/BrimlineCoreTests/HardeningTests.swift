@@ -114,13 +114,14 @@ struct HardeningTests {
         #expect(leftovers.isEmpty)
     }
 
-    @Test("The temporary file is 0600 even under a permissive umask")
-    func permissiveUmask() throws {
+    // The umask only narrows the mode given to open(2), so a creation mode of 0 (what a umask of 0o777
+    // leaves) or 0o666 (a umask of 0) stands for any umask. The umask of the test process is never
+    // changed: the suites run in parallel and a restrictive umask would break their own files.
+    @Test("The temporary file is 0600 whatever mode it is created with", arguments: [mode_t(0o000), mode_t(0o277), mode_t(0o666)])
+    func anyCreationMode(creationMode: mode_t) throws {
         let home = try TemporaryHome()
         let paths = BrimlinePaths(home: home.url)
-        let previous = umask(0o277)
-        defer { umask(previous) }
-        try JSONCoding.write(Data("{}".utf8), to: paths.cacheFile)
+        try JSONCoding.write(Data("{}".utf8), to: paths.cacheFile, creationMode: creationMode)
         #expect(try FileManager.default.attributesOfItem(atPath: paths.cacheFile.path)[.posixPermissions] as? Int == 0o600)
     }
 
