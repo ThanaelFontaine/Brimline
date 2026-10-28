@@ -8,7 +8,8 @@
 //   tank     y 3 to 15, closed on the left (outer radius 2.5), open on the right, stroke `t`
 //   liquid   y 6 to 12, `inset` from the walls; `run` pt long: 40 up to 4 accounts, 4 more per account, 64 at 10 and over
 //   limit    y 1 to 17, 2 pt past the tank; the alert mark takes its place, so the width never moves
-// `t` is 1.5 pt at 2x and 1 pt at 1x, `inset` 1.5 pt at 2x and 2 pt at 1x. Everything sits on the pixel grid.
+// `t` is 1.5 pt at 2x and 2 pt at 1x (so a screen without Retina gets the same bold outline, not a 1 pixel one),
+// `inset` 1.5 pt at 2x and 1 pt at 1x. Everything sits on the pixel grid.
 //
 // The image is not a template: Brimline resolves the outline color and the account colors for the real appearance of
 // the bar at drawing time, so a dark bar on a Mac in light mode gets the dark values. With no counted account the
@@ -114,8 +115,8 @@ public enum MenuBarGaugeImage {
         ctx.scaleBy(x: 1, y: -1)
 
         let hiDPI = scale >= 2
-        let t: CGFloat = hiDPI ? 1.5 : 1
-        let inset: CGFloat = hiDPI ? 1.5 : 2
+        let t: CGFloat = hiDPI ? 1.5 : 2
+        let inset: CGFloat = hiDPI ? 1.5 : 1
         let run = run(accounts: gauge.segments.count)
         let liquidStart = t + inset
         let tankEnd = liquidStart + run + inset
@@ -140,7 +141,7 @@ public enum MenuBarGaugeImage {
         // The limit line, or the alert mark in its place.
         if gauge.alerts.isEmpty {
             ctx.setFillColor(label)
-            let w: CGFloat = hiDPI ? 1.5 : 1
+            let w: CGFloat = hiDPI ? 1.5 : 2
             ctx.addPath(CGPath(roundedRect: CGRect(x: limitX, y: 1, width: w, height: 16),
                                cornerWidth: hiDPI ? 0.75 : 0, cornerHeight: hiDPI ? 0.75 : 0, transform: nil))
             ctx.fillPath()
