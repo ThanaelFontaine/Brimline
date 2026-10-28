@@ -171,8 +171,8 @@ public struct Strings: Sendable {
           "Claude Code donne les limites de son compte à sa ligne d'état (abonnements Pro et Max ; pour un siège Team, voir stream-json dans le guide). Ajoutez la commande de chaque compte à la ligne d'état de son dossier de Claude Code : Brimline montre alors le compte, même sans dossier sur ce Mac, avec l'âge de ses chiffres. Aucun jeton n'est lu, aucune requête n'est envoyée.")
     }
     public var reportsAuto: String {
-        t("Shortcut: --account auto takes the address of the folder the command runs for (its CLAUDE_CONFIG_DIR, or ~/.claude), and writes nothing when the session's transcript lies in another folder.",
-          "Raccourci : --account auto prend l'adresse du dossier pour lequel la commande tourne (son CLAUDE_CONFIG_DIR, ou ~/.claude), et n'écrit rien quand la transcription de la session est dans un autre dossier.")
+        t("Shortcut: --account auto takes the address of the folder the command runs for (its CLAUDE_CONFIG_DIR, or ~/.claude), and writes nothing when the session's transcript is missing or lies in another folder.",
+          "Raccourci : --account auto prend l'adresse du dossier pour lequel la commande tourne (son CLAUDE_CONFIG_DIR, ou ~/.claude), et n'écrit rien quand la transcription de la session manque ou est dans un autre dossier.")
     }
     public var reportsNoAddress: String {
         t("No Claude account with an address yet: use the shortcut, or write the address after --account.",

@@ -49,9 +49,10 @@ Usage:
                                       CLAUDE_CONFIG_DIR folder of this command (or ~/.claude): in
                                       CLAUDE_CONFIG_DIR=... claude -p | brimline ..., the variable
                                       does not reach brimline, so give the address there; with
-                                      --statusline, a transcript_path outside that folder writes
-                                      nothing. Exit codes: 0 recorded, 3 nothing in the input, 4
-                                      format changed (recorded as such), 1 not written, 64 usage.
+                                      --statusline, a transcript_path that is missing or outside
+                                      that folder writes nothing. Exit codes: 0 recorded, 3
+                                      nothing in the input, 4 format changed (recorded as such), 1
+                                      not written, 64 usage.
   brimline mcp                        Local MCP server over stdio (list_accounts, get_usage,
                                       best_account).
   brimline --version                  Print the version.
