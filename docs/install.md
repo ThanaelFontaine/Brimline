@@ -48,7 +48,7 @@ scripts/install.sh
 
 - `scripts/build_app.sh` compiles the app and the `brimline` command for Apple silicon and Intel (`swift build -c release --arch arm64 --arch x86_64`), assembles `build/Brimline.app` and signs it ad hoc (`codesign -s -`).
 - `scripts/install.sh` copies the app to `~/Applications`, links the command to `~/.local/bin/brimline`, and opens the app. With `--login` it also turns on **Open at login** (otherwise turn it on in Settings, General). Nothing is written outside your home folder, and no administrator password is asked.
-- `scripts/build_dmg.sh` builds `build/Brimline.dmg` from that app, the same image as the release (it installs its Python tools in `.build/dmg-venv`, never system wide).
+- `scripts/build_dmg.sh` builds `build/Brimline.dmg` from that app, the same image as the release. It is optional and needs Python 3.10 or later (the Command Line Tools bring 3.9: install a newer one from python.org or Homebrew); it installs its Python tools in `.build/dmg-venv`, never system wide.
 
 ## After installing
 

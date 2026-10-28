@@ -22,9 +22,9 @@ struct MenuBarAccessibilityTests {
         return Strings(language).menuBarAccessibility(gauge) { id in names[id] ?? id }
     }
 
-    let agency = Account(provider: .claude, source: "/tmp/voice/agency", email: nil, organization: nil, seatTier: nil, keychainService: nil)
+    let agency = Account(provider: .claude, source: "/tmp/voice/client", email: nil, organization: nil, seatTier: nil, keychainService: nil)
     var names: [String: String] {
-        ["claude:/tmp/voice/agency": "Claude Agency", "claude:/tmp/voice/main": "Claude", "chatgpt:/tmp/voice/gpt": "ChatGPT",
+        ["claude:/tmp/voice/client": "Claude Client", "claude:/tmp/voice/main": "Claude", "chatgpt:/tmp/voice/gpt": "ChatGPT",
          "gemini:/tmp/voice/gem": "Gemini"]
     }
 
@@ -33,7 +33,7 @@ struct MenuBarAccessibilityTests {
         let usages = [read(agency, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
                       AccountUsage(account: acct(.gemini, "gem"), status: .ok, fetchedAt: now, checkedAt: now)]
         #expect(sentence(usages, names: names, language: .en)
-                == "Alert: Claude Agency at 94%. Brimline, 37% used on average across 3 accounts: Claude Agency 94%, Claude 8%, ChatGPT 10%. Gemini: no figure.")
+                == "Alert: Claude Client at 94%. Brimline, 37% used on average across 3 accounts: Claude Client 94%, Claude 8%, ChatGPT 10%. Gemini: no figure.")
     }
 
     @Test("French: l'alerte d'abord, puis la moyenne et chaque compte, puis les comptes sans chiffre")
@@ -41,7 +41,7 @@ struct MenuBarAccessibilityTests {
         let usages = [read(agency, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
                       AccountUsage(account: acct(.gemini, "gem"), status: .ok, fetchedAt: now, checkedAt: now)]
         #expect(sentence(usages, names: names, language: .fr)
-                == "Alerte : Claude Agency à 94 %. Brimline, utilisé 37 % en moyenne sur 3 comptes : Claude Agency 94 %, Claude 8 %, ChatGPT 10 %. Gemini : pas de chiffre.")
+                == "Alerte : Claude Client à 94 %. Brimline, utilisé 37 % en moyenne sur 3 comptes : Claude Client 94 %, Claude 8 %, ChatGPT 10 %. Gemini : pas de chiffre.")
     }
 
     @Test("No alert, no sentence about one: the average comes first, a single account is singular")
@@ -89,8 +89,8 @@ struct MenuBarAccessibilityTests {
                       AccountUsage(account: acct(.gemini, "gem"), status: .ok, fetchedAt: now, checkedAt: now)]
         let gauge = MenuBarGauge.model(usages, settings: allOn, providers: Set(Provider.allCases), now: now)
         let name: (String) -> String = { names[$0] ?? $0 }
-        #expect(Strings(.en).menuBarTooltip(gauge, names: name) == "Average 37% across 3 accounts · Claude Agency at 94%")
-        #expect(Strings(.fr).menuBarTooltip(gauge, names: name) == "Moyenne 37 % sur 3 comptes · Claude Agency à 94 %")
+        #expect(Strings(.en).menuBarTooltip(gauge, names: name) == "Average 37% across 3 accounts · Claude Client at 94%")
+        #expect(Strings(.fr).menuBarTooltip(gauge, names: name) == "Moyenne 37 % sur 3 comptes · Claude Client à 94 %")
         let calm = MenuBarGauge.model([read(acct(.claude, "main"), 42)], settings: allOn, providers: Set(Provider.allCases), now: now)
         #expect(Strings(.en).menuBarTooltip(calm, names: name) == "Average 42% across 1 account")
         #expect(Strings(.en).menuBarTooltip(GaugeModel(), names: name) == "Brimline")

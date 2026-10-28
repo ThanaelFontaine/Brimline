@@ -1,8 +1,8 @@
 # Checks on every push and pull request: text rules (no em or en dash, no personal data), the
 # tests of the repository scripts, then the Swift package (build, tests) and the app bundle
-# (scripts/build_app.sh, universal) and its disk image (scripts/build_dmg.sh), with the Command Line
-# Tools only. The release workflow starts only
-# after a green run of this one on main.
+# (scripts/build_app.sh, universal, with the Command Line Tools only) and its disk image
+# (scripts/build_dmg.sh, which also needs Python 3.10 or later on the runner). The release workflow
+# starts only after a green run of this one on main.
 #
 # Runner: the maintainer's Mac (self-hosted) while the repository is private. Before it becomes
 # public, switch to GitHub's runners (macos-latest): a self-hosted runner must not serve a public

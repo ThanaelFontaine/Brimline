@@ -46,7 +46,7 @@ Brimline is a **Mac app only**: macOS 14 (Sonoma) or later, on Apple silicon or 
 curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
 ```
 
-The script ([read it first](https://brimline.thanaelfontaine.eu/install.sh) if you like) downloads the latest release from GitHub, checks it against its published SHA-256, puts `Brimline.app` in `/Applications` (or `~/Applications` when `/Applications` is not writable), links the `brimline` command at `~/.local/bin/brimline` and opens the app. No administrator password, nothing written outside those places. Run the same line again to update.
+The script ([read it first](https://brimline.thanaelfontaine.eu/install.sh) if you like) downloads the latest release from GitHub, checks it against its published SHA-256, puts `Brimline.app` in `/Applications` (or where Brimline already is, or `~/Applications` when `/Applications` is not writable), links the `brimline` command at `~/.local/bin/brimline` and opens the app. No administrator password, nothing written outside those places. Run the same line again to update.
 
 **Or the disk image:** download [Brimline.dmg](https://github.com/ThanaelFontaine/Brimline/releases/latest/download/Brimline.dmg) (its SHA-256 is [next to it](https://github.com/ThanaelFontaine/Brimline/releases/latest)), open it and drag Brimline onto Applications. Brimline is not notarized by Apple (that needs a paid Apple Developer account), so macOS blocks it the first time you open it: close the message, then go to **System Settings, Privacy & Security** and click **Open Anyway**, then **Open** ([Apple's page](https://support.apple.com/en-us/102445)). macOS asks this once.
 

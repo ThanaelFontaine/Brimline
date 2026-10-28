@@ -12,14 +12,14 @@ Brimline 0.2.1 changes nothing in what the app does: it is the version you can i
 
 ### Added
 
-- **A disk image with every release.** `Brimline.dmg` (and `Brimline.dmg.sha256`) is attached to each GitHub release by the release workflow. Opening it shows Brimline next to a shortcut to Applications, on a background that says to drag one onto the other and how to get past the first launch of an app that is not notarized (System Settings, Privacy & Security, Open Anyway). The name carries no version, so `releases/latest/download/Brimline.dmg` is always the latest one. `scripts/build_dmg.sh` builds the same image on any Mac (dmgbuild and Pillow, exact versions in `packaging/requirements-dmg.txt`, installed in `.build/dmg-venv`, never system wide) and checks it: the app, its command, the Applications shortcut and the signature.
+- **A disk image with every release.** `Brimline.dmg` (and `Brimline.dmg.sha256`) is attached to each GitHub release by the release workflow, which builds it before publishing the release, so a release is never the latest one without its image. Opening it shows Brimline next to a shortcut to Applications, on a background that says to drag one onto the other and how to get past the first launch of an app that is not notarized (System Settings, Privacy & Security, Open Anyway). The name carries no version, so `releases/latest/download/Brimline.dmg` is always the latest one. `scripts/build_dmg.sh` builds the same image on a Mac with Python 3.10 or later (dmgbuild and Pillow, exact versions and hashes in `packaging/requirements-dmg.txt`, installed in `.build/dmg-venv`, never system wide) and checks it: the app, its command, the Applications shortcut and the signature.
 - **Install in one line.** `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh` downloads the latest disk image, checks its SHA-256 (nothing is installed if it differs), copies Brimline to `/Applications` (or where it already is, or `~/Applications`), links the `brimline` command at `~/.local/bin/brimline` and opens the app; run it again to update. No administrator password. The script lives on the site. In our tests on macOS 27, the app it installs does not carry the quarantine flag that browsers set.
 
 ### Changed
 
 - **One app for Apple silicon and Intel.** `scripts/build_app.sh` builds a universal app (`--arch arm64 --arch x86_64`) and checks that both executables are. Intel was not tried on a real Mac yet.
 - **README and install guide.** The README opens with the install line, says plainly that Brimline is a Mac app only (no Windows or Linux version), has a short "How it works" and a shorter "Use"; [docs/install.md](docs/install.md) gives the three ways to install (one line, disk image, source), with the "Open Anyway" steps of Apple's own page. The FAQ answers "Does it run on Windows or Linux?".
-- **Example names.** The last examples of the code comments and design boards use the same neutral accounts as the pictures (Personal, Work, Client, Side project).
+- **Example names.** The last examples of the code comments, tests and design boards use the same neutral accounts as the pictures (Personal, Work, Client, Side project).
 
 ## [0.2.0] - 2026-10-28
 

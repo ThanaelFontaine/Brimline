@@ -1,7 +1,8 @@
 #!/bin/bash
 # Builds the disk image of Brimline from an app already built by scripts/build_app.sh:
 # a "Brimline" volume showing Brimline.app next to an Applications shortcut, on a background
-# that says to drag one onto the other. Used by the release workflow, and usable as is on a Mac.
+# that says to drag one onto the other. Used by the release workflow, and usable on any Mac with
+# Python 3.10 or later.
 #
 #   scripts/build_dmg.sh [APP] [OUT_DIR]
 #     APP      the bundle to package (default: build/Brimline.app)
@@ -11,9 +12,11 @@
 # carries no version, so that https://github.com/ThanaelFontaine/Brimline/releases/latest/download/Brimline.dmg
 # always gives the latest one; the version is inside (the app's Info.plist).
 #
-# The Python tools (dmgbuild, Pillow, exact versions in packaging/requirements-dmg.txt) are
-# installed in .build/dmg-venv, never system wide. Installs nothing else: the image is written,
-# checked, and never copied to /Applications.
+# Needs Python 3.10 or later (dmgbuild and Pillow require it): the python3 of the Command Line
+# Tools is 3.9, so install a newer one (python.org or Homebrew), or point PYTHON at it. The Python
+# tools (exact versions and hashes in packaging/requirements-dmg.txt) are installed in
+# .build/dmg-venv with pip --require-hashes, never system wide. Installs nothing else: the image
+# is written, checked, and never copied to /Applications.
 set -euo pipefail
 
 CALLER_DIR="$PWD"
@@ -42,12 +45,19 @@ if [ "$PLIST_VERSION" != "$VERSION" ]; then
   exit 1
 fi
 
+PYTHON="${PYTHON:-python3}"
+if ! "$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+  echo "build_dmg: needs Python 3.10 or later, found: $("$PYTHON" --version 2>&1 || echo none)." >&2
+  echo "build_dmg: install one (python.org or Homebrew), or set PYTHON=/path/to/python3." >&2
+  exit 1
+fi
+
 VENV="$ROOT/.build/dmg-venv"
 if [ ! -x "$VENV/bin/dmgbuild" ] || ! cmp -s packaging/requirements-dmg.txt "$VENV/requirements-dmg.txt"; then
   echo "==> Python tools (dmgbuild, Pillow) in $VENV"
   rm -rf "$VENV"
-  python3 -m venv "$VENV"
-  "$VENV/bin/python" -m pip install --quiet --disable-pip-version-check -r packaging/requirements-dmg.txt
+  "$PYTHON" -m venv "$VENV"
+  "$VENV/bin/python" -m pip install --quiet --disable-pip-version-check --require-hashes -r packaging/requirements-dmg.txt
   cp packaging/requirements-dmg.txt "$VENV/requirements-dmg.txt"
 fi
 
