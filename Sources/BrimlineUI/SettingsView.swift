@@ -97,6 +97,9 @@ struct AccountsTab: View {
                     Text(s.accountsIntro)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    Text(s.colorsIntro)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                     Link(destination: Links.accountsDoc(s.language)) {
                         Label(s.howToLink, systemImage: "questionmark.circle")
                     }
@@ -104,7 +107,7 @@ struct AccountsTab: View {
                 }
             }
 
-            // One block per provider (Claude, ChatGPT, Gemini, Grok, Cursor): its dot, its name, its switch, what it
+            // One block per provider (Claude, ChatGPT, Gemini, Grok, Cursor): its name, its switch, what it
             // reads, then its accounts (only when it is on: a provider that is off is not looked for).
             ForEach(Provider.allCases, id: \.self) { provider in
                 let usages = model.allUsages.filter { $0.account.provider == provider }
@@ -166,7 +169,7 @@ struct AccountsTab: View {
     }
 }
 
-/// A provider's heading in the Accounts tab: dot, name, switch, and one line that says what Brimline reads.
+/// A provider's heading in the Accounts tab: name, switch, and one line that says what Brimline reads.
 struct ProviderHeader: View {
     var provider: Provider
     @Bindable var model: AppModel
@@ -177,7 +180,6 @@ struct ProviderHeader: View {
         let on = model.settings.isEnabled(provider)
         VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
             HStack(alignment: .firstTextBaseline, spacing: SGTheme.Space.s) {
-                SGProviderDot(provider)
                 Text(provider.displayName)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.primary)
@@ -223,24 +225,28 @@ struct AccountSettingsRow: View {
         let account = usage.account
         VStack(alignment: .leading, spacing: SGTheme.Space.s) {
             HStack(alignment: .top, spacing: SGTheme.Space.m) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(model.identity(for: account))
-                        .font(.system(size: 13, weight: .semibold))
-                        .lineLimit(3)
-                        .truncationMode(.middle)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .help(account.email ?? account.source)
-                    Text(Self.details(for: usage, unread: model.settings.isUnread(account.id), strings: s))
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(model.displayPath(account.source))
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .textSelection(.enabled)
-                        .help(account.source)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    SGAccountDot(model.color(for: account))
+                        .alignedWithText()
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(model.identity(for: account))
+                            .font(.system(size: 13, weight: .semibold))
+                            .lineLimit(3)
+                            .truncationMode(.middle)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .help(account.email ?? account.source)
+                        Text(Self.details(for: usage, unread: model.settings.isUnread(account.id), strings: s))
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(model.displayPath(account.source))
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                            .textSelection(.enabled)
+                            .help(account.source)
+                    }
                 }
                 Spacer(minLength: SGTheme.Space.s)
                 HStack(spacing: SGTheme.Space.s) {
@@ -269,6 +275,7 @@ struct AccountSettingsRow: View {
                     Button(s.removeFolder) { model.removeAddedFolder(of: account) }
                 }
             }
+            AccountColorRow(account: account, model: model)
             VStack(alignment: .leading, spacing: 2) {
                 Toggle(s.doNotRead, isOn: Binding(
                     get: { model.settings.isUnread(account.id) },

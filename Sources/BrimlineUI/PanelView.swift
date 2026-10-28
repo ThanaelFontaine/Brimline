@@ -190,14 +190,14 @@ public struct PanelView: View {
     }
 }
 
-/// The heading of a provider's group: its dot, its name, and what it goes through ("via Codex").
+/// The heading of a provider's group: its name and what it goes through ("via Codex"). No dot: the dots are the
+/// accounts', so that a color means one thing.
 struct GroupHeader: View {
     var provider: Provider
     var strings: Strings
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
-            SGProviderDot(provider)
             Text(provider.displayName)
                 .font(.system(size: 12, weight: .semibold))
             if let qualifier = strings.qualifier(for: provider) {
@@ -284,14 +284,12 @@ struct AccountCard: View {
     var body: some View {
         let strings = model.strings
         let account = usage.account
-        let labelled = model.settings.label(for: account.id) != nil
         VStack(alignment: .leading, spacing: 0) {
-            // A card that holds a sentence only has no title unless the user named it: the group says whose it is.
-            if !isSentenceOnly || labelled {
-                identity
-            }
+            // Every card has its title and its dot, a sentence-only one too (Gemini takes the provider's name): the dot
+            // is the account's color, the one its share has in the menu bar gauge.
+            identity
             if isSentenceOnly {
-                sentence.padding(.top, labelled ? SGTheme.Space.s : 0)
+                sentence.padding(.top, SGTheme.Space.s)
             }
             if !usage.limits.isEmpty {
                 VStack(alignment: .leading, spacing: 0) {
@@ -335,22 +333,26 @@ struct AccountCard: View {
         let account = usage.account
         let subtitle = [model.subtitle(for: account), usage.note == .sharedPool ? strings.sharedPoolSubtitle : nil]
             .compactMap { $0 }.joined(separator: " · ")
-        return VStack(alignment: .leading, spacing: 0) {
-            // The title wraps rather than being cut; past two lines it is shortened in the middle and
-            // stays whole in the tooltip.
-            Text(model.title(for: account))
-                .font(.system(size: 13, weight: .semibold))
-                .lineLimit(2)
-                .truncationMode(.middle)
-                .fixedSize(horizontal: false, vertical: true)
-                .help(account.provider == .claude ? (account.email ?? account.source) : model.displayPath(account.source))
-            if !subtitle.isEmpty {
-                Text(subtitle)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+        return HStack(alignment: .firstTextBaseline, spacing: 6) {
+            SGAccountDot(model.color(for: account))
+                .alignedWithText()
+            VStack(alignment: .leading, spacing: 0) {
+                // The title wraps rather than being cut; past two lines it is shortened in the middle and
+                // stays whole in the tooltip.
+                Text(model.title(for: account))
+                    .font(.system(size: 13, weight: .semibold))
                     .lineLimit(2)
+                    .truncationMode(.middle)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 1)
+                    .help(account.provider == .claude ? (account.email ?? account.source) : model.displayPath(account.source))
+                if !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 1)
+                }
             }
         }
     }

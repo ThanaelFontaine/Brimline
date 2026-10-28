@@ -117,12 +117,25 @@ struct MenuBarGaugeTests {
     func lastKnown() {
         let expired = read(acct("e"), 40, status: .expired)
         let unavailable = read(acct("u"), 30, status: .unavailable)
-        let reconnect = read(acct("r"), 20, status: .reconnect)
         let changed = read(acct("c"), 10, status: .formatChanged)
         let fresh = read(acct("f"), 60)
-        let g = gauge([expired, unavailable, reconnect, changed, fresh])
-        #expect(g.segments.map(\.stale) == [true, true, true, true, false])
-        #expect(g.segments.count == 5 && abs(g.total - 0.32) < 1e-12)
+        let g = gauge([expired, unavailable, changed, fresh])
+        #expect(g.segments.map(\.stale) == [true, true, true, false])
+        #expect(g.segments.count == 4 && abs(g.total - 0.35) < 1e-12)
+    }
+
+    @Test("A sign-in that is missing, refused or not readable keeps old numbers out of the gauge, like the ranking")
+    func signInLost() {
+        let reconnect = read(acct("r"), 80, status: .reconnect)
+        let signedOut = read(acct("s"), 70, status: .signedOut)
+        let notReadable = read(acct("n"), 60, status: .notReadable)
+        let fresh = read(acct("f"), 20)
+        let g = gauge([reconnect, signedOut, notReadable, fresh])
+        #expect(g.segments.map(\.accountID) == [fresh.account.id])
+        #expect(abs(g.segments[0].share - 0.2) < 1e-12 && abs(g.total - 0.2) < 1e-12, "N is 1")
+        #expect(g.mostLoaded?.accountID == fresh.account.id && g.alerts.isEmpty)
+        #expect(g.withoutFigure == [reconnect.account.id, signedOut.account.id, notReadable.account.id])
+        #expect(Ranking.rank([reconnect, signedOut, notReadable], window: .any, model: nil, now: now).isEmpty)
     }
 
     @Test("The written percentage follows the most loaded account, up-to-date accounts first")

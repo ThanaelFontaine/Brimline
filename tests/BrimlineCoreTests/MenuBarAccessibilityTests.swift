@@ -82,4 +82,17 @@ struct MenuBarAccessibilityTests {
             #expect(!text.contains("\u{2014}") && !text.contains("\u{2013}"))
         }
     }
+
+    @Test("The tooltip: the average, then the alerts after a middle dot, in English and in French")
+    func tooltip() {
+        let usages = [read(agency, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
+                      AccountUsage(account: acct(.gemini, "gem"), status: .ok, fetchedAt: now, checkedAt: now)]
+        let gauge = MenuBarGauge.model(usages, settings: allOn, providers: Set(Provider.allCases), now: now)
+        let name: (String) -> String = { names[$0] ?? $0 }
+        #expect(Strings(.en).menuBarTooltip(gauge, names: name) == "Average 37% across 3 accounts · Claude Agency at 94%")
+        #expect(Strings(.fr).menuBarTooltip(gauge, names: name) == "Moyenne 37 % sur 3 comptes · Claude Agency à 94 %")
+        let calm = MenuBarGauge.model([read(acct(.claude, "main"), 42)], settings: allOn, providers: Set(Provider.allCases), now: now)
+        #expect(Strings(.en).menuBarTooltip(calm, names: name) == "Average 42% across 1 account")
+        #expect(Strings(.en).menuBarTooltip(GaugeModel(), names: name) == "Brimline")
+    }
 }

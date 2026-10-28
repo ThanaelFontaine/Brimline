@@ -197,12 +197,10 @@ struct PanelTextsTests {
         #expect(en.noSignIn(.gemini) == en.geminiNotReadableMessage)
     }
 
-    @Test("VoiceOver says whose number the menu bar shows")
-    func menuBar() {
-        #expect(en.menuBarAccessibility(91, provider: .claude, account: "Research lab") == "Brimline, 91%, Claude, Research lab")
-        #expect(fr.menuBarAccessibility(91, provider: .grok, account: "Grok") == "Brimline, 91 %, Grok, Grok")
-        #expect(en.menuBarAccessibility(nil, provider: .claude, account: "x") == "Brimline")
-        #expect(en.menuBarAccessibility(40, provider: nil, account: nil) == "Brimline, 40%")
+    @Test("The help of the percentage switch describes the gauge, not the old glyph")
+    func menuBarHelp() {
+        #expect(en.menuBarHelp == "The menu bar gauge shows each account's share; the percentage next to it is the most loaded account's.")
+        #expect(fr.menuBarHelp == "La jauge de la barre des menus montre la part de chaque compte ; le pourcentage à côté est celui du compte le plus chargé.")
     }
 
     @Test("The documentation of what is read is in the docs folder")
