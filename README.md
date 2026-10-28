@@ -18,7 +18,7 @@ If you use several Claude accounts (or Claude and ChatGPT, Gemini, Grok, Cursor)
 
 The same numbers are readable by your agents (a command with JSON output and a local MCP server), so an agent can pick the account that still has room.
 
-> **Status:** in development, not released yet. Version 0.1 works with Claude (through Claude Code). The next version, 0.2.0, adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
+> **Status:** private, not announced: the repository and the site are not public yet. The current version is 0.2.0. It works with Claude (through Claude Code, with several accounts) and adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
 
 The *brim* is the edge a tank fills up to, and the *line* is the limit drawn above it: Brimline shows how close you are to the edge, at a glance.
 
