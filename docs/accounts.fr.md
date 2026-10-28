@@ -60,7 +60,7 @@ Brimline prévient, et ne refuse jamais :
 - **proche de la couleur d'un autre compte** : les deux comptes sont désignés, et leurs parts se distinguent mal dans la jauge (une distance CIEDE2000 sous 10, en clair ou en sombre). Les comptes masqués et ceux d'un fournisseur coupé ne sont pas comparés ;
 - **peu visible** : une couleur libre trop pâle ou trop sombre pour la piste vide d'une jauge (contraste sous 3:1, la limite WCAG 2.2 pour les éléments graphiques), en mode clair ou sombre, avec son rapport écrit. Les dix couleurs de la palette atteignent toutes 3:1.
 
-La couleur n'est jamais le seul signal : chaque compte est nommé à côté de sa pastille. Au clavier, chaque couleur est un bouton atteint avec Tab (avec l'accès complet au clavier activé dans Réglages Système) et choisi avec la barre d'espace. VoiceOver lit un groupe par compte (« Couleur de Asso ») avec un choix nommé par couleur.
+La couleur n'est jamais le seul signal : chaque compte est nommé à côté de sa pastille. Au clavier, chaque couleur est un bouton atteint avec Tab (avec l'accès complet au clavier activé dans Réglages Système) et choisi avec la barre d'espace. VoiceOver lit un groupe par compte (« Couleur de Client ») avec un choix nommé par couleur.
 
 ![Les couleurs dans les réglages](images/settings-colors-fr-light.png)
 
@@ -174,7 +174,7 @@ Brimline ne lit que `auth.json` dans ce dossier, et de lui seulement le mode de 
 
 Outil officiel : l'Antigravity CLI de Google (`agy`), que vous installez et dans lequel vous vous connectez vous-même, comme le décrit [la documentation de Google](https://antigravity.google/docs/cli/headless/) (en anglais) : Brimline ne vous connecte jamais. `agy` se trouve dans `~/.local/bin/agy`. Allumez ensuite Gemini.
 
-Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; **le programme de Google peut renouveler lui-même sa connexion, et Brimline ne la lit ni ne l'écrit**) et montre, par groupe de modèles, la fenêtre de 5 heures et la semaine, et la limite propre à un modèle quand il y en a une. Seule la build vérifiée le 27/10/2026 (Antigravity CLI 1.4.8) est lancée ; toute autre ne l'est pas, et la carte dit « Antigravity a été mis à jour : mettez Brimline à jour. » Sans `agy`, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). Lu et vérifié sur un compte Google (`agy` ne dit pas le forfait) ; le pourcentage n'a été vu qu'à 100 % restant, et la référence est le texte d'`agy` lui-même. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
+Brimline lance `agy --print /usage` (la commande officielle de Google pour vos limites ; **le programme de Google peut renouveler lui-même sa connexion, et Brimline ne la lit ni ne l'écrit**) et montre, par groupe de modèles, la fenêtre de 5 heures et la semaine, et la limite propre à un modèle quand il y en a une. Seules les builds vérifiées (Antigravity CLI 1.4.8 et 1.4.9, les 27 et 28/10/2026) sont lancées ; toute autre ne l'est pas, et la carte dit « Antigravity a été mis à jour : mettez Brimline à jour. » Sans `agy`, une carte vous dit où sont vos limites (l'app Gemini, Réglages, Limites d'utilisation). Lu et vérifié sur un compte Google (`agy` ne dit pas le forfait) ; le pourcentage n'a été vu qu'à 100 % restant, et la référence est le texte d'`agy` lui-même. Détails dans [providers](providers.md) (en anglais) et [SECURITY.md](../SECURITY.md) (en anglais).
 
 ### Grok, par le CLI Grok
 

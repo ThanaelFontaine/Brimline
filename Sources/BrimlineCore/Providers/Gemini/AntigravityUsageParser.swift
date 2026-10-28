@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Google documents the command (`/usage`, alias `/quota`, https://antigravity.google/docs/cli/commands/usage/
 /// and https://antigravity.google/docs/cli/headless/) but not the format of its text. This is the real one,
-/// seen on Antigravity CLI 1.4.8 on 27/10/2026 (values and dates replaced here):
+/// seen on Antigravity CLI 1.4.8 on 27/10/2026, and the same on 1.4.9 on 28/10/2026 (values and dates replaced here):
 ///
 ///     Gemini Models<TAB>Weekly Limit Remaining<TAB>100%<TAB>2026-11-03T18:10:18Z
 ///     Gemini Models<TAB>Five Hour Limit Remaining<TAB>100%<TAB>2026-10-27T23:10:18Z

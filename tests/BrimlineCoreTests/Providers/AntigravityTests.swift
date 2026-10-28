@@ -34,7 +34,8 @@ final class FakeAntigravity: AntigravityRunning, @unchecked Sendable {
     }
 }
 
-/// Gemini read through Antigravity, on the shape of the real text of `/usage` (Antigravity CLI 1.4.8, 27/10/2026).
+/// Gemini read through Antigravity, on the shape of the real text of `/usage` (Antigravity CLI 1.4.8, 27/10/2026,
+/// and 1.4.9, 28/10/2026: the same text).
 @Suite("Gemini: read through Antigravity")
 struct AntigravityTests {
     let now = date("2026-10-27T10:00:00Z")
@@ -92,15 +93,52 @@ struct AntigravityTests {
         _ = home
     }
 
-    @Test("The registry's Gemini reader trusts the one build seen on a real account: 1.4.8, by its SHA-256")
-    func registryReaderTrustsOnlyTheVerifiedBuild() throws {
+    @Test("The registry's Gemini reader trusts the builds seen on a real account: 1.4.8 and 1.4.9, by their SHA-256")
+    func registryReaderTrustsOnlyTheVerifiedBuilds() throws {
         let reader = try #require(Providers.all.compactMap { $0 as? GeminiReader }.first)
         #expect(reader.trust == .verified)
         #expect(AntigravityTrust.verified.entries == [
             .init(sha256: "09fcdd8554e03bed9b2ec936e454c7f115d5610610de09ed7d79fa2feae76940", versionOutput: "1.4.8"),
+            .init(sha256: "a66421b7962ffe5642e00cffdd2844dfde440e540502a29d206be5544a065c7b", versionOutput: "1.4.9"),
         ])
         #expect(reader.allowedURLs.isEmpty)
         #expect(reader.minimumReadInterval == 15 * 60)
+    }
+
+    @Test("1.4.9 is accepted with its own --version only; a build that is not on the list is still refused, nothing launched")
+    func build149AcceptedOthersRefused() async throws {
+        let verified = AntigravityTrust.verified
+        let sha149 = "a66421b7962ffe5642e00cffdd2844dfde440e540502a29d206be5544a065c7b"
+        #expect(verified.entry(sha256: sha149)?.versionOutput == "1.4.9")
+        #expect(verified.entry(sha256: "09fcdd8554e03bed9b2ec936e454c7f115d5610610de09ed7d79fa2feae76940")?.versionOutput == "1.4.8")
+        #expect(verified.entry(sha256: sha149.uppercased()) == nil)
+        #expect(verified.entry(sha256: String(repeating: "0", count: 64)) == nil)
+
+        // The real list and a binary that is none of its builds: format_changed, and not one launch.
+        let (_, fakeTrust, account) = try installed()
+        let other = runner(usage: ok(try text("antigravity-usage-normal")), version: ok("1.4.9\n"))
+        guard case .failure(.formatChanged, _, _) = await GeminiReader(runner: other, trust: verified).read(account: account, now: now) else {
+            Issue.record("expected format_changed")
+            return
+        }
+        #expect(other.launches.isEmpty)
+
+        // A binary listed as 1.4.9: read when `--version` says 1.4.9 (the text of 1.4.9 is the text of 1.4.8),
+        // refused when it says anything else, 1.4.8 included.
+        let as149 = AntigravityTrust(entries: [.init(sha256: fakeTrust.entries[0].sha256, versionOutput: "1.4.9")])
+        let accepted = runner(usage: ok(try text("antigravity-usage-normal")), version: ok("1.4.9\n"))
+        guard case .limits(let limits, _) = await GeminiReader(runner: accepted, trust: as149).read(account: account, now: now) else {
+            Issue.record("expected limits")
+            return
+        }
+        #expect(limits.map(\.percent) == [36, 10, 0, 0, 25])
+        #expect(accepted.usageLaunches.count == 1)
+        let mismatched = runner(usage: ok(try text("antigravity-usage-normal")), version: ok("1.4.8\n"))
+        guard case .failure(.formatChanged, _, _) = await GeminiReader(runner: mismatched, trust: as149).read(account: account, now: now) else {
+            Issue.record("expected format_changed")
+            return
+        }
+        #expect(mismatched.usageLaunches.isEmpty)
     }
 
     @Test("Without agy at its path, the card says the sentence and nothing is launched")

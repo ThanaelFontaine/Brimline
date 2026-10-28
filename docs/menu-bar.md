@@ -30,7 +30,7 @@ Brimline cannot remove another app's icon itself: macOS leaves that choice to ea
 
 Brimline never touches another app's icon. To hide, it makes **its own bar** very long: the bar grows to the left and pushes the icons beside it out of the visible part of the menu bar, where macOS does not draw them. To show them, the bar gets its normal length back. Hidden Bar and Dozer used this technique before macOS 27.
 
-**Apple does not document it.** It was tried on **macOS 27.0.1, on a 1920 pt screen without a notch** (28 October 2026). It was **not tried on a MacBook with a notch, nor with several screens**, nor across sleep and lock. A later version of macOS should be able to break it; Brimline should then hide nothing, and every icon should stay shown (not tried).
+**Apple does not document it.** It was tried on **macOS 27.0.1, on a 1920 pt screen without a notch** (28 October 2026). It was **not tried on a MacBook with a notch, nor with several screens**, nor across sleep and lock. A later version of macOS could break it; Brimline should then hide nothing, and every icon should stay shown (not tried).
 
 What the tries showed, and what Brimline does with it:
 

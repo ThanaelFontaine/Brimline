@@ -98,25 +98,25 @@ struct AccountColorSettingsTests {
     @Test("Two visible accounts with close colors are warned, each naming the other by the name the panel gives it")
     func closeWarning() throws {
         let m = model([a, b, c]) {
-            $0.labels = [a.id: "Main", b.id: "Asso"]
+            $0.labels = [a.id: "Personal", b.id: "Client"]
             $0.accountColors = [a.id: .palette(0), b.id: .custom("9870E6"), c.id: .palette(5)]
         }
         let forA = m.colorWarnings(for: a)
         #expect(forA == [.close(accountID: b.id)])
-        #expect(m.text(for: try #require(forA.first)) == "Close to Asso's color: their two shares are hard to tell apart in the gauge.")
+        #expect(m.text(for: try #require(forA.first)) == "Close to Client's color: their two shares are hard to tell apart in the gauge.")
         #expect(m.colorWarnings(for: b) == [.close(accountID: a.id)])
-        #expect(m.text(for: try #require(m.colorWarnings(for: b).first)).contains("Main"))
+        #expect(m.text(for: try #require(m.colorWarnings(for: b).first)).contains("Personal"))
         #expect(m.colorWarnings(for: c).isEmpty)
     }
 
     @Test("The warning is in French when the interface is")
     func closeWarningInFrench() throws {
         let m = model([a, b], language: .fr) {
-            $0.labels = [a.id: "Principal", b.id: "Asso"]
+            $0.labels = [a.id: "Perso", b.id: "Client"]
             $0.accountColors = [a.id: .palette(0), b.id: .custom("9870E6")]
         }
         #expect(m.text(for: try #require(m.colorWarnings(for: a).first))
-            == "Proche de la couleur de Asso : leurs deux parts se distinguent mal dans la jauge.")
+            == "Proche de la couleur de Client : leurs deux parts se distinguent mal dans la jauge.")
     }
 
     @Test("A hidden account, or one of a provider that is off, is not compared: the gauge does not show it")

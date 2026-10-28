@@ -53,7 +53,7 @@ struct AccountColorRow: View {
                         }
                     }
                 }
-                // One group with one choice, as VoiceOver reads a set of radio buttons: "Color of Asso", then each
+                // One group with one choice, as VoiceOver reads a set of radio buttons: "Color of Client", then each
                 // name. "Other color…" stays outside it: the representation replaces what it covers, and the real
                 // picker must stay reachable.
                 .accessibilityRepresentation {

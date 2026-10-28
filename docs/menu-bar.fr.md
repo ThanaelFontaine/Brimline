@@ -30,7 +30,7 @@ Brimline ne peut pas retirer lui-même l'icône d'une autre app : macOS laisse c
 
 Brimline ne touche jamais à l'icône d'une autre app. Pour cacher, il rend **son propre trait** très long : le trait s'allonge vers la gauche et pousse les icônes voisines hors de la partie visible de la barre, où macOS ne les dessine pas. Pour les montrer, le trait reprend sa longueur normale. Hidden Bar et Dozer utilisaient cette technique avant macOS 27.
 
-**Apple ne la documente pas.** Elle a été essayée sur **macOS 27.0.1, sur un écran de 1920 pt sans encoche** (28 octobre 2026). Elle **n'a pas été essayée sur un MacBook à encoche, ni avec plusieurs écrans**, ni après une mise en veille ou un verrouillage. Une version suivante de macOS devrait pouvoir la casser ; Brimline ne devrait alors rien cacher, et toutes les icônes devraient rester visibles (non essayé).
+**Apple ne la documente pas.** Elle a été essayée sur **macOS 27.0.1, sur un écran de 1920 pt sans encoche** (28 octobre 2026). Elle **n'a pas été essayée sur un MacBook à encoche, ni avec plusieurs écrans**, ni après une mise en veille ou un verrouillage. Une version suivante de macOS pourrait la casser ; Brimline ne devrait alors rien cacher, et toutes les icônes devraient rester visibles (non essayé).
 
 Ce que les essais ont montré, et ce que Brimline en fait :
 

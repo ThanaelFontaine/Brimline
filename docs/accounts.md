@@ -60,7 +60,7 @@ Brimline warns, and never refuses:
 - **close to another account's color**: the two accounts are shown, and their parts are hard to tell apart in the gauge (a CIEDE2000 distance under 10, in light or in dark). Hidden accounts and accounts of a provider that is off are not compared;
 - **hard to see**: a free color too pale or too dark for the empty track of a gauge (under 3:1 contrast, the WCAG 2.2 limit for graphics), in light or in dark mode, with its ratio written. The ten colors of the palette all reach 3:1.
 
-The color is never the only signal: every account is named beside its dot. With the keyboard, each color is a button reached with Tab (with Full Keyboard Access on in System Settings) and chosen with Space. VoiceOver reads one group per account ("Color of Asso") with one named choice per color.
+The color is never the only signal: every account is named beside its dot. With the keyboard, each color is a button reached with Tab (with Full Keyboard Access on in System Settings) and chosen with Space. VoiceOver reads one group per account ("Color of Client") with one named choice per color.
 
 ![Colors in the settings](images/settings-colors-light.png)
 
@@ -174,7 +174,7 @@ Brimline reads only `auth.json` in that folder, and of it the sign-in mode, the 
 
 Official tool: Google's Antigravity CLI (`agy`), which you install and sign in to yourself, as [Google's documentation](https://antigravity.google/docs/cli/headless/) describes: Brimline never signs you in. `agy` lives at `~/.local/bin/agy`. Then turn Gemini on.
 
-Brimline launches `agy --print /usage` (Google's official command for your limits; **Google's program may renew its own sign-in, and Brimline neither reads nor writes it**) and shows, per group of models, the 5 hour window and the week, and the limit of a model of its own when there is one. Only the build verified on 27/10/2026 (Antigravity CLI 1.4.8) is launched; any other build is not, and the card says "Antigravity was updated: update Brimline." Without `agy`, one card tells you where your limits are (the Gemini app, Settings, Usage limits). Read and checked on a Google account (`agy` does not say the plan); the percentage was seen at 100 % remaining only, and the reference is `agy`'s own text. Details in [providers](providers.md) and [SECURITY.md](../SECURITY.md).
+Brimline launches `agy --print /usage` (Google's official command for your limits; **Google's program may renew its own sign-in, and Brimline neither reads nor writes it**) and shows, per group of models, the 5 hour window and the week, and the limit of a model of its own when there is one. Only the verified builds (Antigravity CLI 1.4.8 and 1.4.9, checked on 27 and 28/10/2026) are launched; any other build is not, and the card says "Antigravity was updated: update Brimline." Without `agy`, one card tells you where your limits are (the Gemini app, Settings, Usage limits). Read and checked on a Google account (`agy` does not say the plan); the percentage was seen at 100 % remaining only, and the reference is `agy`'s own text. Details in [providers](providers.md) and [SECURITY.md](../SECURITY.md).
 
 ### Grok, through the Grok CLI
 
