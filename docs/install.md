@@ -1,17 +1,43 @@
 # Installing Brimline
 
-There is no downloadable, Apple-notarized build of Brimline yet. You build it on your Mac from the source: it takes a few minutes and needs no Apple account.
+Brimline is a **Mac app only**: macOS 14 (Sonoma) or later, on Apple silicon or Intel. There is no Windows or Linux version.
 
-## What you need
+There are three ways to install it. The first two download the app built by the release workflow; the third builds it on your Mac.
 
-- macOS 14 (Sonoma) or later. Brimline is developed and tested on recent macOS; macOS 14 is the minimum it builds for, not yet tested on a real Sonoma Mac.
-- Apple's **Command Line Tools** with Swift 6 (Xcode is not needed). If `swift --version` does not answer, install them with:
+## 1. In one line (recommended)
 
-  ```bash
-  xcode-select --install
-  ```
+In Terminal:
 
-## Build and install
+```bash
+curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
+```
+
+The script ([readable here](https://brimline.thanaelfontaine.eu/install.sh)):
+
+1. stops if the Mac is not on macOS 14 or later;
+2. finds the latest release on GitHub and downloads `Brimline.dmg` and `Brimline.dmg.sha256`;
+3. checks the image against its SHA-256 and installs nothing if they differ;
+4. copies `Brimline.app` to `/Applications` (or where Brimline already is, or `~/Applications` when `/Applications` is not writable), quitting the running copy first;
+5. links the command at `~/.local/bin/brimline` (never over a file that is not a link);
+6. opens the app.
+
+It asks for no administrator password. Options: `BRIMLINE_VERSION=0.2.1` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`).
+
+## 2. The disk image
+
+1. Download [Brimline.dmg](https://github.com/ThanaelFontaine/Brimline/releases/latest/download/Brimline.dmg). Its SHA-256 is in `Brimline.dmg.sha256`, on the [release page](https://github.com/ThanaelFontaine/Brimline/releases/latest): `shasum -a 256 ~/Downloads/Brimline.dmg` must print the same hash.
+2. Open it: a window shows Brimline and a shortcut to Applications. Drag Brimline onto Applications.
+3. Open Brimline from Applications. The first time, macOS blocks it, because Brimline is not notarized by Apple (that needs a paid Apple Developer account). Close the message, open **System Settings, Privacy & Security**, scroll down and click **Open Anyway**, then **Open** ([Apple's page](https://support.apple.com/en-us/102445)). macOS asks this once.
+
+## 3. From the source
+
+You need Apple's **Command Line Tools** with Swift 6 (Xcode is not needed). If `swift --version` does not answer, install them with:
+
+```bash
+xcode-select --install
+```
+
+Then:
 
 ```bash
 git clone https://github.com/ThanaelFontaine/Brimline.git
@@ -20,28 +46,29 @@ scripts/build_app.sh
 scripts/install.sh
 ```
 
-- `scripts/build_app.sh` compiles the app and the `brimline` command (`swift build -c release`), assembles `build/Brimline.app` and signs it ad hoc (`codesign -s -`).
+- `scripts/build_app.sh` compiles the app and the `brimline` command for Apple silicon and Intel (`swift build -c release --arch arm64 --arch x86_64`), assembles `build/Brimline.app` and signs it ad hoc (`codesign -s -`).
 - `scripts/install.sh` copies the app to `~/Applications`, links the command to `~/.local/bin/brimline`, and opens the app. With `--login` it also turns on **Open at login** (otherwise turn it on in Settings, General). Nothing is written outside your home folder, and no administrator password is asked.
+- `scripts/build_dmg.sh` builds `build/Brimline.dmg` from that app, the same image as the release. It is optional and needs Python 3.10 or later (the Command Line Tools bring 3.9: install a newer one from python.org or Homebrew); it installs its Python tools in `.build/dmg-venv`, never system wide.
+
+## After installing
 
 If `brimline` is not found in a new terminal, add `~/.local/bin` to your `PATH` (for example `export PATH="$HOME/.local/bin:$PATH"` in `~/.zshrc`).
+
+Then link your accounts: [accounts.md](accounts.md).
 
 ## What macOS shows
 
 - **No Dock icon.** Brimline lives in the menu bar only: look for the gauge at the top right of the screen (the upright glyph while no account has a number yet). Opening the app again (from Finder or Spotlight) while it runs opens its settings.
-- **No "unidentified developer" warning, in our tests.** The app is signed ad hoc, not with an Apple Developer identity. macOS mainly checks apps that carry the quarantine flag, which is set on downloaded files; an app you build yourself does not carry it. If you copy a built app to another Mac through a download, macOS will block it: build it on each Mac instead.
+- **Gatekeeper.** The app is signed ad hoc, not with an Apple Developer identity, and it is not notarized. macOS checks apps that carry the quarantine flag, which browsers set on what they download: so the disk image downloaded in a browser needs **Open Anyway** once (above). In our tests (macOS 27), the app installed by the one-line script, or built from the source, did not carry that flag (checked with `xattr`).
 - **Keychain.** Brimline reads each Claude Code sign-in with the `/usr/bin/security` tool. In our tests no prompt appeared; if macOS asks, read the prompt before allowing. See [accounts.md](accounts.md) and [SECURITY.md](../SECURITY.md).
 - **Open at login.** When you turn it on (Settings, General), Brimline writes `~/Library/LaunchAgents/eu.thanaelfontaine.brimline.plist`; macOS may then notify you that a background item was added. Turning the option off removes the file.
+- **Tried on:** Apple silicon, macOS 27. Intel Macs get the same universal app, not tried on one yet; macOS 14 is the minimum it builds for, not yet tried on a real Sonoma Mac.
 
 ## Update
 
-```bash
-cd Brimline
-git pull
-scripts/build_app.sh
-scripts/install.sh
-```
-
-`install.sh` stops the running copy before replacing it.
+- Installed with the one-line script: run the same line again.
+- Installed from the disk image: download the new one and drag Brimline onto Applications again (replace it), after quitting Brimline.
+- Built from the source: `git pull`, then `scripts/build_app.sh` and `scripts/install.sh` (it stops the running copy before replacing it).
 
 ## Formerly Sightglass
 
@@ -61,7 +88,7 @@ Your agents need one change: the command and the MCP server are called `brimline
 2. Remove the files:
 
    ```bash
-   rm -rf ~/Applications/Brimline.app
+   rm -rf /Applications/Brimline.app ~/Applications/Brimline.app
    rm -f ~/.local/bin/brimline
    rm -f ~/Library/LaunchAgents/eu.thanaelfontaine.brimline.plist
    rm -rf ~/Library/Application\ Support/Brimline

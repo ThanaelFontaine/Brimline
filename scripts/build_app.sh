@@ -3,7 +3,8 @@
 #
 #   scripts/build_app.sh
 #
-# 1. swift build -c release (the app and the `brimline` command);
+# 1. swift build -c release, for Apple silicon and Intel (one universal binary each for the app and
+#    the `brimline` command);
 # 2. assembles the bundle: Info.plist (version read from VERSION, menu bar app without Dock icon),
 #    icon, and the command in Contents/Helpers/;
 # 3. signs it ad hoc (codesign -s -): no Apple Developer identity, so macOS treats it as an app
@@ -19,9 +20,10 @@ if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
-swift build -c release --product BrimlineApp
-swift build -c release --product brimline
-BIN="$(swift build -c release --show-bin-path)"
+ARCHS=(--arch arm64 --arch x86_64)
+swift build -c release "${ARCHS[@]}" --product BrimlineApp
+swift build -c release "${ARCHS[@]}" --product brimline
+BIN="$(swift build -c release "${ARCHS[@]}" --show-bin-path)"
 
 APP="$ROOT/build/Brimline.app"
 rm -rf "$APP"
@@ -66,5 +68,8 @@ plutil -lint "$APP/Contents/Info.plist" >/dev/null
 codesign --force -s - "$APP/Contents/Helpers/brimline"
 codesign --force --deep -s - "$APP"
 codesign --verify --deep --strict "$APP"
+for exe in "$APP/Contents/MacOS/Brimline" "$APP/Contents/Helpers/brimline"; do
+  [ "$(lipo -archs "$exe")" = "x86_64 arm64" ] || { echo "build_app: $exe is not universal ($(lipo -archs "$exe"))" >&2; exit 1; }
+done
 
-echo "Built $APP (version $VERSION, ad hoc signature)"
+echo "Built $APP (version $VERSION, Apple silicon and Intel, ad hoc signature)"

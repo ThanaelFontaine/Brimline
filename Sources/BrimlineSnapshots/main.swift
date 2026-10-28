@@ -239,7 +239,7 @@ func hidingModel(_ accounts: [AccountUsage], language: Language, hidden: Bool = 
     return m
 }
 
-/// The picture of the one gesture, for the guide and for Thanaël's try: before, after the Command-drag, hidden.
+/// The picture of the one gesture, for the guide: before, after the Command-drag, hidden.
 /// Neutral tiles with first letters, never the logo of another app.
 struct HidingGesturePicture: View {
     var strings: Strings

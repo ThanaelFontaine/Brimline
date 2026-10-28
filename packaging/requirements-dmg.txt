@@ -1,0 +1,31 @@
+# Python tools of the disk image (scripts/build_dmg.sh installs them in .build/dmg-venv, with
+# pip --require-hashes). Exact versions and the SHA-256 of their files on PyPI (the source archive
+# and the macOS wheels), so that every image is built the same way from the same files.
+# Needs Python 3.10 or later (dmgbuild and Pillow).
+dmgbuild==1.6.7 \
+    --hash=sha256:37ee5771c377beb3203d9164aae8046ffed8531c06edf9227f5788b3c599b1bf \
+    --hash=sha256:676b17acd448899f6d4a83b2184e0657480444ecb6ac9c4922889efad9e5dbfb
+ds-store==1.3.1 \
+    --hash=sha256:c27d413caf13c19acb85d75da4752673f1f38267f9eb6ba81b3b5aa99c2d207c \
+    --hash=sha256:fbacbb0bd5193ab3e66e5a47fff63619f15e374ffbec8ae29744251a6c8f05b5
+mac-alias==2.2.2 \
+    --hash=sha256:504ab8ac546f35bbd75ad014d6ad977c426660aa721f2cd3acf3dc2f664141bd \
+    --hash=sha256:c99c728eb512e955c11f1a6203a0ffa8883b26549e8afe68804031aa5da856b7
+pillow==12.0.0 \
+    --hash=sha256:0fd00cac9c03256c8b2ff58f162ebcd2587ad3e1f2e397eab718c47e24d231cc \
+    --hash=sha256:1979f4566bb96c1e50a62d9831e2ea2d1211761e5662afc545fa766f996632f6 \
+    --hash=sha256:1ac11e8ea4f611c3c0147424eae514028b5e9077dd99ab91e1bd7bc33ff145e1 \
+    --hash=sha256:266cd5f2b63ff316d5a1bba46268e603c9caf5606d44f38c2873c380950576ad \
+    --hash=sha256:3adfb466bbc544b926d50fe8f4a4e6abd8c6bffd28a26177594e6e9b2b76572b \
+    --hash=sha256:5193fde9a5f23c331ea26d0cf171fbf67e3f247585f50c08b3e205c7aeb4589b \
+    --hash=sha256:53561a4ddc36facb432fae7a9d8afbfaf94795414f5cdc5fc52f28c1dca90371 \
+    --hash=sha256:71db6b4c1653045dacc1585c1b0d184004f0d7e694c7b34ac165ca70c0838082 \
+    --hash=sha256:7fa22993bac7b77b78cae22bad1e2a987ddf0d9015c63358032f84a53f23cdc3 \
+    --hash=sha256:805ebf596939e48dbb2e4922a1d3852cfc25c38160751ce02da93058b48d252a \
+    --hash=sha256:87d4f8125c9988bfbed67af47dd7a953e2fc7b0cc1e7800ec6d2080d490bb353 \
+    --hash=sha256:a3475b96f5908b3b16c47533daaa87380c491357d197564e0ba34ae75c0f3257 \
+    --hash=sha256:b22bd8c974942477156be55a768f7aa37c46904c175be4e158b6a86e3a6b7ca8 \
+    --hash=sha256:b2e4b27a6e15b04832fe9bf292b94b5ca156016bbc1ea9c2c20098a0320d6cf6 \
+    --hash=sha256:c50f36a62a22d350c96e49ad02d0da41dbd17ddc2e29750dbdba4323f85eb4a5 \
+    --hash=sha256:e5d8efac84c9afcb40914ab49ba063d94f5dbdf5066db4482c66a992f47a3a3b \
+    --hash=sha256:f135c702ac42262573fe9714dfe99c944b4ba307af5eb507abef1667e2cbbced

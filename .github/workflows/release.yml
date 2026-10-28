@@ -1,11 +1,21 @@
 # Every version has its GitHub release, created by the CI together with the tag, with the notes
-# of its "## [X.Y.Z]" section in CHANGELOG.md (never a generic note).
+# of its "## [X.Y.Z]" section in CHANGELOG.md (never a generic note), and the disk image of the app.
 #
 # Trigger: after a GREEN run of the "Checks" workflow on a push to main.
 # 1. Reads VERSION. 0.0.0 is the development version: nothing is released.
-# 2. If release vX.Y.Z already exists, there is nothing to do.
-# 3. Otherwise it creates the tag on the checked commit (or reuses a tag that already points
-#    there) and the release with the notes. Re-running is safe.
+# 2. If release vX.Y.Z exists and already has Brimline.dmg and Brimline.dmg.sha256, there is
+#    nothing to do (a push that keeps the same VERSION builds nothing).
+# 3. Otherwise it builds the app and its disk image (scripts/build_app.sh, scripts/build_dmg.sh)
+#    from the commit of the tag: the checked commit for a new version, the tagged one when the
+#    release already exists.
+# 4. A new version: the release is created as a draft, the two files are attached, then it is
+#    published, which creates the tag on the checked commit (or uses a tag that already points
+#    there). So a release is never "latest" without its disk image: the site and the one-line
+#    installer download .../releases/latest/download/Brimline.dmg and its .sha256.
+#    An existing release that lacks a file gets both again (--clobber). A draft left by a run that
+#    stopped between creating and publishing (it has no tag yet) is completed from the checked
+#    commit, then published.
+# Re-running is safe. The file names carry no version; the version is in the app's Info.plist.
 #
 # Events created with GITHUB_TOKEN (the tag, the release) do not start other workflows: the whole
 # chain starts here. Never create a tag or a release by hand.
@@ -29,45 +39,92 @@ jobs:
   release:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      - name: Version and notes
+      - name: Version, notes and what is missing
         id: plan
-        run: |
-          VERSION="$(python3 scripts/release_notes.py version)"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          if [ "$VERSION" = "0.0.0" ]; then
-            echo "Version 0.0.0 is the development version: no release."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-          python3 scripts/release_notes.py notes "$VERSION" > "$RUNNER_TEMP/notes.md"
-
-      - name: Tag and release
-        if: ${{ steps.plan.outputs.skip != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          VERSION: ${{ steps.plan.outputs.version }}
         run: |
+          VERSION="$(python3 scripts/release_notes.py version)"
           TAG="v$VERSION"
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists: nothing to do."
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [ "$VERSION" = "0.0.0" ]; then
+            echo "Version 0.0.0 is the development version: no release."
+            echo "action=none" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            if [ "$(git rev-list -n 1 "$TAG")" != "$HEAD_SHA" ]; then
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null && [ "$(git rev-list -n 1 "$TAG")" != "$HEAD_SHA" ]; then
+            if ! gh release view "$TAG" >/dev/null 2>&1; then
               echo "::error::Tag $TAG exists on another commit: bump VERSION instead of moving a tag."
               exit 1
             fi
-            gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
-          else
-            gh release create "$TAG" --target "$HEAD_SHA" --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
           fi
-          echo "Release $TAG created."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            if [ "$(gh release view "$TAG" --json isDraft --jq '.isDraft')" = "true" ]; then
+              echo "Release $TAG is a draft left by an earlier run: it is completed and published."
+              echo "action=publish" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            ASSETS="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+            if printf '%s\n' "$ASSETS" | grep -qx 'Brimline.dmg' && printf '%s\n' "$ASSETS" | grep -qx 'Brimline.dmg.sha256'; then
+              echo "Release $TAG already has its disk image: nothing to do."
+              echo "action=none" >> "$GITHUB_OUTPUT"
+            else
+              echo "Release $TAG lacks its disk image: it is built from the tag and attached."
+              echo "action=attach" >> "$GITHUB_OUTPUT"
+            fi
+            exit 0
+          fi
+          python3 scripts/release_notes.py notes "$VERSION" > "$RUNNER_TEMP/notes.md"
+          echo "action=create" >> "$GITHUB_OUTPUT"
+
+      - name: Use the tagged commit
+        if: ${{ steps.plan.outputs.action == 'attach' }}
+        env:
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: git checkout --detach "$TAG"
+
+      - name: App and disk image
+        if: ${{ steps.plan.outputs.action != 'none' }}
+        run: |
+          scripts/build_app.sh
+          scripts/build_dmg.sh build/Brimline.app build
+
+      - name: Create the release with its disk image
+        if: ${{ steps.plan.outputs.action == 'create' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          gh release create "$TAG" --draft --target "$HEAD_SHA" --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" \
+            build/Brimline.dmg build/Brimline.dmg.sha256
+          gh release edit "$TAG" --draft=false
+          echo "Release $TAG created with Brimline.dmg and its SHA-256."
+
+      - name: Complete and publish the draft release
+        if: ${{ steps.plan.outputs.action == 'publish' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          gh release upload "$TAG" build/Brimline.dmg build/Brimline.dmg.sha256 --clobber
+          gh release edit "$TAG" --draft=false
+          echo "Release $TAG published with Brimline.dmg and its SHA-256."
+
+      - name: Attach the disk image to the existing release
+        if: ${{ steps.plan.outputs.action == 'attach' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          gh release upload "$TAG" build/Brimline.dmg build/Brimline.dmg.sha256 --clobber
+          echo "Brimline.dmg and its SHA-256 attached to $TAG."
