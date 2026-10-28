@@ -7,6 +7,8 @@ import BrimlineCore
 //   brimline status --live --shape [--provider <name>]      the skeleton of each provider's answer (keys and types)
 //   brimline accounts [--json] [--provider <name>]          accounts found on this Mac (no Keychain read)
 //   brimline providers [enable|disable <name>]   which providers Brimline reads
+//   brimline report claude --account <address|auto> [--statusline] [--dir <folder>]
+//                                       records the limits Claude Code printed (standard input)
 //   brimline mcp                        local MCP server over stdio
 //   brimline --version | --help
 
@@ -34,6 +36,17 @@ Usage:
                                       default: a provider that is off is not touched at all.
   brimline providers enable <name>    Turn a provider on (claude, chatgpt, gemini, grok, cursor).
   brimline providers disable <name>   Turn it off: nothing of it is opened or requested again.
+  brimline report claude --account <address|auto> [--statusline] [--dir <folder>]
+                                      Records the limits Claude Code gives, read on standard input:
+                                      the rate_limit_event lines of claude -p --output-format
+                                      stream-json, or with --statusline the JSON of a status line
+                                      (then it prints "5 h 23% · Week 41%" or nothing, and never
+                                      fails). Only the percentages and reset times are kept, in
+                                      ~/Library/Application Support/Brimline/claude-reports/
+                                      (--dir another folder). auto takes the address of the
+                                      CLAUDE_CONFIG_DIR folder (or ~/.claude). Exit codes: 0
+                                      recorded, 3 nothing in the input, 4 format changed (recorded
+                                      as such), 1 not written, 64 usage.
   brimline mcp                        Local MCP server over stdio (list_accounts, get_usage,
                                       best_account).
   brimline --version                  Print the version.
@@ -78,6 +91,16 @@ do {
     }
     arguments = rest
 }
+// `brimline report claude`: handled first and on its own, before the settings or the migration, so that a
+// status line runs it fast. It reads standard input and writes one report file, nothing else.
+if command == "report" {
+    if providerGiven && !arguments.contains("--statusline") {
+        printError("brimline: --provider goes with status and accounts (the MCP tools take a provider argument). See brimline --help.")
+        exit(64)
+    }
+    runReport(arguments)
+}
+
 let flags = Set(arguments)
 if providerGiven && command != "status" && command != "accounts" {
     printError("brimline: --provider goes with status and accounts (the MCP tools take a provider argument). See brimline --help.")
@@ -134,8 +157,8 @@ case "accounts":
         }
         let home = FileManager.default.homeDirectoryForCurrentUser
         let entries = accounts.map {
-            Entry(id: $0.id, provider: $0.provider.rawValue, source: AgentPath.display($0.source, home: home),
-                  folder: $0.provider == .claude ? $0.source : nil, keychainService: $0.keychainService,
+            Entry(id: $0.id, provider: $0.provider.rawValue, source: AgentPath.source(of: $0, home: home),
+                  folder: AgentPath.folder(of: $0), keychainService: $0.keychainService,
                   email: $0.email, organization: $0.organization, label: settings.label(for: $0.id),
                   hidden: settings.isHidden($0.id))
         }
@@ -149,7 +172,7 @@ case "accounts":
             let hidden = settings.isHidden(a.id) ? "  (hidden)" : ""
             print("\(a.email ?? a.folderName)\(hidden)")
             if let org = a.organization { print("  \(org)") }
-            let place = (a.source as NSString).abbreviatingWithTildeInPath
+            let place = a.readsReportOnly ? strings.reportSourceLine : (a.source as NSString).abbreviatingWithTildeInPath
             print(a.provider == .claude ? "  \(place)" : "  \(a.provider.displayName) · \(place)")
         }
     }
@@ -281,4 +304,112 @@ case "mcp":
 default:
     printError("brimline: unknown command \(command). See brimline --help.")
     exit(64)
+}
+
+/// `brimline report claude --account <address|auto> [--statusline] [--dir <folder>]`.
+///
+/// Reads what Claude Code prints and keeps only its limits: from stream-json, the `rate_limit_event` lines; with
+/// `--statusline`, the `rate_limits` of the status line JSON. With `--statusline` the command must stay quick and
+/// quiet: whatever goes wrong, it prints nothing on the error output and exits 0 (a status line whose command
+/// fails or prints nothing goes blank); when it knows the account's numbers it prints one short line.
+func runReport(_ arguments: [String]) -> Never {
+    let statusline = arguments.contains("--statusline")
+    let usageLine = "brimline: usage: brimline report claude --account <address|auto> [--statusline] [--dir <folder>]"
+    func fail(_ message: String, _ code: Int32) -> Never {
+        if statusline { exit(0) }
+        printError(message)
+        exit(code)
+    }
+
+    var account: String?
+    var folder: String?
+    var words: [String] = []
+    var index = 0
+    while index < arguments.count {
+        let argument = arguments[index]
+        func value(_ name: String) -> String {
+            if argument.hasPrefix(name + "=") { return String(argument.dropFirst(name.count + 1)) }
+            index += 1
+            guard index < arguments.count else { fail(usageLine, 64) }
+            return arguments[index]
+        }
+        if argument == "--statusline" {
+        } else if argument == "--account" || argument.hasPrefix("--account=") {
+            account = value("--account")
+        } else if argument == "--dir" || argument.hasPrefix("--dir=") {
+            folder = value("--dir")
+        } else if argument.hasPrefix("-") {
+            fail("brimline: unknown option \(argument). See brimline --help.", 64)
+        } else {
+            words.append(argument)
+        }
+        index += 1
+    }
+    guard words == ["claude"], let account else { fail(usageLine, 64) }
+    let email: String
+    if account == "auto" {
+        guard let found = ClaudeReportEmail.auto() else {
+            fail("brimline: no address in the .claude.json of the Claude Code folder (CLAUDE_CONFIG_DIR, or ~/.claude): give --account <address>.", 64)
+        }
+        email = found
+    } else {
+        guard let normalized = ClaudeReportEmail.normalize(account) else {
+            fail("brimline: \(account) is not a plain email address.", 64)
+        }
+        email = normalized
+    }
+
+    let now = Date()
+    let extraction: ClaudeCodeExtraction
+    if statusline {
+        // The status line JSON is a few KiB: past 1 MiB it is not read at all.
+        extraction = readStandardInput(limit: 1 << 20).map { ClaudeCodeReportParser.parseStatusline($0, now: now) } ?? .nothing
+    } else {
+        extraction = ClaudeCodeReportParser.parseStream(lines: sequence(state: ()) { _ in readLine(strippingNewline: true) },
+                                                        now: now)
+    }
+
+    let directory = folder.map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath, isDirectory: true) }
+        ?? BrimlinePaths().claudeReportsDirectory
+    let store = ClaudeReportStore(directory: directory)
+    let written: ClaudeCodeReport?
+    do {
+        written = try store.record(extraction, email: email, now: now)
+    } catch {
+        fail("brimline: could not write the report in \((directory.path as NSString).abbreviatingWithTildeInPath): \(error).", 1)
+    }
+
+    if statusline {
+        let report = written ?? (try? store.load(email))
+        if let summary = report.flatMap({ $0.status == .ok ? Strings().statuslineSummary($0.limits(at: now), now: now) : nil }) {
+            print(summary)
+        }
+        exit(0)
+    }
+    switch extraction {
+    case .nothing:
+        printError("brimline: no rate_limit_event in the input: nothing recorded.")
+        exit(3)
+    case .formatChanged:
+        printError("brimline: Claude Code's rate_limit_event has a format Brimline does not know: recorded as format_changed, update Brimline.")
+        exit(4)
+    case .observed:
+        exit(0)
+    }
+}
+
+/// The whole standard input, or nil past `limit` bytes.
+func readStandardInput(limit: Int) -> Data? {
+    var data = Data()
+    var chunk = [UInt8](repeating: 0, count: 16 * 1024)
+    while true {
+        let count = chunk.withUnsafeMutableBytes { Darwin.read(STDIN_FILENO, $0.baseAddress, $0.count) }
+        if count < 0 {
+            if errno == EINTR { continue }
+            return nil
+        }
+        if count == 0 { return data }
+        data.append(contentsOf: chunk[0..<count])
+        if data.count > limit { return nil }
+    }
 }

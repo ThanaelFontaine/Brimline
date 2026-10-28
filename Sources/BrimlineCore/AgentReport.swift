@@ -56,7 +56,8 @@ public struct AgentAccount: Codable, Sendable, Equatable {
     public var email: String?
     public var organization: String?
     public var label: String?
-    /// Where the official tool keeps the connection, written from the home folder (`~/.claude-work`).
+    /// Where the official tool keeps the connection, written from the home folder (`~/.claude-work`), or
+    /// `report` for a Claude account known by its Claude Code report only.
     public var source: String
     /// The Claude Code configuration folder, absolute. Claude accounts only (null for the others):
     /// `source` says the same thing for every provider.
@@ -67,6 +68,9 @@ public struct AgentAccount: Codable, Sendable, Equatable {
     public var reason: String?
     public var message: String?
     public var fetchedAt: String?
+    /// When the numbers come from a Claude Code report: when Claude Code saw them (the same time as
+    /// `fetched_at`). Null when they come from the provider's answer.
+    public var observedAt: String?
     public var ageSeconds: Int?
     public var stale: Bool
     public var noGlobalWeeklyLimit: Bool
@@ -75,6 +79,7 @@ public struct AgentAccount: Codable, Sendable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, provider, email, organization, label, source, folder, hidden, status, reason, message, stale, limits
         case fetchedAt = "fetched_at"
+        case observedAt = "observed_at"
         case ageSeconds = "age_seconds"
         case noGlobalWeeklyLimit = "no_global_weekly_limit"
     }
@@ -93,6 +98,7 @@ public struct AgentAccount: Codable, Sendable, Equatable {
         try c.encode(reason, forKey: .reason)
         try c.encode(message, forKey: .message)
         try c.encode(fetchedAt, forKey: .fetchedAt)
+        try c.encode(observedAt, forKey: .observedAt)
         try c.encode(ageSeconds, forKey: .ageSeconds)
         try c.encode(stale, forKey: .stale)
         try c.encode(noGlobalWeeklyLimit, forKey: .noGlobalWeeklyLimit)
@@ -107,13 +113,14 @@ public struct AgentAccount: Codable, Sendable, Equatable {
         email = account.email
         organization = account.organization
         label = settings.label(for: account.id)
-        source = AgentPath.display(account.source, home: home)
-        folder = account.provider == .claude ? account.source : nil
+        source = AgentPath.source(of: account, home: home)
+        folder = AgentPath.folder(of: account)
         hidden = settings.isHidden(account.id)
         status = usage.status.rawValue
         reason = usage.status == .notReadable ? usage.reason?.rawValue : nil
         message = Strings(.en).message(for: usage)
         fetchedAt = usage.fetchedAt.map(ISODate.format)
+        observedAt = usage.observedAt.map(ISODate.format)
         ageSeconds = usage.age(at: now).map { Int($0) }
         let staleAfter = TimeInterval(settings.refreshMinutes * 60 * 2 + 60)
         stale = usage.status != .ok || (usage.age(at: now).map { $0 > staleAfter } ?? true)
@@ -159,6 +166,17 @@ public enum AgentPath {
         if path == h { return "~" }
         if path.hasPrefix(h + "/") { return "~" + path.dropFirst(h.count) }
         return path
+    }
+
+    /// What agents read as the `source` of an account: its place from the home folder, or `report` for a Claude
+    /// account known by its Claude Code report only (the report's path is Brimline's, not the account's).
+    public static func source(of account: Account, home: URL) -> String {
+        account.readsReportOnly ? "report" : display(account.source, home: home)
+    }
+
+    /// The Claude Code folder of a Claude account, absolute; nil for another provider and for a report only account.
+    public static func folder(of account: Account) -> String? {
+        account.provider == .claude && !account.readsReportOnly ? account.source : nil
     }
 }
 

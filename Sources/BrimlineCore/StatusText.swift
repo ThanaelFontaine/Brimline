@@ -28,6 +28,7 @@ public enum StatusText {
             rows.append((strings.limitName(limit, provider: account.provider), percent, reset))
         }
         if usage.hasNoGlobalWeeklyLimit { rows.insert((strings.noGlobalWeekly, "", ""), at: min(1, rows.count)) }
+        if usage.weekUnknown { rows.insert((strings.weekUnknown, "", ""), at: min(1, rows.count)) }
         let width = rows.filter { !$0.1.isEmpty }.map(\.0.count).max() ?? 0
         for (name, percent, reset) in rows {
             if percent.isEmpty {
@@ -38,7 +39,10 @@ public enum StatusText {
                 out.append("  \(padded)  \(pct)   \(reset)")
             }
         }
-        if let age = usage.age(at: now), usage.status == .ok, age > TimeInterval(refreshMinutes * 120 + 60) {
+        if usage.observedAt != nil, let age = usage.age(at: now), usage.status == .ok {
+            // Numbers from a Claude Code report always say how old they are.
+            out.append("  " + strings.reportAge(time.age(age)))
+        } else if let age = usage.age(at: now), usage.status == .ok, age > TimeInterval(refreshMinutes * 120 + 60) {
             out.append("  " + strings.dataAge(time.age(age)))
         }
         return out

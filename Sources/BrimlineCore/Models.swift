@@ -37,9 +37,12 @@ public struct Account: Codable, Sendable, Hashable, Identifiable {
     public var keychainService: String?
     /// True when the folder was added by hand in the settings.
     public var addedByHand: Bool
+    /// Claude only: the absolute path of the Claude Code report of this address (`brimline report claude`),
+    /// when there is one. A report holds numbers only, never a sign-in.
+    public var claudeReport: String?
 
     public init(provider: Provider = .claude, source: String, email: String?, organization: String?,
-                seatTier: String?, keychainService: String?, addedByHand: Bool = false) {
+                seatTier: String?, keychainService: String?, addedByHand: Bool = false, claudeReport: String? = nil) {
         self.id = "\(provider.rawValue):\(source)"
         self.provider = provider
         self.source = source
@@ -48,7 +51,12 @@ public struct Account: Codable, Sendable, Hashable, Identifiable {
         self.seatTier = seatTier
         self.keychainService = keychainService
         self.addedByHand = addedByHand
+        self.claudeReport = claudeReport
     }
+
+    /// A Claude account known only by its Claude Code report: no folder on this Mac, no Keychain item.
+    /// Its `source` is the report's path.
+    public var readsReportOnly: Bool { provider == .claude && keychainService == nil && claudeReport != nil }
 
     /// The name shown when no address is known.
     /// The folder, or "Cursor" for Cursor, whose connection is a database file in a folder of the app.
@@ -159,6 +167,9 @@ public struct AccountUsage: Codable, Sendable, Identifiable {
     public var responseShape: String?
     /// Something to say next to the numbers of the last reading, when `status` is `ok`.
     public var note: AccountNote?
+    /// When the numbers come from a Claude Code report: the time Claude Code saw them (`fetchedAt` is the
+    /// same). Nil when they come from the provider's answer.
+    public var observedAt: Date?
 
     public var id: String { account.id }
 
@@ -184,8 +195,14 @@ public struct AccountUsage: Codable, Sendable, Identifiable {
     public var modelLimits: [UsageLimit] { limits.filter { $0.kind == .model } }
 
     /// True for Claude team seats and other plans that have no weekly limit across all models.
-    /// Other providers have no such notion: their windows are what they are.
-    public var hasNoGlobalWeeklyLimit: Bool { account.provider == .claude && fetchedAt != nil && weeklyLimit == nil }
+    /// Other providers have no such notion: their windows are what they are. Numbers from a Claude Code report
+    /// never say so: a week the report has not seen is unknown (`weekUnknown`).
+    public var hasNoGlobalWeeklyLimit: Bool {
+        account.provider == .claude && fetchedAt != nil && weeklyLimit == nil && observedAt == nil
+    }
+
+    /// Numbers from a Claude Code report that has not seen the week yet: the week is unknown, not absent.
+    public var weekUnknown: Bool { observedAt != nil && weeklyLimit == nil }
 
     /// Highest share used among the limits, as it applies at `now`.
     public func highestPercent(at now: Date) -> Double? {

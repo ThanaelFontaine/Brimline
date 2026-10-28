@@ -273,8 +273,8 @@ struct AccountCard: View {
                         case .limit(let limit, let sub, let showReset):
                             LimitRow(limit: limit, usage: usage, model: model, sub: sub, showReset: showReset)
                                 .padding(.top, index == 0 ? 0 : (sub ? SGTheme.Space.s : SGTheme.Space.m))
-                        case .noGlobalWeekly:
-                            Text(strings.noGlobalWeekly)
+                        case .noGlobalWeekly, .weekUnknown:
+                            Text(row == .weekUnknown ? strings.weekUnknown : strings.noGlobalWeekly)
                                 .font(.system(size: 11))
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -359,6 +359,8 @@ struct AccountCard: View {
     enum Row: Hashable {
         case limit(UsageLimit, sub: Bool, showReset: Bool)
         case noGlobalWeekly
+        /// Numbers from a Claude Code report that has not seen the week yet.
+        case weekUnknown
     }
 
     /// Session, then the week (or the team seat sentence), then every other limit in the provider's order.
@@ -384,6 +386,8 @@ struct AccountCard: View {
         // The team seat sentence comes right after the session, where the week would be.
         if usage.weeklyLimit == nil, usage.hasNoGlobalWeeklyLimit {
             rows.insert(.noGlobalWeekly, at: usage.sessionLimit == nil ? 0 : 1)
+        } else if usage.weekUnknown {
+            rows.insert(.weekUnknown, at: usage.sessionLimit == nil ? 0 : 1)
         }
         return rows
     }
@@ -396,6 +400,8 @@ struct AccountCard: View {
         case .ok:
             // The shared pool is said under the title; the other note stays here.
             if let note = usage.note, note != .sharedPool { return strings.noteMessage(note) }
+            // Numbers from a Claude Code report always say how old they are.
+            if usage.observedAt != nil, let age = usage.age(at: model.now) { return strings.reportAge(model.time.age(age)) }
             if let age = usage.age(at: model.now), age > model.staleAfter {
                 return strings.dataAge(model.time.age(age))
             }

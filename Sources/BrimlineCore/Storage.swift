@@ -12,6 +12,8 @@ public struct BrimlinePaths: Sendable {
         home.appendingPathComponent("Library/Application Support/Brimline", isDirectory: true)
     }
     public var cacheFile: URL { supportDirectory.appendingPathComponent("usage.json") }
+    /// The Claude Code reports written by `brimline report claude`, one file per address.
+    public var claudeReportsDirectory: URL { supportDirectory.appendingPathComponent("claude-reports", isDirectory: true) }
     public var settingsFile: URL { supportDirectory.appendingPathComponent("settings.json") }
     public var launchAgentFile: URL {
         home.appendingPathComponent("Library/LaunchAgents/\(LaunchAgent.label).plist")

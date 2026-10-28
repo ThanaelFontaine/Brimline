@@ -36,7 +36,7 @@ Detail and reasons are in the sections below; this table is what the code does, 
 
 | Provider | What Brimline looks at | What it opens | What it launches | The one request |
 |---|---|---|---|---|
-| Claude | `~/.claude`, each `~/.claude-*` folder and the folders you add | `.claude.json` of the folder (identity), and one Keychain item per folder | Apple's `/usr/bin/security`, for that item only | `https://api.anthropic.com/api/oauth/usage` |
+| Claude | `~/.claude`, each `~/.claude-*` folder and the folders you add, and the names in Brimline's own `claude-reports` folder | `.claude.json` of the folder (identity), one Keychain item per folder, and the Claude Code report of an address (Brimline's own file, no secret in it) | Apple's `/usr/bin/security`, for that item only | `https://api.anthropic.com/api/oauth/usage` (none for an account read from its report) |
 | ChatGPT | `~/.codex` and the Codex folders you add by hand | `auth.json` in it, read only, no link followed | nothing | `https://chatgpt.com/backend-api/wham/usage` |
 | Gemini | `~/.gemini` (one `stat`) and `~/.local/bin/agy` | `agy` itself, to check its SHA-256; nothing inside `~/.gemini` | **`~/.local/bin/agy --print /usage --sandbox`**, a verified build only | none by Brimline |
 | Grok | `~/.grok` | `auth.json` in it, read only, no link followed | nothing | `https://cli-chat-proxy.grok.com/v1/billing?format=credits` |
@@ -100,9 +100,20 @@ Every provider but Claude is off until you turn it on, and an account marked "Do
 ### What it writes
 
 - `~/Library/Application Support/Brimline/usage.json` (the last numbers, statuses, addresses and folders of the accounts, and a fingerprint of the keys of each answer) and `settings.json` (preferences, the providers that are on, the accounts marked "Do not read"), in a folder readable by your user only (`0700`, files `0600`). The cache type has no field for a token, and a test writes a cache from fake tokens and checks none of them is in the file.
+- `~/Library/Application Support/Brimline/claude-reports/`, only through `brimline report claude`: one report of numbers per address (see "Claude Code reports" above), folder `0700`, files `0600`.
 - `~/Library/LaunchAgents/eu.thanaelfontaine.brimline.plist`, only when you turn on "Open at login"; it opens the app and nothing else.
 - Nothing in the Keychain, nothing in the Claude Code folders.
 - Once, at its first launch, it reads `settings.json` and `usage.json` from the old folder in `~/Library/Application Support` (the one named after the old app) and copies them to the Brimline folder: a real folder owned by you, files opened without following a link, regular, owned by you, 1 MiB at most, decoded into the same types as above and written again (so no token can come over), never over an existing file. The old folder is not changed.
+
+### Claude Code reports (`brimline report claude`)
+
+- **What goes in.** The command reads its standard input: the JSON Claude Code gives a status line command (`--statusline`), or the output of `claude -p --output-format stream-json`. Of the status line JSON it decodes `rate_limits.five_hour` and `rate_limits.seven_day` only, and of them `used_percentage` and `resets_at`; of stream-json, only the lines whose `type` is `rate_limit_event`, and of them `rate_limit_info.unifiedWindows.five_hour` and `.seven_day`, `utilization` and `resetsAt` only. Every other line and key (the session, the messages, the tool results, anything that could hold a token) is skipped. A line longer than 64 KiB is not parsed; with `--statusline`, an input over 1 MiB is not read.
+- **What is kept.** A report has a closed type: the address (lower case, a plain address checked character by character, so it can name the file), the source (`statusline` or `stream-json`), the time, a status (`ok` or `format_changed`) and the two windows (share used held between 0 and 100, reset time in seconds between 2020 and 400 days ahead, the time each was seen). No field of it can hold a text from the input. `LeakTests` plants a fake token in every place of a stream and of a status line JSON, and looks for it in the report, the cache, the JSON of the command and the MCP answers (none).
+- **Where.** `~/Library/Application Support/Brimline/claude-reports/<address>.json`: the folder is refused if it is a link or someone else's, created `0700`, each file written atomically (`O_EXCL`, `0600`, synced, renamed), under an advisory lock per address so that two sessions do not lose a window. Nothing is written in a Claude Code folder.
+- **How it is read.** The app lists the names of that folder (a regular file of yours whose name is a plain address; no link). A report is opened without following a link, checked on the open file (regular, yours, 64 KiB at most), decoded into its type, and used only if the address inside is the one of its name. A report in another form is "format changed", never a number.
+- **Consent.** Reports are read only while Claude is on, and the report of an account marked "Do not read" is not opened. An account with a folder keeps its direct reading: its report is used only when the session has expired or the Keychain item is missing, and only if it is newer than the numbers last read from Anthropic.
+- **The status line.** With `--statusline` the command reads no setting, no cache and no Keychain item, never writes on the error output and always exits 0 (Claude Code blanks the status line on a failure). It prints at most one line of numbers.
+- **What is not documented.** `unifiedWindows` is not in the published type of `rate_limit_event` (it was seen on the Claude Code versions of October 2026): when it is missing, the report says "format changed" and no number is guessed. The status line fields are documented ([statusline](https://code.claude.com/docs/en/statusline)).
 
 ### Anthropic's terms
 

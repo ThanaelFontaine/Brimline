@@ -35,6 +35,8 @@ public final class AppModel {
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var clock: Task<Void, Never>?
     @ObservationIgnored private let fixedNow: Date?
+    /// The addresses of the Claude Code reports at the last look: a new report adds its account at the next refresh.
+    @ObservationIgnored private var knownReports: Set<String> = []
 
     /// The live model of the app.
     public init(home: URL = FileManager.default.homeDirectoryForCurrentUser) {
@@ -98,6 +100,7 @@ public final class AppModel {
         isRefreshing = true
         defer { isRefreshing = false }
         reloadSettings()
+        rescanIfReportsChanged()
         let accounts = self.accounts
         let previous = snapshot
         let result = await service.refresh(accounts: accounts, settings: settings, previous: previous, now: Date(), force: force)
@@ -113,6 +116,16 @@ public final class AppModel {
         let onDisk = settingsStore.load()
         guard onDisk != settings else { return }
         settings = onDisk
+        rescan()
+    }
+
+    /// A report written by `brimline report claude` for a new address brings its account without a restart.
+    /// Only the names in the reports folder are listed, and only while Claude is on.
+    private func rescanIfReportsChanged() {
+        guard settings.isEnabled(.claude) else { return }
+        let names = Set(ClaudeReportStore(directory: paths.claudeReportsDirectory).list().map(\.email))
+        guard names != knownReports else { return }
+        knownReports = names
         rescan()
     }
 
@@ -354,6 +367,10 @@ public final class AppModel {
     }
 
     public var cachePathForDisplay: String { "~/Library/Application Support/Brimline/usage.json" }
+
+    /// The command to add to a Claude Code status line (Settings, Accounts, Claude Code reports).
+    public var statuslineCommand: String { "\(shellQuoted(commandPath)) report claude --account auto --statusline" }
+    public var reportsFolderForDisplay: String { "~/Library/Application Support/Brimline/claude-reports/" }
 
     public var appVersion: String {
         let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String

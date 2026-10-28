@@ -115,6 +115,9 @@ struct AccountsTab: View {
                         ForEach(usages) { usage in
                             AccountSettingsRow(usage: usage, model: model)
                         }
+                        if provider == .claude {
+                            ClaudeReportsBlock(model: model)
+                        }
                     }
                 } header: {
                     ProviderHeader(provider: provider, model: model)
@@ -161,6 +164,41 @@ struct AccountsTab: View {
         if panel.runModal() == .OK, let url = panel.url {
             add(url)
         }
+    }
+}
+
+/// The Claude Code reports: what they are, the command to add to a status line, where they are kept. An account
+/// known by its report is listed with the others above, with its own "Don't read this account" box.
+struct ClaudeReportsBlock: View {
+    var model: AppModel
+
+    var body: some View {
+        let s = model.strings
+        VStack(alignment: .leading, spacing: SGTheme.Space.s) {
+            Text(s.reportsTitle)
+                .font(.system(size: 13, weight: .semibold))
+            Text(s.reportsIntro)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            CopyableCode(model: model, text: model.statuslineCommand, copyLabel: s.copy, copiedLabel: s.copied)
+            HStack(alignment: .firstTextBaseline, spacing: SGTheme.Space.s) {
+                Text(s.reportsFolder)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                Text(model.reportsFolderForDisplay)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .textSelection(.enabled)
+            }
+            Text(s.reportsDoNotRead)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, SGTheme.Space.xs)
     }
 }
 
@@ -232,8 +270,8 @@ struct AccountSettingsRow: View {
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(model.displayPath(account.source))
-                        .font(.system(size: 11, design: .monospaced))
+                    Text(account.readsReportOnly ? s.reportSourceLine : model.displayPath(account.source))
+                        .font(.system(size: 11, design: account.readsReportOnly ? .default : .monospaced))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.middle)
