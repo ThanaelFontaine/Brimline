@@ -59,7 +59,7 @@ Each provider tells its accounts apart in its own way, and Brimline shows one li
 
 With four Claude accounts, make four folders (for example `~/.claude-first`, `~/.claude-second`, `~/.claude-third`, and `~/.claude` for the fourth), sign in once in each, and Brimline lists the four. Give each a short label in **Settings, Accounts** if its address is long.
 
-**A sign-in made with `claude setup-token` is not read.** That command makes a long-lived token for scripts. On 27 October 2026 we tried three such tokens against the address Brimline asks for limits (one request each, nothing else read or kept): none returned any limits (one answer was a refusal, HTTP 403, and two were "too many requests", HTTP 429, again an hour later). Brimline therefore reads folders only, and claims nothing about those tokens. If you only have such a token, sign in with `/login` in a folder of its own instead.
+**A sign-in made with `claude setup-token` is not read.** That command makes a long-lived token for scripts. On 27 October 2026 we tried three such tokens against the address Brimline asks for limits (one request each, and a second one an hour later for the two that got HTTP 429; nothing else read or kept): none returned any limits (one answer was a refusal, HTTP 403, and two were "too many requests", HTTP 429, both times). Brimline therefore reads folders only, and claims nothing about those tokens. If you only have such a token, sign in with `/login` in a folder of its own instead.
 
 **A folder you no longer use stays "Session expired".** Brimline never renews a sign-in, and only Claude Code does, when you use that account. Its last numbers stay, in grey, with their age.
 
