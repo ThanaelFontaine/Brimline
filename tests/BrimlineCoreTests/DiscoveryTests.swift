@@ -80,4 +80,25 @@ struct DiscoveryTests {
         #expect(found[0].email == nil)
         #expect(found[0].folderName == ".claude-api")
     }
+
+    @Test("Four Claude accounts, one per folder, are found in a stable order with distinct Keychain items")
+    func fourClaudeAccounts() throws {
+        let home = try TemporaryHome()
+        try home.write(".claude.json", claudeJSON(email: "main@example.com"))
+        try home.mkdir(".claude")
+        try home.write(".claude-one/.claude.json", claudeJSON(email: "one@example.com"))
+        try home.write(".claude-two/.claude.json", claudeJSON(email: "two@example.org"))
+        try home.write(".claude-three/.claude.json", claudeJSON(email: "three@example.net"))
+
+        let found = AccountDiscovery(home: home.url).discover()
+
+        #expect(found.map(\.email) == ["main@example.com", "one@example.com", "three@example.net", "two@example.org"])
+        #expect(Set(found.map(\.source)).count == 4)
+        let services = found.compactMap(\.keychainService)
+        #expect(services.count == 4)
+        #expect(Set(services).count == 4)
+        #expect(services.first == "Claude Code-credentials")
+        #expect(found.allSatisfy { !$0.addedByHand })
+        #expect(AccountDiscovery(home: home.url).discover() == found)   // same order every time
+    }
 }
