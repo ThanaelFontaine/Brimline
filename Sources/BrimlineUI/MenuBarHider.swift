@@ -194,10 +194,15 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
                     self.knownShownApps = Array(plan.shown.dropFirst())
                     self.onShownApps?(self.knownShownApps)
                 }
-            } else {
+            } else if !known.isEmpty {
                 // No permission (after an update), or nothing read: the apps found the last time stay, every other one
                 // goes at once. The list kept is not touched.
                 plan = MenuBarHiding.NativePlan(shown: [own] + known.filter { $0 != own }, hiddenLeftToRight: [])
+            } else {
+                // Nothing read and no list yet: hiding would take the icons right of the bar too.
+                self.showNatively()
+                self.onRecheck?(.refuse(.placeUnknown))
+                return
             }
             self.plan = plan
             self.hiddenCount = 0

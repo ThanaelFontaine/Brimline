@@ -567,8 +567,8 @@ public struct Strings: Sendable {
             t("Brimline's icon is left of the bar: drag it right of the bar, or it would be hidden too.",
               "L'icône de Brimline est à gauche du trait : glissez-la à droite du trait, sinon elle serait cachée aussi.")
         case .placeUnknown:
-            t("Brimline couldn't read where the bar is, so nothing is hidden.",
-              "Brimline n'a pas pu lire où est le trait : rien n'est caché.")
+            t("Brimline couldn't read where the bar and the icons are, so nothing is hidden.",
+              "Brimline n'a pas pu lire où sont le trait et les icônes : rien n'est caché.")
         case .accessibilityNeeded:
             t("To know which icons are left of its bar, Brimline needs the Accessibility permission: turn Brimline on in System Settings, Privacy & Security, Accessibility, then click again.",
               "Pour savoir quelles icônes sont à gauche de son trait, Brimline a besoin de l'autorisation Accessibilité : activez Brimline dans Réglages Système, Confidentialité et sécurité, Accessibilité, puis cliquez à nouveau.")
