@@ -363,6 +363,7 @@ public struct Strings: Sendable {
     public var settingsTitle: String { t("Brimline Settings", "Réglages de Brimline") }
     public var tabAccounts: String { t("Accounts", "Comptes") }
     public var tabGeneral: String { t("General", "Général") }
+    public var tabMenuBar: String { t("Menu Bar", "Barre des menus") }
     public var tabAgents: String { t("Agents", "Agents") }
     public var tabAbout: String { t("About", "À propos") }
     public var howToLink: String { t("How do I link an account?", "Comment associer un compte ?") }
@@ -478,6 +479,129 @@ public struct Strings: Sendable {
     public var copy: String { t("Copy", "Copier") }
     public var copied: String { t("Copied", "Copié") }
     public var agentsDoc: String { t("Agents documentation", "Documentation pour les agents") }
+
+    // Settings, Menu Bar tab (QUOTA-73): where each app keeps the switch of its icon. The labels are the ones the
+    // apps show (read on the installed apps, 27/10/2026): they change with the apps' versions, so they live here only.
+    public var menuBarTitle: String { t("Tidy up the menu bar", "Ranger la barre des menus") }
+    public var menuBarIntro: String {
+        t("Brimline already shows where Claude, ChatGPT and Cursor stand, so their menu bar icons can go. Brimline can't remove them for you: macOS leaves that choice to each app, and to you. Here is where to do it.",
+          "Brimline montre déjà où en sont Claude, ChatGPT et Cursor : leurs icônes dans la barre des menus peuvent partir. Brimline ne peut pas les retirer à leur place, macOS laisse ce choix à chaque app et à vous. Voici où le faire.")
+    }
+    public var menuBarInApps: String { t("In each app", "Dans chaque app") }
+    public var menuBarInstalledOnly: String { t("Only the apps installed on this Mac are listed.", "Seules les apps installées sur ce Mac sont listées.") }
+    public var menuBarForAll: String { t("For every app", "Pour toutes les apps") }
+    public var menuBarSystemText: String {
+        t("macOS also has a switch for each app: System Settings › Menu Bar › Allow in the Menu Bar.",
+          "macOS a aussi un interrupteur par app : Réglages Système › Barre des menus › Autoriser dans la barre des menus.")
+    }
+    public var menuBarOpenSystem: String { t("Open System Settings, Menu Bar", "Ouvrir Réglages Système, Barre des menus") }
+    public var menuBarByHand: String { t("By hand", "D'un geste") }
+    public var menuBarStep1Before: String { t("Hold down the", "Maintenez la touche") }
+    public var menuBarStep1After: String { t("(Command) key.", "(Commande).") }
+    public var menuBarStep2: String { t("Drag the icon out of the menu bar.", "Glissez l'icône hors de la barre des menus.") }
+    public var menuBarStep3: String { t("Let go: the icon is gone.", "Relâchez : l'icône disparaît.") }
+    public var menuBarStepsNote: String {
+        t("If the icon jumps back, its app doesn't allow this: use its setting instead.",
+          "Si l'icône revient à sa place, son app ne permet pas ce geste : passez par son réglage.")
+    }
+    public var menuBarNoApps: String {
+        t("Claude, ChatGPT and Cursor aren't installed on this Mac. For another app, use System Settings or the gesture below.",
+          "Ni Claude, ni ChatGPT, ni Cursor n'est installé sur ce Mac. Pour une autre app, passez par Réglages Système ou par le geste plus bas.")
+    }
+    /// "Turn off “Menu bar”" : the switch of the app's own setting.
+    public func menuBarTurnOff(_ app: MenuBarApp) -> String {
+        let label: String
+        switch app {
+        case .claude: label = t("Menu bar", "Barre de menus")
+        case .chatgpt: label = t("Show in menu bar", "Afficher dans la barre des menus")
+        case .cursor: label = "Menu Bar Icon"   // Cursor is in English in both languages
+        }
+        return t("Turn off “\(label)”", "Coupez « \(label) »")
+    }
+    /// "In Settings › System" (Claude): where that switch is.
+    public func menuBarSettingPath(_ app: MenuBarApp) -> String {
+        switch app {
+        case .claude: t("In Settings › System", "Dans Paramètres › Système")
+        case .chatgpt: t("In Settings › General", "Dans Paramètres › Général")
+        case .cursor: t("In Cursor Settings › General", "Dans Cursor Settings › General")
+        }
+    }
+    public func menuBarOpenApp(_ app: MenuBarApp) -> String { t("Open \(app.displayName)", "Ouvrir \(app.displayName)") }
+    /// What VoiceOver reads for the text of a row (the button is read apart).
+    public func menuBarRowSpoken(_ app: MenuBarApp) -> String {
+        "\(app.displayName). \(menuBarTurnOff(app)), \(menuBarSettingPath(app))."
+    }
+    public func menuBarAppError(_ app: MenuBarApp) -> String {
+        t("\(app.displayName) didn't open: the app may have been moved or deleted.",
+          "\(app.displayName) ne s'est pas ouvert : l'app a peut-être été déplacée ou supprimée.")
+    }
+    public var menuBarSystemHomePage: String {
+        t("System Settings opened on its home page: choose Menu Bar in the list on the left.",
+          "Réglages Système s'est ouvert sur sa page d'accueil : choisissez Barre des menus dans la liste à gauche.")
+    }
+    public var menuBarSystemFailed: String {
+        t("System Settings didn't open. Open it from the Apple menu, then choose Menu Bar.",
+          "Réglages Système ne s'est pas ouvert. Ouvrez-le depuis le menu Pomme, puis choisissez Barre des menus.")
+    }
+
+    // Settings, Menu Bar tab, and the Brimline window: hiding the icons placed left of Brimline's bar (QUOTA-73).
+    public var menuBarHidingTitle: String { t("Hide without removing", "Cacher sans retirer") }
+    public var menuBarHidingToggle: String {
+        t("Hide the icons placed left of the bar", "Cacher les icônes placées à gauche du trait")
+    }
+    public var menuBarHidingHowTo: String {
+        t("Once: hold Command and drag the icons to hide (Claude, ChatGPT, Cursor, Gemini) to the left of Brimline's bar in the menu bar. Then the “Hide the icons” button of the Brimline window hides and shows them. No permission is asked.",
+          "Une fois : maintenez Cmd et glissez dans la barre des menus les icônes à cacher (Claude, ChatGPT, Cursor, Gemini) à gauche du trait de Brimline. Ensuite, le bouton « Cacher les icônes » de la fenêtre de Brimline les cache et les montre. Aucune autorisation n'est demandée.")
+    }
+    public var menuBarHidingHide: String { t("Hide the icons", "Cacher les icônes") }
+    public var menuBarHidingShow: String { t("Show the hidden icons", "Montrer les icônes cachées") }
+    /// Why the icons were not hidden (they stay shown).
+    public func menuBarHidingRefusal(_ refusal: MenuBarHiding.Refusal) -> String {
+        switch refusal {
+        case .barTooFarRight:
+            t("The bar is too far right to hide reliably: drag it further left.",
+              "Le trait est trop à droite pour cacher de façon fiable : glissez-le plus à gauche.")
+        case .brimlineLeftOfBar:
+            t("Brimline's icon is left of the bar: drag it right of the bar, or it would be hidden too.",
+              "L'icône de Brimline est à gauche du trait : glissez-la à droite du trait, sinon elle serait cachée aussi.")
+        case .placeUnknown:
+            t("Brimline couldn't read where the bar is, so nothing is hidden.",
+              "Brimline n'a pas pu lire où est le trait : rien n'est caché.")
+        }
+    }
+    public var menuBarHidingNote: String {
+        t("Apple doesn't document this technique: it was tried on macOS 27.0.1, on a screen without a notch. Brimline itself stays right of the bar, never hidden. Quitting Brimline or turning this off shows every icon again.",
+          "Apple ne documente pas cette technique : elle a été essayée sur macOS 27.0.1, sur un écran sans encoche. Brimline reste à droite du trait, jamais caché. Quitter Brimline ou couper ce réglage remet toutes les icônes.")
+    }
+    public var menuBarHidingGuide: String { t("How hiding works", "Comment marche le masquage") }
+    /// The name VoiceOver reads for the bar, and its help tag.
+    public var menuBarHidingBarName: String { t("Brimline's bar", "Trait de Brimline") }
+    public var menuBarHidingBarHelp: String {
+        t("Brimline: the icons left of this bar can be hidden from the Brimline window.",
+          "Brimline : les icônes à gauche de ce trait peuvent être cachées depuis la fenêtre de Brimline.")
+    }
+    /// The drawing of the gesture.
+    public var menuBarHidingDiagramHidden: String { t("Hidden", "Cachées") }
+    public var menuBarHidingDiagramShown: String { t("Always shown, Brimline too", "Toujours visibles, Brimline aussi") }
+    public var menuBarHidingDiagramGesture: String {
+        t("drag each icon to hide left of the bar", "glissez chaque icône à cacher à gauche du trait")
+    }
+    /// The picture of the gesture in the documentation, step by step.
+    public var menuBarHidingPictureBefore: String {
+        t("1. Turned on: Brimline's bar appears, left of the icons.", "1. Réglage allumé : le trait de Brimline apparaît, à gauche des icônes.")
+    }
+    public var menuBarHidingPictureDrag: String { t("hold Command, drag each icon left of the bar", "maintenez Cmd, glissez chaque icône à gauche du trait") }
+    public var menuBarHidingPictureAfter: String {
+        t("2. After the gesture (once): the icons to hide are left of the bar.", "2. Après le geste (une fois) : les icônes à cacher sont à gauche du trait.")
+    }
+    public var menuBarHidingPictureHidden: String {
+        t("3. “Hide the icons”: they leave the menu bar, Brimline stays. “Show the hidden icons” brings them back.",
+          "3. « Cacher les icônes » : elles quittent la barre, Brimline reste. « Montrer les icônes cachées » les fait revenir.")
+    }
+    public var menuBarHidingDiagramSpoken: String {
+        t("Drawing of the menu bar: Claude, ChatGPT, Cursor and Gemini left of Brimline's bar are hidden; the icons right of it, Brimline too, are always shown.",
+          "Dessin de la barre des menus : Claude, ChatGPT, Cursor et Gemini, à gauche du trait de Brimline, sont cachées ; les icônes à sa droite, Brimline compris, restent visibles.")
+    }
     public var version: String { t("Version", "Version") }
     public var development: String { t("development version", "version de développement") }
     public var licenseLine: String {
@@ -618,6 +742,10 @@ public enum Links {
     /// What Brimline reads for each provider (the "What is read" link of the settings).
     public static var providersDoc: URL { documentationBase.appendingPathComponent("providers.md") }
     public static var agentsDoc: URL { documentationBase.appendingPathComponent("agents.md") }
+    /// The guide to the menu bar (tidying it, hiding icons), in French when the interface is in French.
+    public static func menuBarDoc(_ language: Language) -> URL {
+        documentationBase.appendingPathComponent(language == .fr ? "menu-bar.fr.md" : "menu-bar.md")
+    }
     public static var faq: URL { documentationBase.appendingPathComponent("faq.md") }
     public static let repository = URL(string: "https://github.com/ThanaelFontaine/Brimline")!
 }

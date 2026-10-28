@@ -24,6 +24,10 @@ public struct PanelView: View {
                 .frame(maxHeight: maxCardsHeight)
                 .fixedSize(horizontal: false, vertical: true)
             Divider()
+            if model.settings.menuBarHiding.enabled {
+                hidingRow
+                Divider()
+            }
             footer
         }
         .frame(width: SGTheme.windowWidth)
@@ -155,6 +159,29 @@ public struct PanelView: View {
         .font(.system(size: 12))
         .padding(.horizontal, SGTheme.Space.l)
         .padding(.vertical, SGTheme.Space.m - 2)
+    }
+
+    /// Hiding the icons left of Brimline's bar (QUOTA-73), only when the setting is on. Brimline is right of its bar,
+    /// so this window, and this button, can always be reached to show the icons again.
+    private var hidingRow: some View {
+        let s = model.strings
+        let hidden = model.menuBarIconsHidden
+        return VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
+            Button {
+                model.toggleMenuBarIcons()
+            } label: {
+                Label(hidden ? s.menuBarHidingShow : s.menuBarHidingHide, systemImage: hidden ? "eye" : "eye.slash")
+            }
+            .foregroundStyle(SGTheme.accent)
+            if let refusal = model.menuBarHidingRefusal {
+                MenuBarNote(text: s.menuBarHidingRefusal(refusal), symbol: "exclamationmark.triangle")
+            }
+        }
+        .buttonStyle(.borderless)
+        .font(.system(size: 12))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, SGTheme.Space.l)
+        .padding(.vertical, SGTheme.Space.s)
     }
 
     private var updatedText: String {

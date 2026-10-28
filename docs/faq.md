@@ -61,6 +61,12 @@ When the Keychain is locked (for example in an SSH session), Claude Code keeps t
 
 Yes: a command with JSON output and a local MCP server, both reading the app's cache. See [agents.md](agents.md).
 
+## Can Brimline hide the icons of Claude, ChatGPT and Cursor from the menu bar?
+
+It cannot remove them, but it can hide them with a bar of its own. macOS has no public way for an app to remove another app's menu bar icon (an app can only manage its own). The tools that do it (Bartender, Ice) use non-public methods that need Accessibility, and sometimes Screen Recording, and they are broken or unstable on macOS 27. A usage tracker should not ask for those permissions, so Brimline asks for none. **Settings, Menu Bar** gives you the way out instead: for each of the three apps installed on your Mac, the name of its own switch ("Turn off “Menu bar”" in Claude, "Show in menu bar" in ChatGPT, "Menu Bar Icon" in Cursor), where it is, and a button that opens the app; a button that opens System Settings on Menu Bar (macOS has its own "Allow in the Menu Bar" switch for each app); and the Command-drag gesture, which works for the apps that allow it. The names of the switches are the ones read in the apps on 27 October 2026 and can change with their versions.
+
+To keep the icons and still hide them, **Settings, Menu Bar, Hide without removing** (off by default) does it with Brimline's own item only: a thin bar that you put, once, right of the icons to hide (Command-drag), and that Brimline makes long to push them out of sight. No permission, no private API, no file of another app; Brimline stays right of the bar, and quitting it or turning the setting off shows every icon again. Apple does not document this technique, and a later version of macOS should be able to break it (Brimline would then hide nothing and every icon would stay shown, not tried). It was tried on macOS 27.0.1 on a screen without a notch, not on a MacBook with a notch nor with several screens. Detail and limits: [menu bar](menu-bar.md).
+
 ## Why is there no Dock icon?
 
 Brimline is a menu bar app. To open the settings, use **Settings…** in its window, or open the app again from Finder or Spotlight.

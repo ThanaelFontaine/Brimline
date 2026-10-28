@@ -20,12 +20,27 @@ public final class AppModel {
     public private(set) var lastCopied: String?
     /// The accounts whose "Learn more" is open in the panel (the rest of a "not readable" sentence).
     public private(set) var expandedNotes: Set<String> = []
+    /// The apps of the Menu Bar tab that are installed (read again each time the tab opens).
+    public private(set) var menuBarApps: [InstalledMenuBarApp] = []
+    /// The app that did not open at the last try, for the note under its row.
+    public private(set) var menuBarAppFailed: MenuBarApp?
+    /// How the last "Open System Settings" ended, for the note under its button.
+    public private(set) var menuBarSystemOutcome: MenuBarTidy.SettingsOutcome?
+    /// The icons placed left of Brimline's bar are hidden now (QUOTA-73). Always false at launch.
+    public private(set) var menuBarIconsHidden = false
+    /// Why the last try did not hide them, for the note in the window and in the Menu Bar tab.
+    public private(set) var menuBarHidingRefusal: MenuBarHiding.Refusal?
 
     public let strings: Strings
     public let time: TimeFormatter
     @ObservationIgnored public var openSettingsAction: (() -> Void)?
     /// The icon shown in the About tab (the app's own icon, or the one given to the images).
     @ObservationIgnored public var appIcon: NSImage?
+    /// How the Menu Bar tab finds and opens apps (macOS in the app; fixed in the images and the tests).
+    @ObservationIgnored public var menuBar = MenuBarEnvironment.live
+    @ObservationIgnored public private(set) var menuBarIcons: [String: NSImage] = [:]
+    /// Brimline's bar in the menu bar, given by the app once its own icon is there (see `attachSeparator`).
+    @ObservationIgnored public private(set) var separator: (any MenuBarSeparating)?
 
     @ObservationIgnored private let service: UsageService?
     @ObservationIgnored private let cache: UsageCache?
@@ -117,7 +132,9 @@ public final class AppModel {
         guard let settingsStore else { return }
         let onDisk = settingsStore.load()
         guard onDisk != settings else { return }
+        let hidingChanged = onDisk.menuBarHiding != settings.menuBarHiding
         settings = onDisk
+        if hidingChanged { applyMenuBarHidingSetting() }
         rescan()
     }
 
@@ -334,6 +351,89 @@ public final class AppModel {
     public func setLabel(_ label: String, accountID: String) {
         update { s in
             s.labels[accountID] = label.isEmpty ? nil : label
+        }
+    }
+
+    // MARK: Menu Bar tab
+
+    /// Looks again for the apps of the Menu Bar tab (they can be installed or removed while Brimline runs).
+    public func refreshMenuBarApps() {
+        let found = MenuBarTidy.installed(locate: { menuBar.locate($0) })
+        menuBarIcons = Dictionary(uniqueKeysWithValues: found.compactMap { entry in
+            menuBar.icon(entry.url).map { (entry.id, $0) }
+        })
+        menuBarApps = found
+        menuBarAppFailed = nil
+        menuBarSystemOutcome = nil
+    }
+
+    /// Opens the app, so the person can reach its setting (no link goes straight to it). A failure is a note under its row.
+    public func openMenuBarApp(_ app: MenuBarApp) {
+        guard let entry = menuBarApps.first(where: { $0.app == app }) else { return }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let opened = await menuBar.openApp(entry.url)
+            menuBarAppFailed = opened ? nil : app
+        }
+    }
+
+    /// Opens System Settings on the Menu Bar page, or on its home page when macOS refuses the address.
+    public func openSystemMenuBarSettings() {
+        menuBarSystemOutcome = MenuBarTidy.openSystemSettings(
+            openURL: { menuBar.openURL($0) }, openApp: { menuBar.openBundle($0) })
+    }
+
+    // MARK: Hiding the icons left of Brimline's bar
+
+    /// Takes Brimline's bar and puts it in the menu bar when the setting is on (it is not there otherwise).
+    public func attachSeparator(_ separator: any MenuBarSeparating) {
+        self.separator = separator
+        separator.onRecheck = { [weak self] decision in self?.applyHiding(decision) }
+        separator.setPresent(settings.menuBarHiding.enabled)
+    }
+
+    /// On: the bar appears, every icon still shown. Off: every icon is shown and the bar goes away.
+    public func setMenuBarHiding(_ enabled: Bool) {
+        update { $0.menuBarHiding.enabled = enabled }
+        applyMenuBarHidingSetting()
+    }
+
+    private func applyMenuBarHidingSetting() {
+        let on = settings.menuBarHiding.enabled
+        if !on {
+            menuBarIconsHidden = false
+            menuBarHidingRefusal = nil
+        }
+        if !on { separator?.show() }
+        separator?.setPresent(on)
+    }
+
+    /// Hides the icons left of the bar, after the bar has checked its place; a refusal leaves them shown, with a note.
+    public func hideMenuBarIcons() {
+        guard settings.menuBarHiding.enabled else { return }
+        guard let separator else { return applyHiding(.refuse(.placeUnknown)) }
+        applyHiding(separator.hide())
+    }
+
+    /// Shows every icon again.
+    public func showMenuBarIcons() {
+        separator?.show()
+        menuBarIconsHidden = false
+        menuBarHidingRefusal = nil
+    }
+
+    public func toggleMenuBarIcons() {
+        if menuBarIconsHidden { showMenuBarIcons() } else { hideMenuBarIcons() }
+    }
+
+    private func applyHiding(_ decision: MenuBarHiding.Decision) {
+        switch decision {
+        case .hide:
+            menuBarIconsHidden = true
+            menuBarHidingRefusal = nil
+        case .refuse(let refusal):
+            menuBarIconsHidden = false
+            menuBarHidingRefusal = refusal
         }
     }
 

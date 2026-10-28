@@ -3,10 +3,10 @@ import BrimlineCore
 import SwiftUI
 
 public enum SettingsTab: String, CaseIterable, Sendable {
-    case accounts, general, agents, about
+    case accounts, general, menuBar, agents, about
 }
 
-/// The settings window: Accounts, General, Agents, About.
+/// The settings window: Accounts, General, Menu Bar, Agents, About.
 public struct SettingsView: View {
     // No @State here: in the macOS 27 SDK, @State is a macro whose plugin ships with Xcode only,
     // and Brimline builds with the Command Line Tools. Local state lives in the model.
@@ -29,6 +29,7 @@ public struct SettingsView: View {
                 switch model.settingsTab {
                 case .accounts: AccountsTab(model: model)
                 case .general: GeneralTab(model: model)
+                case .menuBar: MenuBarTab(model: model)
                 case .agents: AgentsTab(model: model)
                 case .about: AboutTab(model: model)
                 }
@@ -45,6 +46,7 @@ public struct SettingsView: View {
         let tabs: [(SettingsTab, String, String)] = [
             (.accounts, s.tabAccounts, "person.2"),
             (.general, s.tabGeneral, "gearshape"),
+            (.menuBar, s.tabMenuBar, "menubar.rectangle"),
             (.agents, s.tabAgents, "terminal"),
             (.about, s.tabAbout, "info.circle"),
         ]
@@ -403,6 +405,274 @@ struct GeneralTab: View {
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+// MARK: Menu Bar
+
+/// "Tidy up the menu bar": where each app keeps the switch of its icon, and a button that opens the app.
+/// Brimline cannot hide another app's icon (QUOTA-73), so this tab asks for no permission and reads nothing
+/// of these apps but where they are installed.
+struct MenuBarTab: View {
+    @Bindable var model: AppModel
+
+    var body: some View {
+        let s = model.strings
+        Form {
+            Section {
+                VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
+                    Text(s.menuBarTitle)
+                        .font(.system(size: 13, weight: .semibold))
+                    Text(s.menuBarIntro)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Section {
+                if model.menuBarApps.isEmpty {
+                    Text(s.menuBarNoApps)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                ForEach(model.menuBarApps) { entry in
+                    MenuBarAppRow(entry: entry, model: model)
+                }
+            } header: {
+                Text(s.menuBarInApps)
+            } footer: {
+                if !model.menuBarApps.isEmpty {
+                    Text(s.menuBarInstalledOnly).frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            Section(s.menuBarForAll) {
+                Text(s.menuBarSystemText)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button(s.menuBarOpenSystem) { model.openSystemMenuBarSettings() }
+                switch model.menuBarSystemOutcome {
+                case .homePage: MenuBarNote(text: s.menuBarSystemHomePage, symbol: "exclamationmark.triangle")
+                case .failed: MenuBarNote(text: s.menuBarSystemFailed, symbol: "exclamationmark.triangle")
+                case .menuBarPage, nil: EmptyView()
+                }
+            }
+            Section(s.menuBarByHand) {
+                VStack(alignment: .leading, spacing: SGTheme.Space.s) {
+                    MenuBarStep(number: 1) {
+                        HStack(spacing: SGTheme.Space.xs) {
+                            Text(s.menuBarStep1Before)
+                            CommandKey()
+                            Text(s.menuBarStep1After)
+                        }
+                    }
+                    MenuBarStep(number: 2) { Text(s.menuBarStep2) }
+                    MenuBarStep(number: 3) { Text(s.menuBarStep3) }
+                }
+                MenuBarNote(text: s.menuBarStepsNote, symbol: "info.circle")
+            }
+            MenuBarHidingSection(model: model)
+        }
+        .formStyle(.grouped)
+        .onAppear { model.refreshMenuBarApps() }
+    }
+}
+
+/// "Hide without removing" (QUOTA-73): the switch of Brimline's bar, the one gesture to make, and the button.
+/// Off by default; on, Brimline adds its bar to the menu bar and hides only what the person put left of it.
+public struct MenuBarHidingSection: View {
+    @Bindable var model: AppModel
+
+    public init(model: AppModel) {
+        self.model = model
+    }
+
+    public var body: some View {
+        let s = model.strings
+        let on = model.settings.menuBarHiding.enabled
+        Section(s.menuBarHidingTitle) {
+            Toggle(s.menuBarHidingToggle, isOn: Binding(
+                get: { on },
+                set: { model.setMenuBarHiding($0) }
+            ))
+            VStack(alignment: .leading, spacing: SGTheme.Space.s) {
+                Text(s.menuBarHidingHowTo)
+                    .font(.system(size: 12))
+                    .fixedSize(horizontal: false, vertical: true)
+                MenuBarHidingDiagram(strings: s)
+            }
+            if on {
+                HStack {
+                    Button(model.menuBarIconsHidden ? s.menuBarHidingShow : s.menuBarHidingHide) {
+                        model.toggleMenuBarIcons()
+                    }
+                    Spacer()
+                }
+                if let refusal = model.menuBarHidingRefusal {
+                    MenuBarNote(text: s.menuBarHidingRefusal(refusal), symbol: "exclamationmark.triangle")
+                }
+            }
+            VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
+                MenuBarNote(text: s.menuBarHidingNote, symbol: "info.circle")
+                Link(destination: Links.menuBarDoc(s.language)) {
+                    Label(s.menuBarHidingGuide, systemImage: "questionmark.circle")
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(SGTheme.accent)
+            }
+        }
+    }
+}
+
+/// A drawing of the menu bar for the one gesture: the icons put left of Brimline's bar are hidden, the others,
+/// Brimline included, stay. Neutral tiles with first letters, never the logo of another app.
+public struct MenuBarHidingDiagram: View {
+    var strings: Strings
+
+    public init(strings: Strings) {
+        self.strings = strings
+    }
+
+    private static let tile: CGFloat = 18
+    private static let gap: CGFloat = 6
+    private static let hiddenNames = ["Cl", "Ch", "Cu", "Ge"]
+    private static var hiddenWidth: CGFloat { CGFloat(hiddenNames.count) * tile + CGFloat(hiddenNames.count - 1) * gap }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
+            HStack(spacing: 10) {
+                HStack(spacing: Self.gap) {
+                    ForEach(Self.hiddenNames, id: \.self) { name in
+                        Text(name)
+                            .font(.system(size: 8, weight: .semibold))
+                            .frame(width: Self.tile, height: Self.tile)
+                            .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.primary.opacity(0.12)))
+                            .opacity(0.55)
+                    }
+                }
+                .frame(width: Self.hiddenWidth)
+                Capsule()
+                    .fill(SGTheme.accent)
+                    .frame(width: 2, height: 16)
+                HStack(spacing: 10) {
+                    Image(systemName: "wifi")
+                    Image(systemName: "magnifyingglass")
+                    Image(nsImage: BrimlineGlyph.image(level: 0.58))
+                    Text("12:20").monospacedDigit()
+                }
+                .font(.system(size: 11))
+            }
+            .padding(.horizontal, SGTheme.Space.s)
+            .frame(height: 26)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color.primary.opacity(0.05)))
+            HStack(spacing: 10) {
+                Text(strings.menuBarHidingDiagramHidden)
+                    .frame(width: Self.hiddenWidth, alignment: .center)
+                Color.clear.frame(width: 2, height: 1)
+                Text(strings.menuBarHidingDiagramShown)
+            }
+            .font(.system(size: 10))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, SGTheme.Space.s)
+            HStack(spacing: SGTheme.Space.xs) {
+                Image(systemName: "arrow.left")
+                CommandKey()
+                Text(strings.menuBarHidingDiagramGesture)
+            }
+            .font(.system(size: 11))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, SGTheme.Space.s)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(strings.menuBarHidingDiagramSpoken)
+    }
+}
+
+/// One installed app: its own icon, the name of its switch, where it is, and a button that opens the app.
+struct MenuBarAppRow: View {
+    var entry: InstalledMenuBarApp
+    @Bindable var model: AppModel
+
+    var body: some View {
+        let s = model.strings
+        let app = entry.app
+        VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
+            HStack(spacing: SGTheme.Space.m) {
+                if let icon = model.menuBarIcons[entry.id] {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .frame(width: 32, height: 32)
+                        .accessibilityHidden(true)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(app.displayName)
+                        .font(.system(size: 13, weight: .semibold))
+                    Text(s.menuBarTurnOff(app))
+                        .font(.system(size: 12))
+                    Text(s.menuBarSettingPath(app))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                // One element for VoiceOver: the app, its switch and where it is. The button stays apart.
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(s.menuBarRowSpoken(app))
+                Spacer(minLength: SGTheme.Space.s)
+                Button(s.menuBarOpenApp(app)) { model.openMenuBarApp(app) }
+            }
+            if model.menuBarAppFailed == app {
+                MenuBarNote(text: s.menuBarAppError(app), symbol: "exclamationmark.triangle")
+            }
+        }
+        .padding(.vertical, SGTheme.Space.xs)
+    }
+}
+
+/// A line of small secondary text with its symbol (never red: it is not a consumption alert).
+struct MenuBarNote: View {
+    var text: String
+    var symbol: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: SGTheme.Space.s) {
+            Image(systemName: symbol)
+                .accessibilityHidden(true)
+            Text(text)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .font(.system(size: 11))
+        .foregroundStyle(.secondary)
+    }
+}
+
+/// A numbered step: a round number, then its text.
+struct MenuBarStep<Content: View>: View {
+    var number: Int
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        HStack(spacing: SGTheme.Space.m) {
+            Text("\(number)")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 18, height: 18)
+                .background(Circle().fill(SGTheme.track))
+                .accessibilityHidden(true)
+            content
+        }
+    }
+}
+
+/// The ⌘ key, as a small keycap.
+struct CommandKey: View {
+    var body: some View {
+        Text("⌘")
+            .font(.system(size: 12))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1)
+            .background(
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(Color(nsColor: .textBackgroundColor))
+                    .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).stroke(Color.primary.opacity(0.25), lineWidth: 0.5))
+            )
+            .accessibilityLabel("Command")
     }
 }
 
