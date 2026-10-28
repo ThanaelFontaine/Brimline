@@ -464,8 +464,8 @@ public struct Strings: Sendable {
           "Écrit un LaunchAgent dans ~/Library/LaunchAgents, retiré quand vous désactivez l'option.")
     }
     public var menuBarHelp: String {
-        t("The menu bar glyph follows the account closest to its limit.",
-          "Le glyphe de la barre des menus suit le compte le plus proche de sa limite.")
+        t("The menu bar gauge shows each account's share; the percentage next to it is the most loaded account's.",
+          "La jauge de la barre des menus montre la part de chaque compte ; le pourcentage à côté est celui du compte le plus chargé.")
     }
     public var agentsIntro: String {
         t("Your agents read the same numbers: a command with JSON output and a local MCP server. They read the cache written by the app and never see a token.",
@@ -512,11 +512,6 @@ public struct Strings: Sendable {
     public func menuBarAccessibility(_ percent: Double?) -> String {
         percent.map { "Brimline, \(percentText($0))" } ?? "Brimline"
     }
-    /// "Brimline, 91%, Claude, Research lab": the number, then whose it is.
-    public func menuBarAccessibility(_ percent: Double?, provider: Provider?, account: String?) -> String {
-        guard percent != nil else { return "Brimline" }
-        return ([menuBarAccessibility(percent)] + [provider?.displayName, account].compactMap { $0 }).joined(separator: ", ")
-    }
     /// What VoiceOver reads for the gauge of the menu bar: the alert first ("Alert: Claude Agency at 94%."), then the
     /// average and each account with its percentage, then the accounts that have no figure. One element, one sentence.
     public func menuBarAccessibility(_ gauge: GaugeModel, names: (String) -> String) -> String {
@@ -546,6 +541,19 @@ public struct Strings: Sendable {
         }
         return parts.joined(separator: " ")
     }
+    /// The tooltip of the menu bar element: "Average 45% across 5 accounts · Agency at 94%" (the alerts after a middle dot).
+    public func menuBarTooltip(_ gauge: GaugeModel, names: (String) -> String) -> String {
+        let count = gauge.segments.count
+        guard count > 0 else { return "Brimline" }
+        var parts = [t("Average \(percentText(gauge.total * 100)) across \(count == 1 ? "1 account" : "\(count) accounts")",
+                       "Moyenne \(percentText(gauge.total * 100)) sur \(count == 1 ? "1 compte" : "\(count) comptes")")]
+        for segment in gauge.alerts {
+            parts.append(t("\(names(segment.accountID)) at \(percentText(segment.percent))",
+                           "\(names(segment.accountID)) à \(percentText(segment.percent))"))
+        }
+        return parts.joined(separator: " · ")
+    }
+
     // MARK: Colors of the accounts (QUOTA-72)
 
     public var colorsIntro: String {

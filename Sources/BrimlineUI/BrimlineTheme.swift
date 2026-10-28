@@ -24,7 +24,12 @@ public enum SGTheme {
     public static let trackLine = dynamic(0xD3D8DD, 0x30353A)
     public static let ok        = dynamic(0x127A82, 0x3BBDC2)   // room left, under 70%
     public static let warn      = dynamic(0x9A5800, 0xEFA63A)   // warning, from 70% to under 90%
-    public static let crit      = dynamic(0xC0302B, 0xFF6F64)   // critical, 90% and over
+    public static let crit      = dynamic(critLight, critDark)   // critical, 90% and over
+    static let critLight: UInt32 = 0xC0302B
+    static let critDark: UInt32 = 0xFF6F64
+
+    /// The critical red as numbers, for the images drawn by hand (the alert mark of the menu bar).
+    static func critRGB(dark: Bool) -> UInt32 { dark ? critDark : critLight }
     public static let muted     = dynamic(0x56606A, 0x9BA5AF)   // expired (last known value)
 
     /// The color of an account (QUOTA-72): a slot of the palette, or a free color, the same in the panel and in the

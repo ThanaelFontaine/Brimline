@@ -184,6 +184,16 @@ public final class AppModel {
         return (top.percent, top.dimmed, top.usage.account.provider, title(for: top.usage.account))
     }
 
+    /// What the menu bar element shows: one part per counted account (see `MenuBarGauge`).
+    public var menuBarGauge: GaugeModel {
+        MenuBarGauge.model(allUsages, settings: settings, providers: enabledProviders, now: now)
+    }
+
+    /// The name of an account in the gauge's sentences (VoiceOver, tooltip): its title, else its id.
+    public func gaugeName(forAccountID id: String) -> String {
+        allUsages.first { $0.account.id == id }.map { title(for: $0.account) } ?? id
+    }
+
     /// The providers that are on.
     public var enabledProviders: Set<Provider> { Set(Provider.allCases.filter(settings.isEnabled)) }
 
@@ -272,6 +282,17 @@ public final class AppModel {
     public func color(for account: Account) -> AccountColor {
         settings.accountColors[account.id]
             ?? AccountPalette.defaultColor(for: account, among: accounts, assigned: settings.accountColors)
+    }
+
+    /// The color of each part of the gauge of the menu bar: the same as the dot of its account in the panel.
+    public func menuBarColors(for gauge: GaugeModel) -> [String: AccountColor] {
+        var colors: [String: AccountColor] = [:]
+        for segment in gauge.segments {
+            if let account = accounts.first(where: { $0.id == segment.accountID }) {
+                colors[segment.accountID] = color(for: account)
+            }
+        }
+        return colors
     }
 
     /// Is this account's color the one "Back to default" would give? Then there is nothing to go back to.
