@@ -37,6 +37,12 @@ struct AntigravityEndToEndTests {
     func launchedAsPlanned() async throws {
         let log = NSTemporaryDirectory() + "agy-e2e-\(UUID().uuidString).log"
         defer { try? FileManager.default.removeItem(atPath: log) }
+        // The log exists, and is writable, before the script runs. A script that creates it with `>>`
+        // gets the process umask, and another test (HardeningTests, "permissive umask") sets 0o277 for a
+        // moment: the file is then created read-only and every later append fails, which left the log
+        // with the first line only. `chmod` does not depend on the umask.
+        #expect(FileManager.default.createFile(atPath: log, contents: nil))
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: log)
         let (_, trust, account) = try home(body: """
         echo "$*" >> '\(log)'
         /usr/bin/env | /usr/bin/sort >> '\(log)'

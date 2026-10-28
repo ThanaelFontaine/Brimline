@@ -1,0 +1,27 @@
+# TEMPORARY (THA-1637): repeats the whole Swift suite 20 times, to show that the end-to-end test
+# no longer fails once in a while. Removed before the merge.
+name: Repeat tmp
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  repeat:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build
+        run: swift build --build-tests
+      - name: Twenty runs in a row
+        run: |
+          for i in $(seq 1 20); do
+            echo "=== run $i of 20 ==="
+            swift test --skip-build 2>&1 | tee "run-$i.log" | grep -E "Test run with|✘" || true
+            if grep -q "✘" "run-$i.log"; then echo "run $i FAILED"; exit 1; fi
+            grep -q "Test run with .* passed" "run-$i.log" || { echo "run $i did not pass"; exit 1; }
+          done
+          echo "20 runs green"
