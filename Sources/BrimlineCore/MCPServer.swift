@@ -172,11 +172,11 @@ public struct MCPServer: Sendable {
                 var entry: [String: Any] = [
                     "id": u.account.id,
                     "provider": u.account.provider.rawValue,
-                    "source": AgentPath.display(u.account.source, home: home),
+                    "source": AgentPath.source(of: u.account, home: home),
                     "hidden": settings.isHidden(u.account.id),
                     "status": u.status.rawValue,
                 ]
-                entry["folder"] = u.account.provider == .claude ? u.account.source : NSNull()
+                entry["folder"] = AgentPath.folder(of: u.account) ?? NSNull()
                 entry["reason"] = u.status == .notReadable ? (u.reason?.rawValue ?? NSNull()) : NSNull()
                 entry["email"] = u.account.email ?? NSNull()
                 entry["organization"] = u.account.organization ?? NSNull()

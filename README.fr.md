@@ -43,7 +43,7 @@ Chaque nouveau fournisseur a été essayé le **27 octobre 2026** sur le compte 
 
 | Fournisseur | Lu par | Source | Forfait essayé (27/10/2026) | État |
 |---|---|---|---|---|
-| Claude | Connexion de Claude Code (Trousseau) | Non documentée | Vrais comptes, depuis la v0.1.0 | Lu et vérifié |
+| Claude | Connexion de Claude Code (Trousseau) ; pour un compte qu'il ne peut pas lire, les [relevés de Claude Code](docs/accounts.fr.md#relevés-de-claude-code--un-compte-que-brimline-ne-lit-pas-directement) | Non documentée (les relevés : ligne d'état documentée) | Vrais comptes, depuis la v0.1.0 | Lu et vérifié |
 | ChatGPT | Codex (`~/.codex/auth.json`) | Non documentée (code public de Codex) | ChatGPT gratuit : le mois, 0 % | Lu et vérifié sur ce forfait ; comparaison avec la page d'usage d'OpenAI en attente |
 | Gemini | Antigravity CLI (`agy --print /usage`) | Commande documentée, format du texte non | Un compte Google (`agy` ne dit pas le forfait) : cinq limites, aucune entamée | Lu et vérifié, sauf que le pourcentage n'a été vu qu'à 100 % restant, et que la référence est le texte d'`agy` lui-même |
 | Grok | CLI Grok (`~/.grok/auth.json`) | Non documentée (code public du CLI) | Un compte gratuit : **xAI ne renvoie aucune limite, donc aucun pourcentage n'est affiché** | Lu et vérifié pour cette seule phrase ; xAI n'a pas de page de comparaison |

@@ -151,6 +151,39 @@ public struct Strings: Sendable {
         return t("Period", "Période")
     }
     public var noGlobalWeekly: String { t("No weekly limit across all models", "Pas de limite hebdomadaire globale") }
+    /// Numbers from a Claude Code report that has not seen the week: unknown, never "no weekly limit".
+    public var weekUnknown: String {
+        t("Week: not seen yet in Claude Code's reports", "Semaine : pas encore vue dans les relevés de Claude Code")
+    }
+    /// The age of numbers that come from a Claude Code report: "Claude Code report, 3 min ago".
+    public func reportAge(_ age: String) -> String { t("Claude Code report, \(age)", "Relevé de Claude Code, \(age)") }
+    /// What `brimline report claude --statusline` prints: "5 h 23% · Week 41%", or nil when nothing is known.
+    public func statuslineSummary(_ limits: [UsageLimit], now: Date) -> String? {
+        var parts: [String] = []
+        if let s = limits.first(where: { $0.kind == .session }) { parts.append("5 h \(percentText(s.effectivePercent(at: now)))") }
+        if let w = limits.first(where: { $0.kind == .weekly }) { parts.append("\(week) \(percentText(w.effectivePercent(at: now)))") }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+    // The Claude Code reports, in Settings, Accounts.
+    public var reportsTitle: String { t("Claude Code reports", "Relevés Claude Code") }
+    public var reportsIntro: String {
+        t("Claude Code gives the limits of its account to its status line (Pro and Max plans; for a Team seat, see stream-json in the guide). Add the command of each account to the status line of its Claude Code folder: Brimline then shows the account, even one with no folder on this Mac, with the age of its numbers. No token is read and no request is sent.",
+          "Claude Code donne les limites de son compte à sa ligne d'état (abonnements Pro et Max ; pour un siège Team, voir stream-json dans le guide). Ajoutez la commande de chaque compte à la ligne d'état de son dossier de Claude Code : Brimline montre alors le compte, même sans dossier sur ce Mac, avec l'âge de ses chiffres. Aucun jeton n'est lu, aucune requête n'est envoyée.")
+    }
+    public var reportsAuto: String {
+        t("Shortcut: --account auto takes the address of the folder the command runs for (its CLAUDE_CONFIG_DIR, or ~/.claude), and writes nothing when the session's transcript lies in another folder.",
+          "Raccourci : --account auto prend l'adresse du dossier pour lequel la commande tourne (son CLAUDE_CONFIG_DIR, ou ~/.claude), et n'écrit rien quand la transcription de la session est dans un autre dossier.")
+    }
+    public var reportsNoAddress: String {
+        t("No Claude account with an address yet: use the shortcut, or write the address after --account.",
+          "Aucun compte Claude avec une adresse pour l'instant : prenez le raccourci, ou écrivez l'adresse après --account.")
+    }
+    public var reportsDoNotRead: String {
+        t("An account marked \"Don't read this account\" keeps its report unopened. The command still writes the report: take it out of the status line to stop it.",
+          "Un compte marqué « Ne pas lire ce compte » garde son relevé fermé. La commande continue d'écrire le relevé : retirez-la de la ligne d'état pour l'arrêter.")
+    }
+    public var reportsFolder: String { t("Reports folder", "Dossier des relevés") }
+    public var reportSourceLine: String { t("Claude Code report only", "Relevé de Claude Code seulement") }
     // States.
     public var expiredMessage: String {
         t("Session expired: open Claude Code with this account to sign it in again",
@@ -360,8 +393,8 @@ public struct Strings: Sendable {
         let verb: String
         switch provider {
         case .claude:
-            verb = t("reads the Claude Code sign-in from the Keychain and asks api.anthropic.com for usage.",
-                     "lit la connexion de Claude Code dans le Trousseau et demande l'usage à api.anthropic.com.")
+            verb = t("reads the Claude Code sign-in from the Keychain and asks api.anthropic.com for usage; for an account it cannot read, the Claude Code reports (no request).",
+                     "lit la connexion de Claude Code dans le Trousseau et demande l'usage à api.anthropic.com ; pour un compte qu'il ne peut pas lire, les relevés de Claude Code (aucune requête).")
         case .chatgpt:
             verb = t("reads ~/.codex/auth.json and asks chatgpt.com for usage.",
                      "lit ~/.codex/auth.json et demande l'usage à chatgpt.com.")
@@ -691,6 +724,8 @@ public struct Strings: Sendable {
             if detail.hasPrefix("HTTP 429") { return t("rate limited (HTTP 429)", "trop de requêtes (HTTP 429)") }
             if detail.hasPrefix("HTTP 5") { return t("provider error (\(detail))", "erreur du fournisseur (\(detail))") }
             if detail.hasPrefix("security") { return t("Keychain not readable", "Trousseau illisible") }
+            if detail == "no report" { return t("no Claude Code report yet", "pas encore de relevé de Claude Code") }
+            if detail == "report not readable" { return t("Claude Code report not readable", "relevé de Claude Code illisible") }
             return detail
         }
     }

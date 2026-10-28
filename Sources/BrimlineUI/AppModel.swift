@@ -50,6 +50,8 @@ public final class AppModel {
     @ObservationIgnored private var loop: Task<Void, Never>?
     @ObservationIgnored private var clock: Task<Void, Never>?
     @ObservationIgnored private let fixedNow: Date?
+    /// The addresses of the Claude Code reports at the last look: a new report adds its account at the next refresh.
+    @ObservationIgnored private var knownReports: Set<String> = []
 
     /// The live model of the app.
     public init(home: URL = FileManager.default.homeDirectoryForCurrentUser) {
@@ -115,6 +117,7 @@ public final class AppModel {
         isRefreshing = true
         defer { isRefreshing = false }
         reloadSettings()
+        rescanIfReportsChanged()
         let accounts = self.accounts
         let previous = snapshot
         let result = await service.refresh(accounts: accounts, settings: settings, previous: previous, now: Date(), force: force)
@@ -135,6 +138,16 @@ public final class AppModel {
         rescan()
     }
 
+    /// A report written by `brimline report claude` for a new address brings its account without a restart.
+    /// Only the names in the reports folder are listed, and only while Claude is on.
+    private func rescanIfReportsChanged() {
+        guard settings.isEnabled(.claude) else { return }
+        let names = Set(ClaudeReportStore(directory: paths.claudeReportsDirectory).list().map(\.email))
+        guard names != knownReports else { return }
+        knownReports = names
+        rescan()
+    }
+
     public func refreshNow() {
         Task { await refresh(force: true) }
     }
@@ -143,7 +156,11 @@ public final class AppModel {
     public func rescan() {
         accounts = Providers.discover(home: home, settings: settings)
         // Every account gets a color the first time it is seen, and keeps it (QUOTA-72); saved only when one was given.
-        update { $0.assignDefaultColors(to: accounts) }
+        update {
+            $0.assignDefaultColors(to: accounts)
+            // A Claude account marked "Do not read" keeps the report of its address closed, by address.
+            $0.closeReportsOfUnreadAccounts(accounts)
+        }
         if var snap = snapshot {
             let ids = Set(accounts.map(\.id))
             snap.accounts.removeAll { !ids.contains($0.account.id) }
@@ -260,11 +277,19 @@ public final class AppModel {
     }
 
     /// "Do not read": the account stays listed with its last numbers and is never read.
+    /// On a Claude account, the Claude Code report of its address follows (`BrimlineSettings.setUnread`).
     public func setUnread(_ unread: Bool, accountID: String) {
+        let account = accounts.first { $0.id == accountID }
         update { s in
-            s.unreadAccounts.removeAll { $0 == accountID }
-            if unread { s.unreadAccounts.append(accountID) }
+            if let account {
+                s.setUnread(unread, account: account)
+            } else {
+                s.unreadAccounts.removeAll { $0 == accountID }
+                if unread { s.unreadAccounts.append(accountID) }
+            }
         }
+        // A report opened or closed changes the accounts: linked to its folder or not.
+        if account?.claudeReportEmail != nil { rescan() }
     }
 
     // MARK: Colors of the accounts
@@ -515,11 +540,29 @@ public final class AppModel {
     }
 
     private func shellQuoted(_ s: String) -> String {
-        let safe = s.allSatisfy { $0.isLetter || $0.isNumber || "/._-+~".contains($0) }
+        let safe = s.allSatisfy { $0.isLetter || $0.isNumber || "/._-+~@%".contains($0) }
         return safe ? s : "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
     public var cachePathForDisplay: String { "~/Library/Application Support/Brimline/usage.json" }
+
+    /// The command to add to the status line of each Claude account Brimline knows (Settings, Accounts, Claude Code
+    /// reports): one per address, the address written out, in the order of the accounts.
+    public var statuslineCommands: [(email: String, command: String)] {
+        var seen = Set<String>()
+        return accounts.compactMap { account in
+            guard let email = account.claudeReportEmail, seen.insert(email).inserted else { return nil }
+            return (email, statuslineCommand(account: email))
+        }
+    }
+
+    public func statuslineCommand(account: String) -> String {
+        "\(shellQuoted(commandPath)) report claude --account \(shellQuoted(account)) --statusline"
+    }
+
+    /// The shortcut: `auto` takes the address of the folder the status line runs for.
+    public var statuslineAutoCommand: String { statuslineCommand(account: "auto") }
+    public var reportsFolderForDisplay: String { "~/Library/Application Support/Brimline/claude-reports/" }
 
     public var appVersion: String {
         let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String

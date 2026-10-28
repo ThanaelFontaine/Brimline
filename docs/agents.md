@@ -26,6 +26,8 @@ brimline status --live --shape [--provider <name>]      Shape of the provider's 
 brimline accounts [--json] [--provider <name>]          Accounts found on this Mac (no Keychain read)
 brimline providers [--json]                             The providers and whether each is on
 brimline providers enable|disable <name>                Turn a provider on or off
+brimline report claude --account <address|auto> [--statusline] [--dir <folder>]
+                                                        Record the limits Claude Code prints
 brimline mcp                                            Local MCP server over stdio
 brimline --version
 ```
@@ -35,6 +37,7 @@ brimline --version
 - `--provider <name>` (`claude`, `chatgpt`, `gemini`, `grok` or `cursor`) limits `status` and `accounts` to one provider. If that provider is off, the answer is empty and a line on the standard error says how to turn it on (or, for a provider this version does not read yet, that there is nothing to show).
 - `status --live --shape` prints, for each provider asked, the **shape** of its last answer: every key and the type of its value (`"string"`, `"number"`, `"bool"`, `"null"`), never a value. It is for checking a format when a provider changes it; it replaces `--json` and needs `--live`. Gemini has none: `agy` prints text, not JSON, so the answer is "no answer to show" (exit code 2).
 - `providers` lists the providers (on, off, or "not available yet" when this version has no reader for it); `providers enable <name>` and `providers disable <name>` change the setting file, and the app takes it at its next refresh. Claude is on by default, every other provider is **off until it is turned on**: a provider that is off is not touched at all.
+- `report claude` reads what Claude Code prints on its standard input (the `rate_limit_event` lines of `claude -p --output-format stream-json`, or with `--statusline` the JSON of a status line) and keeps only the percentages and reset times, in a report per address that the app reads. It always reads its input to the end (a wrong option included), so the program before it in the pipe never finds it closed; in `CLAUDE_CONFIG_DIR=... claude -p | brimline report claude ...`, give the address: the variable does not reach `brimline`, and `--account auto` would take `~/.claude`. Exit codes: 0 recorded, 3 nothing in the input, 4 format changed, 1 not written, 64 usage; with `--statusline` always 0. How to set it up: [Claude Code reports](accounts.md#claude-code-reports-an-account-brimline-cannot-read-directly).
 - There is no `brimline best` command: agents choose an account with the MCP tool `best_account` and its `provider` argument.
 - Exit codes: 0 on success, 2 when there is no cache yet (or no answer to show with `--shape`), 64 for a wrong command or option.
 
@@ -75,6 +78,7 @@ brimline --version
       ],
       "message" : null,
       "no_global_weekly_limit" : true,
+      "observed_at" : null,
       "organization" : "Example Team",
       "provider" : "claude",
       "reason" : null,
@@ -95,8 +99,9 @@ Fields:
 | Field | Meaning |
 |---|---|
 | `provider` | `claude`, `chatgpt`, `gemini`, `grok` or `cursor` |
-| `source` | Where the official tool keeps the account's connection, written from your home folder (`~/.claude-work`). The same field for every provider |
-| `folder` | The Claude Code configuration folder, absolute. Claude accounts only (`null` for the others); `source` says the same thing |
+| `source` | Where the official tool keeps the account's connection, written from your home folder (`~/.claude-work`). The same field for every provider. `report` for a Claude account known by its Claude Code report only |
+| `folder` | The Claude Code configuration folder, absolute. Claude accounts only (`null` for the others, and for a Claude account known by its report only); `source` says the same thing |
+| `observed_at` | When the numbers come from a Claude Code report: the time Claude Code saw them (the same as `fetched_at`). `null` when they come from the provider's answer |
 | `kind` | `session` (five hour window), `weekly` (all models), `model` (one model or pool, named in `model`; for Claude, that model's week), `daily`, `monthly`, `period` (another window length, see `window_seconds`) |
 | `window_seconds` | Length of the window in seconds when the provider says it, else `null` |
 | `label` | A name for the limit when its `kind` does not say enough, else `null` (letters, digits, `.`, `_`, `-` and spaces, 64 characters at most) |
@@ -105,7 +110,7 @@ Fields:
 | `status` | `ok`, `expired` (token expired, numbers are the last known ones), `reconnect` (sign-in refused), `unavailable`, `signed_out`, `pending`, `not_readable` (the provider gives no limit Brimline can read for this account), `format_changed` (the provider's answer is not one Brimline recognizes: the numbers are the last known ones) |
 | `reason` | Why the account is `not_readable`: `api_key`, `keychain_or_signed_out`, `consumer_plan`, `protected_sign_in` or `no_cli`; `null` otherwise |
 | `stale` | `true` when the numbers are older than two refresh intervals, or the last read failed |
-| `no_global_weekly_limit` | `true` for plans without a weekly limit across all models (often team seats) |
+| `no_global_weekly_limit` | `true` for plans without a weekly limit across all models (often team seats). Never `true` for numbers from a Claude Code report: a week the report has not seen is unknown, and no `weekly` limit is listed |
 | `age_seconds` | Age of the numbers (per account) or of the cache (top level) |
 
 Every key is always present; a missing value is `null`. `<home>` stands for your home folder.

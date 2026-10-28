@@ -12,6 +12,8 @@ public struct BrimlinePaths: Sendable {
         home.appendingPathComponent("Library/Application Support/Brimline", isDirectory: true)
     }
     public var cacheFile: URL { supportDirectory.appendingPathComponent("usage.json") }
+    /// The Claude Code reports written by `brimline report claude`, one file per address.
+    public var claudeReportsDirectory: URL { supportDirectory.appendingPathComponent("claude-reports", isDirectory: true) }
     public var settingsFile: URL { supportDirectory.appendingPathComponent("settings.json") }
     public var launchAgentFile: URL {
         home.appendingPathComponent("Library/LaunchAgents/\(LaunchAgent.label).plist")
@@ -136,6 +138,33 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
 
     /// May Brimline read this account at all: its provider is on and the account is not "Do not read".
     public func mayRead(_ account: Account) -> Bool { isEnabled(account.provider) && !isUnread(account.id) }
+
+    /// The addresses whose Claude Code report stays closed: the ones marked through `claudeReportID` (a report
+    /// only account, or a Claude account marked "Do not read" while it had that address).
+    public var closedReports: Set<String> {
+        let prefix = Account.claudeReportID("")
+        return Set(unreadAccounts.filter { $0.hasPrefix(prefix) }.map { String($0.dropFirst(prefix.count)) })
+    }
+
+    /// "Do not read" on or off for one account. On a Claude account with an address, the report of that address
+    /// follows: closed with it, opened again with it. The mark is kept by address, so the report stays closed even
+    /// if the folder's `.claude.json` loses its address for a while.
+    public mutating func setUnread(_ unread: Bool, account: Account) {
+        var ids = [account.id]
+        if let email = account.claudeReportEmail { ids.append(Account.claudeReportID(email)) }
+        unreadAccounts.removeAll { ids.contains($0) }
+        if unread { unreadAccounts.append(contentsOf: ids.reduce(into: []) { if !$0.contains($1) { $0.append($1) } }) }
+    }
+
+    /// Closes the report of every Claude account marked "Do not read" that has an address, and keeps the mark
+    /// (an account marked before reports existed). Never opens one.
+    public mutating func closeReportsOfUnreadAccounts(_ accounts: [Account]) {
+        for account in accounts where isUnread(account.id) {
+            guard let email = account.claudeReportEmail else { continue }
+            let id = Account.claudeReportID(email)
+            if !unreadAccounts.contains(id) { unreadAccounts.append(id) }
+        }
+    }
 
     /// Gives a palette slot to every account that has no color yet, and keeps the colors already there. Accounts are
     /// handled in order, each one seeing the colors given before it.

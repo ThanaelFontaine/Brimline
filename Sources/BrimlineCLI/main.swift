@@ -7,6 +7,8 @@ import BrimlineCore
 //   brimline status --live --shape [--provider <name>]      the skeleton of each provider's answer (keys and types)
 //   brimline accounts [--json] [--provider <name>]          accounts found on this Mac (no Keychain read)
 //   brimline providers [enable|disable <name>]   which providers Brimline reads
+//   brimline report claude --account <address|auto> [--statusline] [--dir <folder>]
+//                                       records the limits Claude Code printed (standard input)
 //   brimline mcp                        local MCP server over stdio
 //   brimline --version | --help
 
@@ -34,6 +36,22 @@ Usage:
                                       default: a provider that is off is not touched at all.
   brimline providers enable <name>    Turn a provider on (claude, chatgpt, gemini, grok, cursor).
   brimline providers disable <name>   Turn it off: nothing of it is opened or requested again.
+  brimline report claude --account <address|auto> [--statusline] [--dir <folder>]
+                                      Records the limits Claude Code gives, read on standard input:
+                                      the rate_limit_event lines of claude -p --output-format
+                                      stream-json, or with --statusline the JSON of a status line
+                                      (then it prints "5 h 23% · Week 41%" when that input gave
+                                      limits, else nothing, and always exits 0). Only the
+                                      percentages and reset times are kept, in
+                                      ~/Library/Application Support/Brimline/claude-reports/
+                                      (--dir another folder of yours, 0700). The input is always
+                                      read to its end. auto takes the address of the
+                                      CLAUDE_CONFIG_DIR folder of this command (or ~/.claude): in
+                                      CLAUDE_CONFIG_DIR=... claude -p | brimline ..., the variable
+                                      does not reach brimline, so give the address there; with
+                                      --statusline, a transcript_path outside that folder writes
+                                      nothing. Exit codes: 0 recorded, 3 nothing in the input, 4
+                                      format changed (recorded as such), 1 not written, 64 usage.
   brimline mcp                        Local MCP server over stdio (list_accounts, get_usage,
                                       best_account).
   brimline --version                  Print the version.
@@ -44,6 +62,15 @@ Documentation: \(Links.agentsDoc.absoluteString)
 var arguments = Array(CommandLine.arguments.dropFirst())
 let command = arguments.first ?? "status"
 if !arguments.isEmpty { arguments.removeFirst() }
+
+// `brimline report claude`: handled first and on its own, before the settings or the migration, so that a
+// status line runs it fast. It reads standard input to its end and writes one report file, nothing else.
+if command == "report" {
+    let outcome = ClaudeReportCommand().run(arguments, input: STDIN_FILENO)
+    if let output = outcome.output { print(output) }
+    if let error = outcome.error { printError(error) }
+    exit(outcome.code)
+}
 
 // `--provider <name>` (or `--provider=<name>`) is taken out first: its value is not a flag.
 var providerFilter: Provider?
@@ -134,8 +161,8 @@ case "accounts":
         }
         let home = FileManager.default.homeDirectoryForCurrentUser
         let entries = accounts.map {
-            Entry(id: $0.id, provider: $0.provider.rawValue, source: AgentPath.display($0.source, home: home),
-                  folder: $0.provider == .claude ? $0.source : nil, keychainService: $0.keychainService,
+            Entry(id: $0.id, provider: $0.provider.rawValue, source: AgentPath.source(of: $0, home: home),
+                  folder: AgentPath.folder(of: $0), keychainService: $0.keychainService,
                   email: $0.email, organization: $0.organization, label: settings.label(for: $0.id),
                   hidden: settings.isHidden($0.id))
         }
@@ -149,7 +176,7 @@ case "accounts":
             let hidden = settings.isHidden(a.id) ? "  (hidden)" : ""
             print("\(a.email ?? a.folderName)\(hidden)")
             if let org = a.organization { print("  \(org)") }
-            let place = (a.source as NSString).abbreviatingWithTildeInPath
+            let place = a.readsReportOnly ? strings.reportSourceLine : (a.source as NSString).abbreviatingWithTildeInPath
             print(a.provider == .claude ? "  \(place)" : "  \(a.provider.displayName) · \(place)")
         }
     }

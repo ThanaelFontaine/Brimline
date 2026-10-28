@@ -72,7 +72,7 @@ Chaque fournisseur distingue ses comptes à sa façon, et Brimline montre une li
 
 | Fournisseur | Un compte, c'est | Pour en ajouter un |
 |---|---|---|
-| Claude | un dossier de Claude Code (`~/.claude`, `~/.claude-*`, ou un dossier ajouté) | lui donner son propre dossier et s'y connecter (étapes 1 à 3 ci-dessus) |
+| Claude | un dossier de Claude Code (`~/.claude`, `~/.claude-*`, ou un dossier ajouté), ou une adresse qui a un relevé de Claude Code | lui donner son propre dossier et s'y connecter (étapes 1 à 3 ci-dessus), ou laisser Claude Code relever ses limites (plus bas) |
 | ChatGPT | un dossier de Codex (`~/.codex`, ou un dossier `CODEX_HOME` ajouté) | **Ajouter un dossier Codex…**, sous ChatGPT dans **Réglages, Comptes** |
 | Grok | la connexion du Grok CLI dans `~/.grok` : un seul compte | rien : Brimline ne lit que `~/.grok` (un dossier `GROK_HOME` n'est pas lu) |
 | Cursor | la connexion de l'app Cursor : un seul compte | rien : Brimline lit la seule connexion de l'app |
@@ -83,6 +83,64 @@ Avec quatre comptes Claude, faites quatre dossiers (par exemple `~/.claude-premi
 **Une connexion faite avec `claude setup-token` n'est pas lue.** Cette commande fabrique un jeton de longue durée pour des scripts. Le 27 octobre 2026, nous avons essayé trois jetons de ce genre sur l'adresse que Brimline interroge pour les limites (une requête chacun, et une seconde une heure plus tard pour les deux qui ont reçu HTTP 429 ; rien d'autre lu ni gardé) : aucun n'a renvoyé de limites (une réponse était un refus, HTTP 403, et deux étaient « trop de requêtes », HTTP 429, les deux fois). Brimline ne lit donc que des dossiers, et n'affirme rien sur ces jetons. Si vous n'avez qu'un tel jeton, connectez-vous plutôt avec `/login` dans un dossier à part.
 
 **Un dossier que vous n'utilisez plus reste « Session expirée ».** Brimline ne renouvelle jamais une connexion : seul Claude Code le fait, quand vous utilisez ce compte. Ses derniers chiffres restent, en gris, avec leur âge.
+
+## Relevés de Claude Code : un compte que Brimline ne lit pas directement
+
+Claude Code connaît déjà les limites de son compte à chaque réponse, et les donne à deux endroits : à votre commande de **ligne d'état** (le champ `rate_limits`, décrit dans la [documentation de Claude Code](https://code.claude.com/docs/en/statusline)), et dans `claude -p --output-format stream-json`, sous la forme d'une ligne `rate_limit_event` (son type, `SDKRateLimitInfo`, est publié avec l'Agent SDK, mais sans `unifiedWindows`, le champ qui porte les deux fenêtres que lit Brimline : voir plus bas). La commande `brimline report claude` lit l'une ou l'autre sur son entrée standard et n'en garde **que les chiffres** : la part utilisée et l'heure de remise à zéro de la session de 5 h et de la semaine. Brimline montre alors ce compte, même sans dossier sur ce Mac (un compte utilisé ailleurs, par un script, ou dont Brimline voit la session expirée), avec l'âge de ses chiffres.
+
+Aucun jeton n'est lu, aucune requête n'est envoyée, aucun quota n'est consommé : les chiffres sont ceux que Claude Code avait déjà.
+
+### Par la ligne d'état
+
+Ajoutez la commande à la ligne d'état de chaque dossier de Claude Code, avec l'adresse du compte de ce dossier. **Réglages, Comptes, Relevés Claude Code** donne la commande prête à copier pour chaque compte Claude que Brimline connaît, son adresse remplie. La ligne d'état se règle dans le `settings.json` du dossier (`~/.claude/settings.json`, ou `~/.claude-travail/settings.json` pour un dossier choisi avec `CLAUDE_CONFIG_DIR`) :
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.local/bin/brimline report claude --account someone@example.com --statusline"
+  }
+}
+```
+
+Avec `--statusline`, la commande affiche une ligne courte (`5 h 23 % · Semaine 41 %`, dans la langue du Mac) quand l'entrée reçue a des limites, et rien sinon (avant la première réponse d'une session, par exemple). Elle ne fait jamais échouer la ligne d'état et n'écrit jamais sur la sortie d'erreur ; sans chiffre à donner, elle n'affiche rien, et la ligne d'état est alors vide si la commande y est seule (Claude Code n'affiche rien pour une commande qui n'affiche rien). Elle n'écrit que si Claude Code a donné une limite.
+
+**Le raccourci `--account auto`** prend l'adresse dans le `.claude.json` du dossier pour lequel la commande tourne : le `CLAUDE_CONFIG_DIR` que voit la commande, ou `~/.claude`. Sa limite : la documentation de Claude Code ne dit pas que la commande de la ligne d'état voit le `CLAUDE_CONFIG_DIR` de la session. Avec `--statusline`, `auto` compare donc le `transcript_path` de la session à ce dossier (Claude Code range l'historique d'un dossier sous `<dossier>/projects/`, [variables d'environnement](https://code.claude.com/docs/en/env-vars)) : si la transcription est dans un autre dossier, rien n'est écrit et rien n'est affiché. L'adresse écrite en clair, comme ci-dessus, est le moyen sûr.
+
+**Vous avez déjà une ligne d'état.** Gardez-la, et donnez-lui la même entrée. Dans un script à vous (par exemple `~/.claude/statusline.sh`, nommé dans `statusLine.command`) :
+
+```bash
+#!/bin/bash
+input=$(cat)
+printf '%s' "$input" | ~/.local/bin/brimline report claude --account someone@example.com --statusline >/dev/null
+# puis votre ligne d'état, comme avant, à partir de "$input"
+printf '%s' "$input" | ~/.claude/ma-ligne-detat.sh
+```
+
+Retirez `>/dev/null` pour afficher aussi la ligne de Brimline. La documentation de Claude Code dit que `rate_limits` est présent pour les abonnés Claude.ai Pro et Max, après la première réponse d'une session, et que chaque fenêtre peut manquer. Pour une autre offre (un siège Team ou Enterprise), Claude Code peut n'en donner aucune : passez alors par stream-json, ci-dessous.
+
+### Par `claude -p`
+
+Un script qui lance `claude -p --output-format stream-json --verbose` peut envoyer sa sortie à la commande (elle lit chaque ligne et ne garde que les `rate_limit_event`). Donnez-lui la sortie en direct, comme ci-dessous, pas un ancien journal : c'est la dernière entrée reçue qui compte.
+
+```bash
+claude -p "..." --output-format stream-json --verbose | tee run.ndjson | ~/.local/bin/brimline report claude --account someone@example.com
+```
+
+Donnez l'adresse ici : dans `CLAUDE_CONFIG_DIR=~/.claude-travail claude -p ... | brimline report claude --account auto`, la variable ne vaut que pour `claude`, jamais pour `brimline`, et `auto` prendrait l'adresse de `~/.claude`. La commande lit toujours son entrée jusqu'au bout, même après une option fausse, pour que `claude -p` ne trouve jamais son tube fermé ; une ligne de plus de 64 Kio est jetée sans être gardée.
+
+Codes de sortie : `0` relevé écrit, `3` aucune limite dans l'entrée (rien d'écrit), `4` l'événement de Claude Code a une forme que Brimline ne connaît pas (noté « format modifié »), `1` le relevé n'a pas pu être écrit, `64` une option fausse. `--dir <dossier>` écrit ailleurs (pour les essais : l'app ne lit que son propre dossier) ; le dossier doit être à vous et ouvert à vous seul (`0700`), ou absent (il est alors créé en `0700`) : un dossier ouvert à d'autres, comme votre dossier personnel, est refusé et laissé tel quel.
+
+Le pourcentage d'un `rate_limit_event` est dans `rate_limit_info.unifiedWindows`, un champ absent du type publié de l'événement (vu sur les versions de Claude Code d'octobre 2026). S'il disparaît, Brimline dit « format modifié » et ne montre aucun chiffre nouveau, jamais une supposition.
+
+### Ce que Brimline fait d'un relevé
+
+- Un relevé par adresse, dans `~/Library/Application Support/Brimline/claude-reports/<adresse>.json` (dossier `0700`, fichier `0600`, écrit de façon atomique). Il contient un numéro de version (`schema_version`), l'adresse, d'où viennent les chiffres (`statusline` ou `stream-json`), quand, un état (`ok`, ou `format_changed` quand la dernière entrée avait un événement que Brimline n'a pas su lire), et les deux fenêtres, chacune avec sa part utilisée, son heure de remise à zéro et l'heure où elle a été vue. Rien d'autre de la sortie de Claude Code ne peut y entrer ([SECURITY.md](../SECURITY.md)).
+- Fenêtre par fenêtre, chaque fenêtre gardée est remplacée par celle de la dernière entrée reçue : une semaine absente d'une entrée reste telle que vue la dernière fois. Une remise à zéro passée vaut 0 %. Une semaine jamais vue s'affiche **« Semaine : pas encore vue dans les relevés de Claude Code »**, jamais « pas de limite hebdomadaire » (un siège d'équipe peut ne jamais en avoir).
+- Un relevé dont l'adresse est celle d'un dossier y est rattaché : ce compte **garde sa lecture directe**, et son relevé ne sert que si la session a expiré ou si l'élément du Trousseau manque, et seulement s'il est plus récent que les derniers chiffres lus. Une adresse sans dossier devient un compte à part, lu par son relevé seulement.
+- La carte dit toujours l'âge des chiffres (« Relevé de Claude Code, il y a 3 min »). Un compte peu utilisé montre des chiffres anciens, avec leur âge.
+- **« Ne pas lire ce compte »** vaut aussi pour les relevés, par adresse : le relevé de l'adresse de ce compte n'est pas ouvert, même si le `.claude.json` du dossier perd l'adresse un moment. La commande continue d'écrire le relevé : retirez-la de la ligne d'état (ou du script) pour l'arrêter.
+- Pour les agents, un compte connu par son seul relevé a `"source": "report"` et `"folder": null`, et chaque compte lu par un relevé a `observed_at`, l'heure où Claude Code a vu ses chiffres ([agents](agents.md)).
 
 ## Ce que Brimline lit, et ce qu'il ne fait jamais
 
@@ -138,6 +196,7 @@ Outil officiel : l'app Cursor, connectée comme d'habitude. Cursor n'a pas de co
 | **À reconnecter** | Anthropic a refusé le jeton (HTTP 401). | Lancez `/login` dans Claude Code avec ce dossier. |
 | **Pas connecté** | Aucun élément du Trousseau pour ce dossier. | Lancez Claude Code avec ce dossier et connectez-vous. |
 | **Indisponible** | Anthropic n'a pas répondu utilement (trop de requêtes, erreur du serveur, réseau, ou réponse que Brimline ne comprend pas). Brimline réessaie plus tard, en attendant un peu plus à chaque fois. | En général, rien. Si ça dure, le point d'accès a peut-être changé : voir la [FAQ](faq.md) (en anglais). |
+| **Semaine : pas encore vue dans les relevés de Claude Code** | Les chiffres viennent d'un relevé de Claude Code qui n'a jamais eu la semaine (un siège d'équipe peut ne jamais en avoir). Elle est inconnue, pas absente. | Rien. |
 | **Pas de limite hebdomadaire globale** | Le compte (souvent un siège d'équipe) n'a pas de limite hebdomadaire tous modèles ; seules la session et les limites par modèle s'appliquent. | Rien. |
 | Un compte manque | Son dossier ne s'appelle pas `~/.claude-*`, ou n'a pas encore de `.claude.json`. | Connectez-vous une fois dans ce dossier, ou ajoutez-le à la main. |
 
