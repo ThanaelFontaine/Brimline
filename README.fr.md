@@ -56,7 +56,7 @@ Le script ([à lire d'abord](https://brimline.thanaelfontaine.eu/install.sh) si 
 git clone https://github.com/ThanaelFontaine/Brimline.git
 cd Brimline
 scripts/build_app.sh     # construit build/Brimline.app
-scripts/install.sh       # la copie dans ~/Applications, relie la commande, ouvre l'app
+scripts/install.sh       # la copie dans /Applications (ou ~/Applications), relie la commande, ouvre l'app
 ```
 
 Brimline vit ensuite dans la barre des menus, pas dans le Dock : cherche sa jauge en haut à droite de l'écran. Prérequis, ce que montre macOS, mise à jour et désinstallation : [docs/install.md](docs/install.md) (en anglais).
@@ -98,7 +98,7 @@ Ce qui est lu exactement, d'où vient la source et ce que chaque essai a montré
   ![L'élément de la barre des menus sur une barre claire : 1, 3 et 10 comptes, une alerte, une dernière valeur connue et aucun compte, en 2x et en 1x](docs/images/menubar-gauge-light.png)
 - **Ouvre la fenêtre.** Les cartes regroupées par fournisseur, une jauge par limite avec son pourcentage et son heure de remise à zéro (« repart dans 2 h 10 (14:30) »). Un fournisseur qui ne donne aucune limite lisible le dit en une phrase, jamais avec un chiffre inventé.
 - **Réglages** (depuis la fenêtre, ou en rouvrant l'app) : masquer un compte ou lui donner un libellé, choisir sa couleur, allumer ou couper chaque fournisseur, marquer un compte « Ne pas lire ce compte », changer l'intervalle d'actualisation (2 à 15 minutes), afficher le pourcentage à côté de la jauge, ouvrir à la connexion.
-- **Ranger la barre des menus** (Réglages, Barre des menus) : où couper les icônes de Claude, ChatGPT et Cursor, et un « Cacher sans retirer » optionnel, sans aucune autorisation demandée : [docs/menu-bar.fr.md](docs/menu-bar.fr.md).
+- **Ranger la barre des menus** (Réglages, Barre des menus) : où couper les icônes de Claude, ChatGPT et Cursor, et un « Cacher sans retirer » optionnel (sous macOS 27 et après, il utilise une API privée de macOS et demande l'autorisation Accessibilité, seulement pour lire où sont les icônes) : [docs/menu-bar.fr.md](docs/menu-bar.fr.md).
 
 L'app suit la langue du Mac (anglais ou français). Chaque état est dit en mots, jamais par la seule couleur :
 

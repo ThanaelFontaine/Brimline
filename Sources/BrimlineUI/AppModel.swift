@@ -32,6 +32,8 @@ public final class AppModel {
     public private(set) var menuBarHidingRefusal: MenuBarHiding.Refusal?
     /// The icons are hidden, but the bar is so far right that the ones nearest it may stay shown.
     public private(set) var menuBarHidingPartial = false
+    /// Whether Brimline's bar hides with macOS 27's allow-list: the texts of Settings follow.
+    public private(set) var menuBarHidingUsesAllowList = false
 
     public let strings: Strings
     public let time: TimeFormatter
@@ -390,6 +392,9 @@ public final class AppModel {
     /// Takes Brimline's bar and puts it in the menu bar when the setting is on (it is not there otherwise).
     public func attachSeparator(_ separator: any MenuBarSeparating) {
         self.separator = separator
+        menuBarHidingUsesAllowList = separator.usesAllowList
+        separator.knownShownApps = settings.menuBarHiding.shownApps
+        separator.onShownApps = { [weak self] apps in self?.update { $0.menuBarHiding.shownApps = apps } }
         separator.onRecheck = { [weak self] decision in self?.applyHiding(decision) }
         separator.onClick = { [weak self] in self?.clickMenuBarSeparator() }
         separator.setPresent(settings.menuBarHiding.enabled)

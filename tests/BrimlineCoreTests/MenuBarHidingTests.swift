@@ -111,8 +111,10 @@ struct MenuBarHidingTests {
             let all = [s.menuBarHidingTitle, s.menuBarHidingToggle, s.menuBarHidingHowTo, s.menuBarHidingHide,
                        s.menuBarHidingShow, s.menuBarHidingNote, s.menuBarHidingGuide, s.menuBarHidingBarName,
                        s.menuBarHidingBarHelp, s.menuBarHidingBarHelpHidden, s.menuBarHidingDiagramHidden, s.menuBarHidingDiagramShown,
-                       s.menuBarHidingDiagramGesture, s.menuBarHidingDiagramSpoken, s.menuBarHidingPartial]
-                + [MenuBarHiding.Refusal.placeUnknown, .brimlineLeftOfBar].map(s.menuBarHidingRefusal)
+                       s.menuBarHidingDiagramGesture, s.menuBarHidingDiagramSpoken, s.menuBarHidingPartial,
+                       s.menuBarHidingHowToAllowList, s.menuBarHidingNoteAllowList]
+                + [MenuBarHiding.Refusal.placeUnknown, .brimlineLeftOfBar, .accessibilityNeeded, .notInApplications,
+                   .refusedByMacOS].map(s.menuBarHidingRefusal)
             for text in all {
                 #expect(!text.isEmpty)
                 #expect(!text.contains("\u{2014}") && !text.contains("\u{2013}"), "\(text)")
@@ -124,5 +126,43 @@ struct MenuBarHidingTests {
         #expect(!Strings(.en).menuBarHidingRefusal(.brimlineLeftOfBar).contains("too far right"))
         #expect(Links.menuBarDoc(.fr).lastPathComponent == "menu-bar.fr.md")
         #expect(Links.menuBarDoc(.en).lastPathComponent == "menu-bar.md")
+    }
+
+    @Test("macOS 27: the apps right of the bar and Brimline stay; the others go from the leftmost to the nearest")
+    func nativePlan() {
+        let icon = { (id: String, fromRight: Double) in MenuBarHiding.MenuBarIcon(bundleIdentifier: id, middleFromRight: fromRight) }
+        // The bar's middle at 465 pt from the right edge. Claude has four icons left of it, the clock is right of it.
+        let plan = MenuBarHiding.nativePlan(icons: [
+            icon("com.anthropic.claudefordesktop", 738), icon("com.anthropic.claudefordesktop", 618),
+            icon("com.raycast.macos", 753), icon("com.corsair.ControlCenter", 846),
+            icon("com.cron.electron", 688), icon("com.apple.campo", 454), icon("com.kyome.Neo.RunCat", 343),
+            icon("eu.thanaelfontaine.brimline", 261), icon("eu.thanaelfontaine.brimline", 478),
+        ], barMiddleFromRight: 465, own: "eu.thanaelfontaine.brimline")
+        #expect(plan.shown == ["eu.thanaelfontaine.brimline", "com.apple.campo", "com.kyome.Neo.RunCat"])
+        #expect(plan.hiddenLeftToRight == ["com.corsair.ControlCenter", "com.raycast.macos",
+                                           "com.anthropic.claudefordesktop", "com.cron.electron"])
+        #expect(plan.allowed(hiding: 0) == plan.shown + plan.hiddenLeftToRight)
+        #expect(plan.allowed(hiding: 1).last == "com.cron.electron" && !plan.allowed(hiding: 1).contains("com.corsair.ControlCenter"))
+        #expect(plan.allowed(hiding: 9) == plan.shown)
+    }
+
+    @Test("macOS 27: an app with an icon on each side of the bar stays, every icon with it")
+    func nativePlanBothSides() {
+        let plan = MenuBarHiding.nativePlan(icons: [
+            MenuBarHiding.MenuBarIcon(bundleIdentifier: "com.apple.MenuBarAgent", middleFromRight: 700),
+            MenuBarHiding.MenuBarIcon(bundleIdentifier: "com.apple.MenuBarAgent", middleFromRight: 200),
+        ], barMiddleFromRight: 465, own: "eu.thanaelfontaine.brimline")
+        #expect(plan.shown == ["eu.thanaelfontaine.brimline", "com.apple.MenuBarAgent"])
+        #expect(plan.hiddenLeftToRight.isEmpty)
+    }
+
+    @Test("macOS 27: Brimline hides only from the Applications folder, and with the Accessibility permission")
+    func nativeRefusal() {
+        #expect(MenuBarHiding.nativeRefusal(appPath: "/Volumes/Disk/Applications/Brimline.app", accessibilityTrusted: true) == .notInApplications)
+        #expect(MenuBarHiding.nativeRefusal(appPath: "/Applications/Brimline.app", accessibilityTrusted: false) == .accessibilityNeeded)
+        #expect(MenuBarHiding.nativeRefusal(appPath: "/Applications/Brimline.app", accessibilityTrusted: true) == nil)
+        // After an update, the permission may be missing: the apps found the last time still let it hide.
+        #expect(MenuBarHiding.nativeRefusal(appPath: "/Applications/Brimline.app", accessibilityTrusted: false,
+                                            knowsShownApps: true) == nil)
     }
 }

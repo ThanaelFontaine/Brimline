@@ -222,6 +222,9 @@ final class PictureBar: MenuBarSeparating {
     var answer: MenuBarHiding.Decision
     var onRecheck: ((MenuBarHiding.Decision) -> Void)?
     var onClick: (() -> Void)?
+    var usesAllowList = true
+    var knownShownApps: [String] = []
+    var onShownApps: (([String]) -> Void)?
     init(_ answer: MenuBarHiding.Decision) { self.answer = answer }
     func setPresent(_ present: Bool) {}
     func hide() -> MenuBarHiding.Decision { answer }

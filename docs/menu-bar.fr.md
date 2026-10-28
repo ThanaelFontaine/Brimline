@@ -2,7 +2,7 @@
 
 *[English version](menu-bar.md)*
 
-Claude, ChatGPT, Cursor et Gemini posent chacun leur icône dans la barre des menus, et Brimline montre déjà où ils en sont. **Réglages, Barre des menus** donne deux façons de faire de la place. Aucune ne demande d'autorisation (ni Accessibilité, ni Enregistrement de l'écran), n'utilise d'API privée ni n'écrit dans un fichier de macOS ou d'une autre app.
+Claude, ChatGPT, Cursor et Gemini posent chacun leur icône dans la barre des menus, et Brimline montre déjà où ils en sont. **Réglages, Barre des menus** donne deux façons de faire de la place. La première (ranger) ne demande rien. La seconde (cacher) utilise, sous macOS 27 et après, une API privée de macOS et l'autorisation Accessibilité, seulement pour lire où sont les icônes des autres apps ; sous macOS 26 et avant, elle ne demande aucune autorisation et n'utilise aucune API privée. Aucune n'écrit dans un fichier de macOS ou d'une autre app.
 
 ## 1. Retirer une icône pour de bon (ranger)
 
@@ -20,13 +20,26 @@ Brimline ne peut pas retirer lui-même l'icône d'une autre app : macOS laisse c
 
 1. **Le trait apparaît.** Brimline ajoute un élément à lui dans la barre des menus : un fin trait vertical. La première fois, il arrive à gauche des autres icônes (macOS y place tout nouvel élément).
 2. **Une fois, le geste.** Maintenez Cmd et glissez, dans la barre des menus, chaque icône à cacher (Claude, ChatGPT, Cursor, Gemini) à gauche du trait. macOS retient la place de chaque icône, celle du trait aussi, d'un lancement à l'autre.
-3. **Cacher et montrer.** Un clic sur le trait cache tout ce qui est à sa gauche, et le trait devient une flèche «, juste à côté des icônes qui restent ; un clic sur la flèche les fait revenir. Dans la fenêtre de Brimline, **« Cacher les icônes »** et **« Montrer les icônes cachées »** font la même chose ; le même bouton est dans les Réglages.
+3. **Cacher et montrer.** Un clic sur le trait cache tout ce qui est à sa gauche, et le trait devient une flèche «, juste à côté des icônes qui restent ; un clic sur la flèche les fait revenir. Sous macOS 27 et après, la première fois, macOS demande l'autorisation Accessibilité (voir plus bas). Dans la fenêtre de Brimline, **« Cacher les icônes »** et **« Montrer les icônes cachées »** font la même chose ; le même bouton est dans les Réglages.
 
 <p align="center">
   <img src="images/settings-menuBar-hiding-fr-light.png" width="520" alt="Réglages, Barre des menus, Cacher sans retirer : l'interrupteur, le geste à faire une fois, le bouton Cacher les icônes et la note sur la technique">
 </p>
 
 ### Comment ça marche
+
+#### Sous macOS 27 et après : la liste d'autorisation de macOS
+
+Quand macOS a sa liste d'autorisation de la barre des menus, Brimline cache avec elle au lieu d'allonger son trait. C'est celle du mode examen de macOS, dans un cadre privé (`MenuBarClientCore`, classes `MBAssessmentModeConfiguration` et `MBAssessmentModeAssertion`). Hidden Bar 1.11.1 ([18 septembre 2026](https://github.com/dwarvesf/hidden/releases/tag/v1.11.1)) s'en sert aussi sous macOS 27. **Apple ne la documente pas** : une version de macOS peut la retirer. Brimline la cherche au lancement ; absente, il revient à la longueur de son trait, décrite plus bas (qui reste aussi pour macOS 26 et avant).
+
+- **Ce que vous voyez.** Les icônes des apps à gauche du trait disparaissent sur place, une app après l'autre de la gauche vers le trait (70 ms entre deux), et le trait devient une flèche «. macOS n'ajoute plus son propre « après les menus. Un clic sur la flèche les fait revenir, de la plus proche à la plus lointaine. Le clic sur le trait, le bouton « Cacher les icônes » de la fenêtre et celui des Réglages font la même chose.
+- **Par app.** Une app qui a une icône de chaque côté du trait reste visible, toutes ses icônes avec. Les éléments du système (horloge, Wi-Fi, Centre de contrôle) restent toujours. Une app dont Brimline ne peut pas lire les icônes en 0,2 s n'est pas sur la liste : macOS la cache, où que soient ses icônes.
+- **L'autorisation Accessibilité.** Brimline s'en sert seulement pour lire où sont les icônes des autres apps (l'attribut `AXExtrasMenuBar` de chaque app ouverte) et savoir lesquelles sont à gauche du trait. macOS la demande la première fois, dans une fenêtre du système. Sans elle, et sans liste connue, Brimline refuse avec : « Pour savoir quelles icônes sont à gauche de son trait, Brimline a besoin de l'autorisation Accessibilité : activez Brimline dans Réglages Système, Confidentialité et sécurité, Accessibilité, puis cliquez à nouveau. »
+- **Brimline doit être dans `/Applications`.** Ailleurs, macOS cache aussi ses icônes. Le 28 octobre 2026, un programme d'essai a mis Brimline, alors dans `~/Applications`, sur la liste, et ses icônes ont quand même disparu, alors que les apps de `/Applications` sur la liste sont restées ; les notes de Hidden Bar 1.11.1 disent la même chose. Sinon Brimline refuse : « Brimline doit être dans le dossier Applications pour cacher des icônes : ailleurs, macOS cache aussi les siennes. Placez Brimline dans Applications, puis rouvrez-le. »
+- **La liste mémorisée.** Brimline garde les apps trouvées à droite du trait la dernière fois (`shownApps`, dans son `settings.json`). Il est signé ad hoc, et macOS peut lier l'autorisation à chaque build (une possibilité, non vérifiée) : sans l'autorisation, le trait cache avec cette liste, c'est-à-dire toutes les autres apps d'un coup.
+- **Ce qui a été essayé.** Le 28 octobre 2026, sur macOS 27.0.1 (écran de 1920 pt, sans encoche), avec un programme d'essai et non Brimline : les icônes se sont cachées sur place, macOS n'a dessiné aucun « de lui, et tout est revenu à la fin de la liste. Puis, le 29 octobre 2026, dans Brimline (dans `/Applications`, avec l'autorisation Accessibilité), par de vrais clics : le trait, le bouton « Hide the icons » de la fenêtre de Brimline et celui des Réglages ont chacun caché les apps à gauche du trait l'une après l'autre, de la plus lointaine vers le trait, pendant que le trait devenait « ; le clic suivant les a remontrées en partant de la plus proche, et le « est redevenu le trait. macOS n'a dessiné aucun « de lui. Non essayé : un MacBook à encoche, plusieurs écrans, la mise en veille et le verrouillage.
+
+#### Sous macOS 26 et avant, ou sans la liste : la longueur du trait
 
 Brimline ne touche jamais à l'icône d'une autre app. Pour cacher, il rend **son propre trait** très long : le trait s'allonge vers la gauche et pousse les icônes voisines hors de la partie visible de la barre, où macOS ne les dessine pas. Pour les montrer, le trait reprend sa longueur normale. Hidden Bar et Dozer utilisaient cette technique avant macOS 27.
 
@@ -43,10 +56,12 @@ Ce que les essais ont montré, et ce que Brimline en fait :
 
 - **Brimline reste à droite du trait, il n'est donc jamais caché**, ni sa fenêtre avec le bouton « Montrer les icônes cachées ». Le trait est posé après l'icône de Brimline, il arrive donc à sa gauche ; et avant chaque masquage, Brimline vérifie que sa propre icône est à droite du trait, et refuse sinon (« L'icône de Brimline est à gauche du trait : glissez-la à droite du trait, sinon elle serait cachée aussi. »). Après un clic sur le trait, un refus ouvre les Réglages sur Barre des menus, où il est écrit.
 - **Couper le réglage** montre toutes les icônes et retire le trait de la barre : réglage coupé, il n'y a aucun trait.
-- **Quitter Brimline** fait revenir toutes les icônes : le trait appartient au processus de Brimline et part avec lui. Après un plantage, ce devrait être pareil, par construction (le trait part avec l'app), non essayé. À chaque lancement, les icônes partent montrées, même si elles étaient cachées au dernier arrêt.
+- **Quitter Brimline** fait revenir toutes les icônes : le trait appartient au processus de Brimline et part avec lui. Avec la liste d'autorisation de macOS 27, la liste prend fin avec le processus de Brimline, selon la documentation de Hidden Bar ; nous ne l'avons pas essayé pour un plantage. Mettre fin à la liste à la main (`invalidate`) a tout remis dans l'essai du 28 octobre 2026. À chaque lancement, les icônes partent montrées, même si elles étaient cachées au dernier arrêt.
 - **Rouvrir Brimline** (Finder, Spotlight) montre les icônes cachées et ouvre les réglages : une voie de retour qui ne dépend pas de la barre des menus.
 - Le trait ne peut pas être glissé hors de la barre, et ne quitte jamais Brimline.
 
 ### Ce qu'il laisse derrière lui
+
+Sous macOS 27 et après, avec la liste d'autorisation, Brimline écrit une chose à lui : `"menuBarHiding": { "enabled": …, "shownApps": [identifiants] }` dans son `settings.json`, les apps trouvées à droite du trait la dernière fois. L'autorisation Accessibilité reste dans Réglages Système, Confidentialité et sécurité, Accessibilité, jusqu'à ce que vous la retiriez.
 
 La place du trait est gardée par macOS, comme celle de chaque icône que vous glissez (sous macOS 27, dans ses propres préférences de la barre des menus, sous le nom de l'exécutable de Brimline et `brimline-separator`). Brimline n'écrit jamais dans ce fichier. Brimline peut aussi apparaître dans Réglages Système, Barre des menus, Autoriser dans la barre des menus, comme toute app qui a une icône. Il n'a pas été vérifié si couper puis rallumer le réglage garde la place du trait : si le trait revient à gauche des icônes, refaites le geste.
