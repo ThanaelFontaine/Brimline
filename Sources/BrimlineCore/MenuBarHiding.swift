@@ -163,8 +163,8 @@ public enum MenuBarHiding {
 public struct MenuBarHidingSettings: Codable, Sendable, Equatable {
     public var enabled: Bool = false
     /// macOS 27: the apps found right of the bar the last time Brimline could read the menu bar (bundle identifiers).
-    /// Brimline is signed ad hoc, and macOS may tie the Accessibility permission to each build (a possibility, not
-    /// checked): when the permission is missing, or nothing could be read, the bar hides with this list.
+    /// Brimline is signed ad hoc, so macOS ties the Accessibility permission to one build (its grant names the cdhash):
+    /// after an update, until the new build is covered, or when nothing could be read, the bar hides with this list.
     public var shownApps: [String] = []
 
     public init(enabled: Bool = false, shownApps: [String] = []) {

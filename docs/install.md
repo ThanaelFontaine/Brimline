@@ -69,6 +69,7 @@ Then link your accounts: [accounts.md](accounts.md).
 - Installed with the one-line script: run the same line again.
 - Installed from the disk image: download the new one and drag Brimline onto Applications again (replace it), after quitting Brimline.
 - Built from the source: `git pull`, then `scripts/build_app.sh` and `scripts/install.sh` (it stops the running copy before replacing it).
+- On macOS 27, with "Hide without removing" on: Brimline is signed ad hoc, so the Accessibility permission covers one build. After an update, the bar hides with the remembered list (all the other apps at once, no wave) until the permission covers the new build; see [menu bar](menu-bar.md#2-hide-icons-without-removing-them).
 
 ## Formerly Sightglass
 
