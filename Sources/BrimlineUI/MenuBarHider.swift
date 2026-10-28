@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import BrimlineCore
 
 /// What the model asks of Brimline's bar in the menu bar (QUOTA-73). The app gives `MenuBarHider`; the tests and
@@ -15,11 +16,23 @@ public protocol MenuBarSeparating: AnyObject {
     var onRecheck: ((MenuBarHiding.Decision) -> Void)? { get set }
     /// Told when the person clicks the bar: it hides or shows the icons, without opening the Brimline window.
     var onClick: (() -> Void)? { get set }
+    /// Whether it hides with macOS 27's allow-list (true) or with the length of the bar (false).
+    var usesAllowList: Bool { get }
+    /// macOS 27: the apps found right of the bar the last time (saved by the model), used when the Accessibility
+    /// permission is missing, and the place to tell a new list.
+    var knownShownApps: [String] { get set }
+    var onShownApps: (([String]) -> Void)? { get set }
 }
 
 /// Brimline's bar: one more `NSStatusItem` of Brimline's own, a thin vertical bar, that hides the icons placed left
-/// of it by growing (see `MenuBarHiding`). No permission, no private API, no file of macOS or of another app is
-/// written: Brimline only changes the length of its own item.
+/// of it. No file of macOS or of another app is written.
+///
+/// - On macOS 27 and later, when macOS has its allow-list (`MenuBarAllowList`): the bar keeps its size, Brimline
+///   reads which apps have icons left of it (Accessibility permission), and macOS hides those apps' icons in place, one
+///   app after the other from the left toward the bar, which becomes an arrow «. A click on the arrow brings them back,
+///   from the nearest. Brimline must run from the Applications folder.
+/// - Otherwise: the bar grows and pushes the icons out of the visible part of the menu bar (see `MenuBarHiding`);
+///   no permission is asked.
 ///
 /// - It exists only while the setting is on: when it is off, there is no bar in the menu bar.
 /// - It always starts at its normal length (icons shown), so a quit never leaves anything hidden (after a crash too, by design, not tried): the
@@ -38,6 +51,25 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
     private var screenObserver: (any NSObjectProtocol)?
     private var recheck: Task<Void, Never>?
     private var lastDecision: MenuBarHiding.Decision?
+    /// macOS 27's allow-list instead of the length.
+    private let native = MenuBarAllowList.isAvailable
+    public var usesAllowList: Bool { native }
+    public var knownShownApps: [String] = []
+    public var onShownApps: (([String]) -> Void)?
+    /// The allow-list in force, the plan it follows, and how many apps of the plan it hides.
+    private var assertion: NSObject?
+    private var plan: MenuBarHiding.NativePlan?
+    private var hiddenCount = 0
+    /// Bumped at each hide and each show: a wave whose number is no longer the current one ends any allow-list it gets
+    /// and leaves the state alone, so that no allow-list is lost and nothing is hidden after a show.
+    private var generation = 0
+    /// The icons going one after the other, or coming back.
+    private var wave: Task<Void, Never>?
+    private var morph: Task<Void, Never>?
+    private var askedAccessibility = false
+
+    /// The pause between two apps, so that their icons go one after the other toward the bar.
+    private static let waveStep: Duration = .milliseconds(70)
 
     public init(strings: Strings) {
         self.strings = strings
@@ -52,7 +84,7 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
             // Not taken out by a Command-drag out of the menu bar, and never quits Brimline.
             item.behavior = []
             if let button = item.button {
-                button.image = Self.barImage
+                button.image = native ? Self.nativeImage(arrow: 0) : Self.barImage
                 button.toolTip = strings.menuBarHidingBarHelp
                 button.setAccessibilityLabel(strings.menuBarHidingBarName)
                 button.target = self
@@ -77,6 +109,7 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
     public func hide() -> MenuBarHiding.Decision {
         guard let item else { return .refuse(.placeUnknown) }
         if isHiding { return lastDecision ?? .hide(length: Double(item.length)) }
+        if native { return hideNatively(item) }
         let decision = MenuBarHiding.decide(
             placement: placement(of: item),
             screenWidths: NSScreen.screens.map { Double($0.frame.width) },
@@ -96,6 +129,7 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
     public func show() {
         recheck?.cancel()
         recheck = nil
+        if native { return showNatively() }
         item?.length = NSStatusItem.variableLength
         item?.button?.image = Self.barImage
         item?.button?.toolTip = strings.menuBarHidingBarHelp
@@ -107,13 +141,186 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
     /// A screen came, went or changed size: the length that hides depends on the screens, and the place read before
     /// may no longer hold. The icons are shown, the bar settles, then the check runs again.
     private func screensChanged() {
-        guard isHiding else { return }
+        // The allow-list does not depend on the screens.
+        guard isHiding, !native else { return }
         show()
         recheck = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(800))
             guard let self, !Task.isCancelled, self.item != nil else { return }
             self.onRecheck?(self.hide())
         }
+    }
+
+    // MARK: macOS 27: the allow-list
+
+    private func hideNatively(_ item: NSStatusItem) -> MenuBarHiding.Decision {
+        let trusted = AXIsProcessTrusted()
+        if let refusal = MenuBarHiding.nativeRefusal(appPath: Bundle.main.bundlePath, accessibilityTrusted: trusted,
+                                                     knowsShownApps: !knownShownApps.isEmpty) {
+            if refusal == .accessibilityNeeded { askAccessibility() }
+            return .refuse(refusal)
+        }
+        guard let window = item.button?.window, let screen = window.screen ?? NSScreen.main, window.frame.width > 0 else {
+            return .refuse(.placeUnknown)
+        }
+        let barMiddleFromRight = Double(screen.frame.maxX - window.frame.midX)
+        let decision = MenuBarHiding.Decision.hide(length: 0)
+        isHiding = true
+        lastDecision = decision
+        item.button?.toolTip = strings.menuBarHidingBarHelpHidden
+        item.button?.setAccessibilityLabel(strings.menuBarHidingShow)
+        animateArrow(to: 1)
+        generation += 1
+        let current = generation
+        wave?.cancel()
+        // Shown again only in part (a click during the way back): the same plan goes on from where it is, so that no
+        // icon still shown blinks, and nothing is read again.
+        if let plan, assertion != nil {
+            wave = Task { @MainActor [weak self] in await self?.hideWave(plan, from: (self?.hiddenCount ?? 0) + 1, current) }
+            return decision
+        }
+        let (apps, screens) = MenuBarAllowList.snapshot()
+        let own = Bundle.main.bundleIdentifier ?? "eu.thanaelfontaine.brimline"
+        let known = knownShownApps
+        wave = Task { @MainActor [weak self] in
+            let icons = trusted ? await Task.detached(priority: .userInitiated) {
+                MenuBarAllowList.icons(of: apps, screens: screens)
+            }.value : []
+            guard let self, self.generation == current else { return }
+            let plan: MenuBarHiding.NativePlan
+            if !icons.isEmpty {
+                plan = MenuBarHiding.nativePlan(icons: icons, barMiddleFromRight: barMiddleFromRight, own: own)
+                if Array(plan.shown.dropFirst()) != self.knownShownApps {
+                    self.knownShownApps = Array(plan.shown.dropFirst())
+                    self.onShownApps?(self.knownShownApps)
+                }
+            } else if !known.isEmpty {
+                // No permission (after an update), or nothing read: the apps found the last time stay, every other one
+                // goes at once. The list kept is not touched.
+                plan = MenuBarHiding.NativePlan(shown: [own] + known.filter { $0 != own }, hiddenLeftToRight: [])
+            } else {
+                // Nothing read and no list yet: hiding would take the icons right of the bar too.
+                self.showNatively()
+                self.onRecheck?(.refuse(.placeUnknown))
+                return
+            }
+            self.plan = plan
+            self.hiddenCount = 0
+            await self.hideWave(plan, from: 1, current)
+        }
+        return decision
+    }
+
+    /// One allow-list per step, each with one app fewer, from the leftmost: the new one is in force before the previous
+    /// one ends, so nothing comes back in between.
+    private func hideWave(_ plan: MenuBarHiding.NativePlan, from first: Int, _ current: Int) async {
+        let last = max(1, plan.hiddenLeftToRight.count)
+        guard first <= last else { return }
+        for count in first...last {
+            guard generation == current else { return }
+            guard let next = await MenuBarAllowList.activate(allowing: plan.allowed(hiding: count)) else {
+                if generation == current { refusedByMacOS() }
+                return
+            }
+            guard generation == current else { return MenuBarAllowList.invalidate(next) }
+            if let previous = assertion { MenuBarAllowList.invalidate(previous) }
+            assertion = next
+            hiddenCount = count
+            if count < last { try? await Task.sleep(for: Self.waveStep) }
+        }
+    }
+
+    private func showNatively() {
+        wave?.cancel()
+        isHiding = false
+        lastDecision = nil
+        item?.button?.toolTip = strings.menuBarHidingBarHelp
+        item?.button?.setAccessibilityLabel(strings.menuBarHidingBarName)
+        animateArrow(to: 0)
+        generation += 1
+        let current = generation
+        guard assertion != nil, let plan else {
+            plan = nil
+            hiddenCount = 0
+            return
+        }
+        // Back from the app nearest the bar to the leftmost, starting from what is hidden now, then the last
+        // allow-list ends.
+        let first = hiddenCount
+        wave = Task { @MainActor [weak self] in
+            for count in stride(from: first - 1, through: 1, by: -1) {
+                try? await Task.sleep(for: Self.waveStep)
+                guard let self, self.generation == current else { return }
+                guard let next = await MenuBarAllowList.activate(allowing: plan.allowed(hiding: count)) else { break }
+                guard self.generation == current else { return MenuBarAllowList.invalidate(next) }
+                if let previous = self.assertion { MenuBarAllowList.invalidate(previous) }
+                self.assertion = next
+                self.hiddenCount = count
+            }
+            guard let self, self.generation == current else { return }
+            if let last = self.assertion { MenuBarAllowList.invalidate(last) }
+            self.assertion = nil
+            self.plan = nil
+            self.hiddenCount = 0
+        }
+    }
+
+    /// macOS did not take an allow-list: everything is shown again, and the model is told why.
+    private func refusedByMacOS() {
+        showNatively()
+        onRecheck?(.refuse(.refusedByMacOS))
+    }
+
+    /// The system's own window that opens System Settings at Accessibility, once per launch.
+    private func askAccessibility() {
+        guard !askedAccessibility else { return }
+        askedAccessibility = true
+        // The value of kAXTrustedCheckOptionPrompt, a global that Swift 6 does not let be read from here.
+        _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+    }
+
+    /// The bar turns into the arrow « (1) or back (0) in a few frames.
+    private func animateArrow(to target: CGFloat) {
+        morph?.cancel()
+        morph = Task { @MainActor [weak self] in
+            for step in 1...5 {
+                let progress = CGFloat(step) / 5
+                self?.item?.button?.image = Self.nativeImage(arrow: target == 1 ? progress : 1 - progress)
+                if step < 5 { try? await Task.sleep(for: .milliseconds(30)) }
+                if Task.isCancelled { return }
+            }
+        }
+    }
+
+    /// The bar (0), the arrow « (1), or a step between: the bar shrinks while the two chevrons appear in its place.
+    static func nativeImage(arrow progress: CGFloat) -> NSImage {
+        let image = NSImage(size: NSSize(width: 12, height: 16), flipped: false) { rect in
+            let midX = rect.midX
+            if progress < 1 {
+                let height = (rect.height - 3) * (1 - progress)
+                let bar = NSBezierPath(roundedRect: NSRect(x: midX - 0.75, y: rect.midY - height / 2, width: 1.5, height: height),
+                                       xRadius: 0.75, yRadius: 0.75)
+                NSColor.black.withAlphaComponent(1 - progress).setFill()
+                bar.fill()
+            }
+            if progress > 0 {
+                let arrows = NSBezierPath()
+                let half = 4 * progress
+                for tip in [midX - 4.25, midX + 0.25] {
+                    arrows.move(to: NSPoint(x: tip + 3.5 * progress, y: rect.midY + half))
+                    arrows.line(to: NSPoint(x: tip, y: rect.midY))
+                    arrows.line(to: NSPoint(x: tip + 3.5 * progress, y: rect.midY - half))
+                }
+                arrows.lineWidth = 1.5
+                arrows.lineCapStyle = .round
+                arrows.lineJoinStyle = .round
+                NSColor.black.withAlphaComponent(progress).setStroke()
+                arrows.stroke()
+            }
+            return true
+        }
+        image.isTemplate = true
+        return image
     }
 
     /// Where the bar and Brimline's own icon are, in points, on the bar's screen. Nil when it cannot be read.

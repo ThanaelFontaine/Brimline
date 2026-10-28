@@ -553,6 +553,11 @@ public struct Strings: Sendable {
         t("Once: hold Command and drag the icons to hide (Claude, ChatGPT, Cursor, Gemini) to the left of Brimline's bar in the menu bar. Then a click on the bar, or the “Hide the icons” button of the Brimline window, hides them; the bar becomes an arrow «, and a click on it shows them again. No permission is asked.",
           "Une fois : maintenez Cmd et glissez dans la barre des menus les icônes à cacher (Claude, ChatGPT, Cursor, Gemini) à gauche du trait de Brimline. Ensuite, un clic sur le trait, ou le bouton « Cacher les icônes » de la fenêtre de Brimline, les cache ; le trait devient une flèche «, et un clic dessus les montre à nouveau. Aucune autorisation n'est demandée.")
     }
+    /// The same on macOS 27, where Brimline hides with macOS's allow-list.
+    public var menuBarHidingHowToAllowList: String {
+        t("Once: hold Command and drag the icons to hide (Claude, ChatGPT, Cursor, Gemini) to the left of Brimline's bar in the menu bar. Then a click on the bar, or the “Hide the icons” button of the Brimline window, hides them in place, one after the other toward the bar, which becomes an arrow «; a click on the arrow shows them again. The first time, macOS asks for the Accessibility permission: Brimline uses it only to see which icons are left of its bar.",
+          "Une fois : maintenez Cmd et glissez dans la barre des menus les icônes à cacher (Claude, ChatGPT, Cursor, Gemini) à gauche du trait de Brimline. Ensuite, un clic sur le trait, ou le bouton « Cacher les icônes » de la fenêtre de Brimline, les cache sur place, l'une après l'autre vers le trait, qui devient une flèche « ; un clic sur la flèche les montre à nouveau. La première fois, macOS demande l'autorisation Accessibilité : Brimline s'en sert seulement pour voir quelles icônes sont à gauche de son trait.")
+    }
     public var menuBarHidingHide: String { t("Hide the icons", "Cacher les icônes") }
     public var menuBarHidingShow: String { t("Show the hidden icons", "Montrer les icônes cachées") }
     /// Why the icons were not hidden (they stay shown).
@@ -562,8 +567,17 @@ public struct Strings: Sendable {
             t("Brimline's icon is left of the bar: drag it right of the bar, or it would be hidden too.",
               "L'icône de Brimline est à gauche du trait : glissez-la à droite du trait, sinon elle serait cachée aussi.")
         case .placeUnknown:
-            t("Brimline couldn't read where the bar is, so nothing is hidden.",
-              "Brimline n'a pas pu lire où est le trait : rien n'est caché.")
+            t("Brimline couldn't read where the bar and the icons are, so nothing is hidden.",
+              "Brimline n'a pas pu lire où sont le trait et les icônes : rien n'est caché.")
+        case .accessibilityNeeded:
+            t("To know which icons are left of its bar, Brimline needs the Accessibility permission: turn Brimline on in System Settings, Privacy & Security, Accessibility, then click again.",
+              "Pour savoir quelles icônes sont à gauche de son trait, Brimline a besoin de l'autorisation Accessibilité : activez Brimline dans Réglages Système, Confidentialité et sécurité, Accessibilité, puis cliquez à nouveau.")
+        case .notInApplications:
+            t("Brimline must be in the Applications folder to hide icons: anywhere else, macOS hides its icons too. Move Brimline to Applications, then open it again.",
+              "Brimline doit être dans le dossier Applications pour cacher des icônes : ailleurs, macOS cache aussi les siennes. Placez Brimline dans Applications, puis rouvrez-le.")
+        case .refusedByMacOS:
+            t("macOS refused to hide the icons. They stay shown.",
+              "macOS a refusé de cacher les icônes. Elles restent visibles.")
         }
     }
     /// After a hiding that may leave the icons nearest the bar shown.
@@ -574,6 +588,11 @@ public struct Strings: Sendable {
     public var menuBarHidingNote: String {
         t("Apple doesn't document this technique: it was tried on macOS 27.0.1, on a screen without a notch. Brimline itself stays right of the bar, never hidden. Quitting Brimline or turning this off shows every icon again.",
           "Apple ne documente pas cette technique : elle a été essayée sur macOS 27.0.1, sur un écran sans encoche. Brimline reste à droite du trait, jamais caché. Quitter Brimline ou couper ce réglage remet toutes les icônes.")
+    }
+    /// The same on macOS 27, where Brimline hides with macOS's allow-list.
+    public var menuBarHidingNoteAllowList: String {
+        t("On macOS 27, Brimline hides with an allow-list of macOS that Apple doesn't document (Hidden Bar uses it too); tried on macOS 27.0.1. It works per app: an app with an icon on each side of the bar stays shown. Brimline must be in the Applications folder. Quitting Brimline or turning this off shows every icon again.",
+          "Sur macOS 27, Brimline cache avec une liste d'autorisation de macOS qu'Apple ne documente pas (Hidden Bar s'en sert aussi) ; essayé sur macOS 27.0.1. Elle marche par app : une app qui a une icône de chaque côté du trait reste visible. Brimline doit être dans le dossier Applications. Quitter Brimline ou couper ce réglage remet toutes les icônes.")
     }
     public var menuBarHidingGuide: String { t("How hiding works", "Comment marche le masquage") }
     /// The name VoiceOver reads for the bar, and its help tag.

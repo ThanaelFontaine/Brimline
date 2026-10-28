@@ -56,7 +56,7 @@ The script ([read it first](https://brimline.thanaelfontaine.eu/install.sh) if y
 git clone https://github.com/ThanaelFontaine/Brimline.git
 cd Brimline
 scripts/build_app.sh     # builds build/Brimline.app
-scripts/install.sh       # copies it to ~/Applications, links the command, opens the app
+scripts/install.sh       # copies it to /Applications (or ~/Applications), links the command, opens the app
 ```
 
 Brimline then lives in the menu bar, not in the Dock: look for its gauge at the top right of the screen. Requirements, what macOS shows, updating and uninstalling: [docs/install.md](docs/install.md).
@@ -98,7 +98,7 @@ What exactly is read, where the source comes from and what each try showed: [doc
   ![The menu bar element on a light bar: 1, 3 and 10 accounts, an alert, a last known value and no account, at 2x and 1x](docs/images/menubar-gauge-light.png)
 - **Open the window.** Cards grouped by provider, one gauge per limit with its percentage and its reset time ("resets in 2 h 10 (14:30)"). A provider that gives no readable limit says so in one sentence, never with a made-up number.
 - **Settings** (from the window, or by opening the app again): hide an account or give it a label, choose its color, switch each provider on or off, mark an account "Don't read this account", change the refresh interval (2 to 15 minutes), show the percentage next to the gauge, open at login.
-- **Tidy the menu bar** (Settings, Menu Bar): where to turn off the icons of Claude, ChatGPT and Cursor, and an optional "Hide without removing", with no permission asked: [docs/menu-bar.md](docs/menu-bar.md).
+- **Tidy the menu bar** (Settings, Menu Bar): where to turn off the icons of Claude, ChatGPT and Cursor, and an optional "Hide without removing" (on macOS 27 and later it uses a private API of macOS and asks for the Accessibility permission, only to read where the icons are): [docs/menu-bar.md](docs/menu-bar.md).
 
 Every state is said in words, never by color alone:
 

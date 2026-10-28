@@ -1,6 +1,11 @@
 #!/bin/bash
 # Installs the app built by scripts/build_app.sh for the current user:
-#   ~/Applications/Brimline.app, the command linked at ~/.local/bin/brimline, then opens the app.
+#   /Applications/Brimline.app (or ~/Applications/Brimline.app when /Applications is not writable), the command
+#   linked at ~/.local/bin/brimline, then opens the app.
+#
+# /Applications first: on macOS 27, Brimline hides menu bar icons with macOS's allow-list, which works only for an app
+# in /Applications. A copy left in ~/Applications by an earlier install is moved to the Trash (never deleted), and the
+# LaunchAgent that opened it at login is written again for the new place.
 #
 #   scripts/build_app.sh && scripts/install.sh [--login]
 #
@@ -15,18 +20,19 @@
 # - prints the command that moves the old files to the Trash, without running it.
 # The settings and the usage cache of the old folder come over at the first launch of Brimline.
 #
-# Nothing is written outside your home folder and no administrator password is asked.
+# Nothing is written outside your home folder and /Applications, and no administrator password is asked.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SOURCE="$ROOT/build/Brimline.app"
-DEST_DIR="$HOME/Applications"
+if [ -w /Applications ]; then DEST_DIR="/Applications"; else DEST_DIR="$HOME/Applications"; fi
 DEST="$DEST_DIR/Brimline.app"
+EARLIER="$HOME/Applications/Brimline.app"
 BIN_DIR="$HOME/.local/bin"
 AGENT_DIR="$HOME/Library/LaunchAgents"
 AGENT="$AGENT_DIR/eu.thanaelfontaine.brimline.plist"
 
-OLD_APP="$DEST_DIR/Sightglass.app"
+OLD_APP="$HOME/Applications/Sightglass.app"
 OLD_LINK="$BIN_DIR/sightglass"
 OLD_LABEL="eu.thanaelfontaine.sightglass"
 OLD_AGENT="$AGENT_DIR/$OLD_LABEL.plist"
@@ -45,12 +51,23 @@ if [ ! -d "$SOURCE" ]; then
   exit 1
 fi
 
-# Stop the old app and the installed copy if they run (only those, found by their full path).
+# Stop the old app and the installed copies if they run (only those, found by their full path).
 for pid in $(pgrep -f "^$OLD_APP/Contents/MacOS/Sightglass" || true) \
-           $(pgrep -f "^$DEST/Contents/MacOS/Brimline" || true); do
+           $(pgrep -f "^$DEST/Contents/MacOS/Brimline" || true) \
+           $(pgrep -f "^$EARLIER/Contents/MacOS/Brimline" || true); do
   kill "$pid" 2>/dev/null || true
 done
 sleep 1
+
+# A copy in ~/Applications from an earlier install, when this one goes to /Applications: to the Trash, and the wish
+# to open at login carries over.
+if [ "$DEST" != "$EARLIER" ] && [ -d "$EARLIER" ]; then
+  mv "$EARLIER" "$HOME/.Trash/Brimline-$(date +%Y%m%d-%H%M%S).app"
+  echo "The earlier copy in ~/Applications is in the Trash."
+fi
+if [ -f "$AGENT" ] && ! grep -q "<string>$DEST</string>" "$AGENT"; then
+  LOGIN=1
+fi
 
 mkdir -p "$DEST_DIR" "$BIN_DIR"
 rm -rf "$DEST"

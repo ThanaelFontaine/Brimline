@@ -32,6 +32,7 @@ public struct PanelView: View {
         }
         .frame(width: SGTheme.windowWidth)
         .background(opaqueBackground ? Color(nsColor: .windowBackgroundColor) : Color.clear)
+        .background(PanelWindowFitter())
     }
 
     private var header: some View {
@@ -534,5 +535,40 @@ struct LimitRow: View {
             return "\(strings.limitReached) · " + parts.joined(separator: " · ")
         }
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+}
+
+/// The window of the menu bar keeps the height of the tallest content it showed: once a note goes away, the panel sits
+/// in the middle of a taller window, with an empty band above it and a dark one under the footer. This brings the
+/// window back to the height of the panel, its top edge kept under the menu bar. Without a window, or when the window
+/// already has the panel's height (the images of the documentation), it does nothing.
+struct PanelWindowFitter: NSViewRepresentable {
+    func makeNSView(context: Context) -> FittingView { FittingView() }
+    func updateNSView(_ view: FittingView, context: Context) { view.fitSoon() }
+
+    final class FittingView: NSView {
+        override func setFrameSize(_ newSize: NSSize) {
+            super.setFrameSize(newSize)
+            fitSoon()
+        }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            fitSoon()
+        }
+
+        func fitSoon() {
+            Task { @MainActor [weak self] in self?.fit() }
+        }
+
+        private func fit() {
+            guard let window, bounds.height > 0 else { return }
+            let height = bounds.height.rounded()
+            guard abs(window.frame.height - height) > 1 else { return }
+            var frame = window.frame
+            frame.origin.y = frame.maxY - height
+            frame.size.height = height
+            window.setFrame(frame, display: true, animate: false)
+        }
     }
 }

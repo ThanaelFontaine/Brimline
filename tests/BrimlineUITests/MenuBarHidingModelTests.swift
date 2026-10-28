@@ -18,6 +18,9 @@ struct MenuBarHidingModelTests {
         var hidden = false
         var onRecheck: ((MenuBarHiding.Decision) -> Void)?
         var onClick: (() -> Void)?
+        var usesAllowList = false
+        var knownShownApps: [String] = []
+        var onShownApps: (([String]) -> Void)?
 
         func setPresent(_ present: Bool) {
             self.present.append(present)

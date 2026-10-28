@@ -17,11 +17,11 @@ The script ([readable here](https://brimline.thanaelfontaine.eu/install.sh)):
 1. stops if the Mac is not on macOS 14 or later;
 2. finds the latest release on GitHub and downloads `Brimline.dmg` and `Brimline.dmg.sha256`;
 3. checks the image against its SHA-256 and installs nothing if they differ;
-4. copies `Brimline.app` to `/Applications` (or where Brimline already is, or `~/Applications` when `/Applications` is not writable), quitting the running copy first;
+4. copies `Brimline.app` to `/Applications` (or where Brimline already is, or `~/Applications` when `/Applications` is not writable), quitting the running copy first (on macOS 27, Brimline hides the icons only from `/Applications`: a copy kept in `~/Applications` is refused until it is moved);
 5. links the command at `~/.local/bin/brimline` (never over a file that is not a link);
 6. opens the app.
 
-It asks for no administrator password. Options: `BRIMLINE_VERSION=0.2.2` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`).
+It asks for no administrator password. Options: `BRIMLINE_VERSION=0.2.2` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`; on macOS 27, Brimline then refuses to hide icons until it is in `/Applications`).
 
 ## 2. The disk image
 
@@ -47,7 +47,7 @@ scripts/install.sh
 ```
 
 - `scripts/build_app.sh` compiles the app and the `brimline` command for Apple silicon and Intel (`swift build -c release --arch arm64 --arch x86_64`), assembles `build/Brimline.app` and signs it ad hoc (`codesign -s -`).
-- `scripts/install.sh` copies the app to `~/Applications`, links the command to `~/.local/bin/brimline`, and opens the app. With `--login` it also turns on **Open at login** (otherwise turn it on in Settings, General). Nothing is written outside your home folder, and no administrator password is asked.
+- `scripts/install.sh` copies the app to `/Applications` (or to `~/Applications` when `/Applications` is not writable), moves to the Trash a copy left in `~/Applications` by an earlier install, writes again the **Open at login** LaunchAgent for the new place, links the command to `~/.local/bin/brimline`, and opens the app. With `--login` it also turns on **Open at login** (otherwise turn it on in Settings, General). Nothing is written outside your home folder and `/Applications`, and no administrator password is asked. Brimline must be in `/Applications` to hide menu bar icons on macOS 27 (see [menu bar](menu-bar.md)).
 - `scripts/build_dmg.sh` builds `build/Brimline.dmg` from that app, the same image as the release. It is optional and needs Python 3.10 or later (the Command Line Tools bring 3.9: install a newer one from python.org or Homebrew); it installs its Python tools in `.build/dmg-venv`, never system wide.
 
 ## After installing
@@ -94,7 +94,7 @@ Your agents need one change: the command and the MCP server are called `brimline
    rm -rf ~/Library/Application\ Support/Brimline
    ```
 
-Brimline never wrote to your Keychain or to your Claude Code folders, so there is nothing to clean there.
+Brimline never wrote to your Keychain or to your Claude Code folders, so there is nothing to clean there. If you gave it the Accessibility permission (macOS 27, to hide icons), remove Brimline from System Settings, Privacy & Security, Accessibility.
 
 ## For contributors
 

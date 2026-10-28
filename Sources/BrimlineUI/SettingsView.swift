@@ -494,7 +494,7 @@ public struct MenuBarHidingSection: View {
                 set: { model.setMenuBarHiding($0) }
             ))
             VStack(alignment: .leading, spacing: SGTheme.Space.s) {
-                Text(s.menuBarHidingHowTo)
+                Text(model.menuBarHidingUsesAllowList ? s.menuBarHidingHowToAllowList : s.menuBarHidingHowTo)
                     .font(.system(size: 12))
                     .fixedSize(horizontal: false, vertical: true)
                 MenuBarHidingDiagram(strings: s)
@@ -514,7 +514,8 @@ public struct MenuBarHidingSection: View {
                 }
             }
             VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
-                MenuBarNote(text: s.menuBarHidingNote, symbol: "info.circle")
+                MenuBarNote(text: model.menuBarHidingUsesAllowList ? s.menuBarHidingNoteAllowList : s.menuBarHidingNote,
+                            symbol: "info.circle")
                 Link(destination: Links.menuBarDoc(s.language)) {
                     Label(s.menuBarHidingGuide, systemImage: "questionmark.circle")
                 }
