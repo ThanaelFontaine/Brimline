@@ -3,7 +3,8 @@ import BrimlineCore
 import SwiftUI
 
 /// What the menu bar shows: the gauge element (one colored part per account), and the percentage of the most loaded
-/// account when the setting asks for it. VoiceOver reads it as one element.
+/// account when the setting asks for it. VoiceOver reads it as one element. Its tooltip is set on the status bar
+/// button by `MenuBarTooltip`: `.help` here would be lost.
 public struct MenuBarLabel: View {
     var model: AppModel
     /// Read so that the image is drawn again when the appearance changes.
@@ -26,7 +27,6 @@ public struct MenuBarLabel: View {
                     .monospacedDigit()
             }
         }
-        .help(model.strings.menuBarTooltip(gauge, names: names))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(sentence)
     }

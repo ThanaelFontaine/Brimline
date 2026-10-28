@@ -22,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
     private lazy var settingsWindow = SettingsWindowController(model: model)
     private lazy var hider = MenuBarHider(strings: model.strings)
+    private lazy var tooltip = MenuBarTooltip(model: model)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -38,6 +39,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try? await Task.sleep(for: .milliseconds(100))
             }
             guard let self else { return }
+            // The tooltip goes on the button of Brimline's element, found before the bar exists.
+            if let window = MenuBarHider.brimlineStatusWindows(excluding: nil).first,
+               let button = MenuBarTooltip.statusButton(in: window) {
+                self.tooltip.attach(button)
+            }
             self.model.attachSeparator(self.hider)
         }
     }
