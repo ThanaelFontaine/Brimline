@@ -82,4 +82,47 @@ struct LeakTests {
             #expect(!label.lowercased().contains("token") && !label.lowercased().contains("secret") && !label.lowercased().contains("password"))
         }
     }
+
+    @Test("A token in what Claude Code prints never reaches the report, the cache, the JSON or the MCP answers")
+    func reportSeeds() async throws {
+        let token = "sk-ant-oat01-SEED-REPORT-TOKEN-5e2a"
+        let other = "SEED-REPORT-OTHER-c41f"
+        let epoch = Int(now.timeIntervalSince1970)
+        let stream = [
+            #"{"type":"system","subtype":"init","apiKeySource":"\#(token)","session_id":"\#(other)"}"#,
+            #"{"type":"assistant","message":{"content":[{"type":"text","text":"Bearer \#(token) rate_limit_event"}]}}"#,
+            #"{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","overageDisabledReason":"\#(token)","unifiedWindows":{"five_hour":{"utilization":0.25,"resetsAt":\#(epoch + 3600),"status":"\#(token)","note":"\#(other)"},"seven_day":{"utilization":0.5,"token":"\#(token)"}},"accessToken":"\#(token)"},"uuid":"\#(other)","session_id":"\#(token)"}"#,
+            #"{"type":"result","result":"\#(token)"}"#,
+        ]
+        let statusline = #"{"session_id":"\#(token)","transcript_path":"\#(other)","rate_limits":{"five_hour":{"used_percentage":30,"resets_at":\#(epoch + 3600),"token":"\#(token)"},"spend_limit":{"used_percentage":1,"period":"\#(token)"}}}"#
+
+        let home = try TemporaryHome()
+        let paths = BrimlinePaths(home: home.url)
+        let store = ClaudeReportStore(directory: paths.claudeReportsDirectory)
+        try store.record(ClaudeCodeReportParser.parseStream(lines: stream, now: now), email: "someone@example.com", now: now)
+        try store.record(ClaudeCodeReportParser.parseStatusline(Data(statusline.utf8), now: now), email: "someone@example.com", now: now)
+
+        let service = UsageService(credentials: FakeCredentials([:]), http: FakeHTTP([:]))
+        let accounts = Providers.discover(readers: service.readers, home: home.url, settings: BrimlineSettings())
+        let snapshot = await service.refresh(accounts: accounts, settings: BrimlineSettings(), previous: nil, now: now, force: true)
+        #expect(snapshot.accounts.first?.sessionLimit?.percent == 30)
+        #expect(snapshot.accounts.first?.weeklyLimit?.percent == 50)
+        try UsageCache(file: paths.cacheFile).save(snapshot)
+
+        var outputs = [
+            String(decoding: try Data(contentsOf: store.file(for: "someone@example.com")), as: UTF8.self),
+            String(decoding: try Data(contentsOf: paths.cacheFile), as: UTF8.self),
+            AgentUsageReport(snapshot: snapshot, settings: BrimlineSettings(), source: "cache", now: now, home: home.url).jsonString(),
+        ]
+        let server = MCPServer(version: "0.0.0", load: { (snapshot, BrimlineSettings()) }, now: { self.now }, home: home.url)
+        for tool in ["list_accounts", "get_usage", "best_account"] {
+            outputs.append(try #require(server.handle(line: #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"\#(tool)","arguments":{}}}"#)))
+        }
+        for text in outputs {
+            #expect(!text.contains(token), "the token found in an output")
+            #expect(!text.contains(other), "a seed found in an output")
+            #expect(!text.contains("Bearer"))
+        }
+        #expect(!(outputs[0].contains("session_id") || outputs[0].contains("uuid")))
+    }
 }

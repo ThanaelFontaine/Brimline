@@ -80,6 +80,15 @@ public struct UsageService: Sendable {
             return read(usage, limits: limits, shape: shape, note: nil, now: now)
         case .annotated(let limits, let shape, let note):
             return read(usage, limits: limits, shape: shape, note: note, now: now)
+        case .observed(let limits, let observedAt, let instead):
+            // A fallback older than the numbers already read from the provider does not replace them.
+            if let instead, usage.observedAt == nil, let fetched = usage.fetchedAt, fetched >= observedAt, !usage.limits.isEmpty {
+                return failed(usage, status: instead, detail: nil, now: now, backoff: false)
+            }
+            var result = read(usage, limits: limits, shape: "", note: nil, now: now)
+            result.fetchedAt = min(observedAt, now)
+            result.observedAt = result.fetchedAt
+            return result
         case .expired:
             return failed(usage, status: .expired, detail: nil, now: now, backoff: false)
         case .notReadable(let reason):
@@ -108,6 +117,7 @@ public struct UsageService: Sendable {
         u.reason = nil
         u.responseShape = shape.isEmpty ? nil : shape
         u.note = note
+        u.observedAt = nil
         return u
     }
 

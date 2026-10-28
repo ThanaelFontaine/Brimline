@@ -51,7 +51,7 @@ Each provider tells its accounts apart in its own way, and Brimline shows one li
 
 | Provider | One account is | To add another |
 |---|---|---|
-| Claude | one Claude Code folder (`~/.claude`, `~/.claude-*`, or a folder you added) | give it its own folder and sign in there (steps 1 to 3 above) |
+| Claude | one Claude Code folder (`~/.claude`, `~/.claude-*`, or a folder you added), or one address with a Claude Code report | give it its own folder and sign in there (steps 1 to 3 above), or let Claude Code report its limits (below) |
 | ChatGPT | one Codex folder (`~/.codex`, or a `CODEX_HOME` folder you added) | **Add a Codex folder…**, under ChatGPT in **Settings, Accounts** |
 | Grok | the sign-in of the Grok CLI in `~/.grok`: one account | none: Brimline reads `~/.grok` only (a `GROK_HOME` folder is not read) |
 | Cursor | the sign-in of the Cursor app: one account | none: Brimline reads the one sign-in of the app |
@@ -62,6 +62,62 @@ With four Claude accounts, make four folders (for example `~/.claude-first`, `~/
 **A sign-in made with `claude setup-token` is not read.** That command makes a long-lived token for scripts. On 27 October 2026 we tried three such tokens against the address Brimline asks for limits (one request each, nothing else read or kept): none returned any limits (one answer was a refusal, HTTP 403, and two were "too many requests", HTTP 429, again an hour later). Brimline therefore reads folders only, and claims nothing about those tokens. If you only have such a token, sign in with `/login` in a folder of its own instead.
 
 **A folder you no longer use stays "Session expired".** Brimline never renews a sign-in, and only Claude Code does, when you use that account. Its last numbers stay, in grey, with their age.
+
+## Claude Code reports: an account Brimline cannot read directly
+
+Claude Code already learns the limits of its account with every answer, and gives them out in two documented places: to your **status line** command (the `rate_limits` field, [Claude Code's documentation](https://code.claude.com/docs/en/statusline)), and in `claude -p --output-format stream-json`, as a `rate_limit_event` line. The command `brimline report claude` reads one of these on its standard input and keeps **only the numbers**: the share used and the reset time of the 5 hour session and of the week. Brimline then shows that account, even one with no folder on this Mac (an account used on another setup, through a script, or whose session Brimline sees expired), with the age of its numbers.
+
+No token is read, no request is sent, no quota is spent: the numbers are the ones Claude Code already had.
+
+### With the status line
+
+Add the command to the status line of each Claude Code folder. The status line lives in the folder's `settings.json` (`~/.claude/settings.json`, or `~/.claude-work/settings.json` for a folder chosen with `CLAUDE_CONFIG_DIR`):
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.local/bin/brimline report claude --account someone@example.com --statusline"
+  }
+}
+```
+
+With `--statusline`, the command prints one short line (`5 h 23% · Week 41%`, in the language of your Mac), or nothing while Claude Code has no limit to give (before the first answer of a session). It never fails and never writes on the error output: whatever goes wrong, the status line just stays as it was. It writes only when Claude Code gave a limit.
+
+`--account auto` takes the address from the `.claude.json` of the folder in use (`CLAUDE_CONFIG_DIR`, or `~/.claude`). That needs the status line command to see the `CLAUDE_CONFIG_DIR` of the session, which Claude Code's documentation does not state: the address written out, as above, is the sure way.
+
+**You already have a status line.** Keep it, and give it the same input. In a script of your own (for example `~/.claude/statusline.sh`, named in `statusLine.command`):
+
+```bash
+#!/bin/bash
+input=$(cat)
+printf '%s' "$input" | ~/.local/bin/brimline report claude --account someone@example.com --statusline >/dev/null
+# then your status line, as before, from "$input"
+printf '%s' "$input" | ~/.claude/my-statusline.sh
+```
+
+Drop `>/dev/null` to show Brimline's line too. Claude Code's documentation says `rate_limits` is there for Claude.ai Pro and Max subscribers, after the first answer of a session, and that each window may be missing. For another plan (a Team or Enterprise seat), Claude Code may give none: use the stream-json way below.
+
+### With `claude -p`
+
+A script that runs `claude -p --output-format stream-json --verbose` can pipe its output into the command (it reads every line and keeps only the `rate_limit_event` ones):
+
+```bash
+claude -p "..." --output-format stream-json --verbose | tee run.ndjson | ~/.local/bin/brimline report claude --account someone@example.com
+```
+
+Exit codes: `0` recorded, `3` no limits in the input (nothing written), `4` Claude Code's event has a form Brimline does not know (recorded as "format changed"), `1` the report could not be written, `64` a wrong option. `--dir <folder>` writes elsewhere (for tests: the app reads only its own folder).
+
+The percentage of a `rate_limit_event` is in `rate_limit_info.unifiedWindows`, a field that is not in the published type of the event (it was seen on the Claude Code versions of October 2026). If it disappears, Brimline says "format changed" and shows no new number, never a guess.
+
+### What Brimline does with a report
+
+- One report per address, in `~/Library/Application Support/Brimline/claude-reports/<address>.json` (folder readable by you only, file `0600`, written atomically). It holds the address, where the numbers came from (`statusline` or `stream-json`), when, and the two windows. Nothing else of Claude Code's output can go in it.
+- Each window kept is replaced only by a newer one: a week missing from one input stays as last seen. A reset time that has passed counts as 0 %. A week never seen is shown as **"Week: not seen yet in Claude Code's reports"**, never as "no weekly limit" (a team seat may never have one).
+- A report whose address is the one of a folder is linked to it: that account **keeps its direct reading**, and its report is used only when the session has expired or the Keychain item is missing, and only if it is newer than the last numbers read. An address with no folder becomes an account of its own, read from its report only.
+- The card always says the age of the numbers ("Claude Code report, 3 min ago"). An account little used shows old numbers, with their age.
+- **"Don't read this account"** applies to reports too: the report of such an account is not opened.
+- For agents, an account known by its report only has `"source": "report"` and `"folder": null`, and every account read from a report has `observed_at`, the time Claude Code saw its numbers ([agents](agents.md)).
 
 ## What Brimline reads, and what it never does
 
@@ -117,6 +173,7 @@ Official tool: the Cursor app, signed in as usual. Cursor has no account to link
 | **Sign in again** | Anthropic refused the token (HTTP 401). | Run `/login` in Claude Code with this folder. |
 | **Not signed in** | No Keychain item for this folder. | Run Claude Code with this folder and sign in. |
 | **Unavailable** | Anthropic did not answer usefully (rate limit, server error, network, or an answer Brimline does not understand). Brimline tries again later, waiting longer each time. | Nothing, usually. If it lasts, the endpoint may have changed: see the [FAQ](faq.md). |
+| **Week: not seen yet in Claude Code's reports** | The numbers come from a Claude Code report that has never had the week (a team seat may never have one). It is unknown, not absent. | Nothing. |
 | **No weekly limit across all models** | The account (often a team seat) has no weekly limit across all models; only the session and per model limits apply. | Nothing. |
 | An account is missing | Its folder is not named `~/.claude-*`, or has no `.claude.json` yet. | Sign in once in that folder, or add it by hand. |
 
