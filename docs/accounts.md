@@ -53,9 +53,9 @@ Each provider tells its accounts apart in its own way, and Brimline shows one li
 |---|---|---|
 | Claude | one Claude Code folder (`~/.claude`, `~/.claude-*`, or a folder you added) | give it its own folder and sign in there (steps 1 to 3 above) |
 | ChatGPT | one Codex folder (`~/.codex`, or a `CODEX_HOME` folder you added) | **Add a Codex folder…**, under ChatGPT in **Settings, Accounts** |
-| Grok | the sign-in of the Grok CLI (`~/.grok`): one account | none: the Grok CLI keeps a single sign-in |
-| Cursor | the sign-in of the Cursor app: one account | none: the app keeps a single sign-in |
-| Gemini | the sign-in of Antigravity: one account | none: Antigravity keeps a single sign-in |
+| Grok | the sign-in of the Grok CLI in `~/.grok`: one account | none: Brimline reads `~/.grok` only (a `GROK_HOME` folder is not read) |
+| Cursor | the sign-in of the Cursor app: one account | none: Brimline reads the one sign-in of the app |
+| Gemini | the sign-in of Antigravity: one account | none: Brimline reads the one sign-in of Antigravity |
 
 With four Claude accounts, make four folders (for example `~/.claude-first`, `~/.claude-second`, `~/.claude-third`, and `~/.claude` for the fourth), sign in once in each, and Brimline lists the four. Give each a short label in **Settings, Accounts** if its address is long.
 

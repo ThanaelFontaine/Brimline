@@ -53,9 +53,9 @@ Chaque fournisseur distingue ses comptes à sa façon, et Brimline montre une li
 |---|---|---|
 | Claude | un dossier de Claude Code (`~/.claude`, `~/.claude-*`, ou un dossier ajouté) | lui donner son propre dossier et s'y connecter (étapes 1 à 3 ci-dessus) |
 | ChatGPT | un dossier de Codex (`~/.codex`, ou un dossier `CODEX_HOME` ajouté) | **Ajouter un dossier Codex…**, sous ChatGPT dans **Réglages, Comptes** |
-| Grok | la connexion du Grok CLI (`~/.grok`) : un seul compte | rien : le Grok CLI garde une seule connexion |
-| Cursor | la connexion de l'app Cursor : un seul compte | rien : l'app garde une seule connexion |
-| Gemini | la connexion d'Antigravity : un seul compte | rien : Antigravity garde une seule connexion |
+| Grok | la connexion du Grok CLI dans `~/.grok` : un seul compte | rien : Brimline ne lit que `~/.grok` (un dossier `GROK_HOME` n'est pas lu) |
+| Cursor | la connexion de l'app Cursor : un seul compte | rien : Brimline lit la seule connexion de l'app |
+| Gemini | la connexion d'Antigravity : un seul compte | rien : Brimline lit la seule connexion d'Antigravity |
 
 Avec quatre comptes Claude, faites quatre dossiers (par exemple `~/.claude-premier`, `~/.claude-deuxieme`, `~/.claude-troisieme`, et `~/.claude` pour le quatrième), connectez-vous une fois dans chacun, et Brimline liste les quatre. Donnez à chacun un libellé court dans **Réglages, Comptes** si son adresse est longue.
 
