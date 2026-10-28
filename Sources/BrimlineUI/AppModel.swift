@@ -404,6 +404,7 @@ public final class AppModel {
             menuBarIconsHidden = false
             menuBarHidingRefusal = nil
         }
+        if !on { separator?.show() }
         separator?.setPresent(on)
     }
 

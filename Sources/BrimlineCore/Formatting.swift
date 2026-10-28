@@ -570,8 +570,8 @@ public struct Strings: Sendable {
         }
     }
     public var menuBarHidingNote: String {
-        t("Apple doesn't document this technique: it was tried on macOS 27.0.1, on a screen without a notch. Brimline itself stays right of the bar, never hidden. Quitting Brimline or turning this off always shows every icon again.",
-          "Apple ne documente pas cette technique : elle a été essayée sur macOS 27.0.1, sur un écran sans encoche. Brimline reste à droite du trait, jamais caché. Quitter Brimline ou couper ce réglage remet toujours toutes les icônes.")
+        t("Apple doesn't document this technique: it was tried on macOS 27.0.1, on a screen without a notch. Brimline itself stays right of the bar, never hidden. Quitting Brimline or turning this off shows every icon again.",
+          "Apple ne documente pas cette technique : elle a été essayée sur macOS 27.0.1, sur un écran sans encoche. Brimline reste à droite du trait, jamais caché. Quitter Brimline ou couper ce réglage remet toutes les icônes.")
     }
     public var menuBarHidingGuide: String { t("How hiding works", "Comment marche le masquage") }
     /// The name VoiceOver reads for the bar, and its help tag.

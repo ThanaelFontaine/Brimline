@@ -19,7 +19,6 @@ struct MenuBarHidingModelTests {
         var onRecheck: ((MenuBarHiding.Decision) -> Void)?
 
         func setPresent(_ present: Bool) {
-            if !present { show() }
             self.present.append(present)
         }
         func hide() -> MenuBarHiding.Decision {

@@ -20,7 +20,7 @@ public protocol MenuBarSeparating: AnyObject {
 /// written: Brimline only changes the length of its own item.
 ///
 /// - It exists only while the setting is on: when it is off, there is no bar in the menu bar.
-/// - It always starts at its normal length (icons shown), so a crash or a quit never leaves anything hidden: the
+/// - It always starts at its normal length (icons shown), so a quit never leaves anything hidden (after a crash too, by design, not tried): the
 ///   icons come back when Brimline's process ends, and the next launch starts with them shown.
 /// - Its place is only read while the icons are shown (the frames AppKit gives while they are hidden are wrong).
 /// - When the screens change while the icons are hidden, it shows them, reads its place again, and hides them again

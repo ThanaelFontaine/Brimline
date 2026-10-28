@@ -30,7 +30,7 @@ Brimline cannot remove another app's icon itself: macOS leaves that choice to ea
 
 Brimline never touches another app's icon. To hide, it makes **its own bar** very long: the bar grows to the left and pushes the icons beside it out of the visible part of the menu bar, where macOS does not draw them. To show them, the bar gets its normal length back. Hidden Bar and Dozer used this technique before macOS 27.
 
-**Apple does not document it.** It was tried on **macOS 27.0.1, on a 1920 pt screen without a notch** (28 October 2026). It was **not tried on a MacBook with a notch, nor with several screens**, nor across sleep and lock. A later version of macOS can break it; Brimline then hides nothing, and every icon stays shown.
+**Apple does not document it.** It was tried on **macOS 27.0.1, on a 1920 pt screen without a notch** (28 October 2026). It was **not tried on a MacBook with a notch, nor with several screens**, nor across sleep and lock. A later version of macOS should be able to break it; Brimline should then hide nothing, and every icon should stay shown (not tried).
 
 What the tries showed, and what Brimline does with it:
 
@@ -42,7 +42,7 @@ What the tries showed, and what Brimline does with it:
 
 - **Brimline stays right of the bar, so it is never hidden**, and neither is its window with the "Show the hidden icons" button. The bar is put in after Brimline's own icon, so it lands left of it; and before each hiding Brimline checks that its own icon is right of the bar, and refuses otherwise ("Brimline's icon is left of the bar: drag it right of the bar, or it would be hidden too.").
 - **Turning the setting off** shows every icon and takes the bar out of the menu bar: when the setting is off, there is no bar at all.
-- **Quitting Brimline**, or a crash, brings every icon back: the bar belongs to Brimline's process and leaves with it. At each launch the icons start shown, even when they were hidden at the last quit.
+- **Quitting Brimline** brings every icon back: the bar belongs to Brimline's process and leaves with it. After a crash it should be the same, by design (the bar goes away with the app), not tried. At each launch the icons start shown, even when they were hidden at the last quit.
 - **Opening Brimline again** (Finder, Spotlight) shows the hidden icons, and opens the settings: a way back that does not depend on the menu bar.
 - The bar cannot be dragged out of the menu bar, and it never quits Brimline.
 

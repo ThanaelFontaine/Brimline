@@ -30,7 +30,7 @@ Brimline ne peut pas retirer lui-même l'icône d'une autre app : macOS laisse c
 
 Brimline ne touche jamais à l'icône d'une autre app. Pour cacher, il rend **son propre trait** très long : le trait s'allonge vers la gauche et pousse les icônes voisines hors de la partie visible de la barre, où macOS ne les dessine pas. Pour les montrer, le trait reprend sa longueur normale. Hidden Bar et Dozer utilisaient cette technique avant macOS 27.
 
-**Apple ne la documente pas.** Elle a été essayée sur **macOS 27.0.1, sur un écran de 1920 pt sans encoche** (28 octobre 2026). Elle **n'a pas été essayée sur un MacBook à encoche, ni avec plusieurs écrans**, ni après une mise en veille ou un verrouillage. Une version suivante de macOS peut la casser ; Brimline ne cache alors rien, et toutes les icônes restent visibles.
+**Apple ne la documente pas.** Elle a été essayée sur **macOS 27.0.1, sur un écran de 1920 pt sans encoche** (28 octobre 2026). Elle **n'a pas été essayée sur un MacBook à encoche, ni avec plusieurs écrans**, ni après une mise en veille ou un verrouillage. Une version suivante de macOS devrait pouvoir la casser ; Brimline ne devrait alors rien cacher, et toutes les icônes devraient rester visibles (non essayé).
 
 Ce que les essais ont montré, et ce que Brimline en fait :
 
@@ -42,7 +42,7 @@ Ce que les essais ont montré, et ce que Brimline en fait :
 
 - **Brimline reste à droite du trait, il n'est donc jamais caché**, ni sa fenêtre avec le bouton « Montrer les icônes cachées ». Le trait est posé après l'icône de Brimline, il arrive donc à sa gauche ; et avant chaque masquage, Brimline vérifie que sa propre icône est à droite du trait, et refuse sinon (« L'icône de Brimline est à gauche du trait : glissez-la à droite du trait, sinon elle serait cachée aussi. »).
 - **Couper le réglage** montre toutes les icônes et retire le trait de la barre : réglage coupé, il n'y a aucun trait.
-- **Quitter Brimline**, ou un plantage, fait revenir toutes les icônes : le trait appartient au processus de Brimline et part avec lui. À chaque lancement, les icônes partent montrées, même si elles étaient cachées au dernier arrêt.
+- **Quitter Brimline** fait revenir toutes les icônes : le trait appartient au processus de Brimline et part avec lui. Après un plantage, ce devrait être pareil, par construction (le trait part avec l'app), non essayé. À chaque lancement, les icônes partent montrées, même si elles étaient cachées au dernier arrêt.
 - **Rouvrir Brimline** (Finder, Spotlight) montre les icônes cachées et ouvre les réglages : une voie de retour qui ne dépend pas de la barre des menus.
 - Le trait ne peut pas être glissé hors de la barre, et ne quitte jamais Brimline.
 
