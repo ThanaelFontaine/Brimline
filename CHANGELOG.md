@@ -14,6 +14,7 @@ Brimline 0.2.2 fixes "Hide without removing" when Brimline's bar sits far right 
 
 - **The bar far right no longer refuses to hide.** Up to 0.2.1, a bar whose left edge was more than 45 % of the screen plus 50 pt from the left was refused with "The bar is too far right to hide reliably", which, with many icons in the menu bar, meant always. Measured again on 28 October 2026 with a bar at 1512 pt of a 1920 pt screen: macOS pushes the icons with a length of 864 pt and takes the bar out from 1000 pt, wherever the bar is. Brimline now always hides what it can, with **48 % of the narrowest screen** (921 pt on 1920, it was 45 %), and when the bar is far right it says that the icons nearest the bar may stay visible, and how to keep only the icons to hide left of it. The refusal "too far right" is gone; the two others stay (Brimline's icon left of the bar, a place that cannot be read).
 - **The gauge on a regular screen.** On a screen that is not Retina (1x), the gauge, its limit line and the glyph were drawn thinner than on Retina; they now have the same bold look (2 pt lines). The pictures of the README and the docs are made again.
+- **Release workflow.** When it completes a draft release left by an earlier run, it now makes the tag on the commit the disk image was built from (`--target`), as it already did for a new release.
 
 ## [0.2.1] - 2026-10-28
 
