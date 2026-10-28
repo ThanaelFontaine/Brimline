@@ -155,7 +155,7 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
 
     private func hideNatively(_ item: NSStatusItem) -> MenuBarHiding.Decision {
         let trusted = AXIsProcessTrusted()
-        // After an update, the permission given to the previous build no longer applies: macOS's window asks again.
+        // After an update, the permission given to the previous build no longer applies: ask macOS to show its window.
         if !trusted { askAccessibility() }
         if let refusal = MenuBarHiding.nativeRefusal(appPath: Bundle.main.bundlePath, accessibilityTrusted: trusted,
                                                      knowsShownApps: !knownShownApps.isEmpty) {
