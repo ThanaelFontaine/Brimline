@@ -54,9 +54,26 @@ enum MenuBarAllowList {
         let activate = unsafeBitCast(class_getMethodImplementation(assertionClass, activateSelector),
                                      to: ActivateFunction.self)
         let accepted: Bool = await withCheckedContinuation { continuation in
-            activate(assertion, activateSelector, configuration) { error in continuation.resume(returning: error == nil) }
+            let once = ResumeOnce(continuation)
+            activate(assertion, activateSelector, configuration) { error in once.resume(returning: error == nil) }
         }
         return accepted ? assertion : nil
+    }
+
+    /// Resumes the wait once, should macOS call the completion handler more than once.
+    private final class ResumeOnce: @unchecked Sendable {
+        private let lock = NSLock()
+        private var continuation: CheckedContinuation<Bool, Never>?
+
+        init(_ continuation: CheckedContinuation<Bool, Never>) { self.continuation = continuation }
+
+        func resume(returning value: Bool) {
+            lock.lock()
+            let pending = continuation
+            continuation = nil
+            lock.unlock()
+            pending?.resume(returning: value)
+        }
     }
 
     /// Ends one allow-list: the icons it hid come back, unless a newer one hides them.

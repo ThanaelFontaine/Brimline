@@ -540,8 +540,8 @@ struct LimitRow: View {
 
 /// The window of the menu bar keeps the height of the tallest content it showed: once a note goes away, the panel sits
 /// in the middle of a taller window, with an empty band above it and a dark one under the footer. This brings the
-/// window back to the height of the panel, its top edge kept under the menu bar. Without a window (the images of the
-/// documentation), it does nothing.
+/// window back to the height of the panel, its top edge kept under the menu bar. Without a window, or when the window
+/// already has the panel's height (the images of the documentation), it does nothing.
 struct PanelWindowFitter: NSViewRepresentable {
     func makeNSView(context: Context) -> FittingView { FittingView() }
     func updateNSView(_ view: FittingView, context: Context) { view.fitSoon() }

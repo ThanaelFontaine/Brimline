@@ -104,6 +104,18 @@ struct MenuBarHidingTests {
         #expect(try JSONCoding.decoder().decode(BrimlineSettings.self, from: data).menuBarHiding.enabled == true)
     }
 
+    @Test("the list of apps shown is empty in a file written before it, and kept when saved")
+    func shownAppsRoundTrip() throws {
+        let old = try JSONCoding.decoder().decode(BrimlineSettings.self, from: Data(#"{"menuBarHiding":{"enabled":true}}"#.utf8))
+        #expect(old.menuBarHiding.enabled == true)
+        #expect(old.menuBarHiding.shownApps.isEmpty)
+        var settings = BrimlineSettings()
+        settings.menuBarHiding = MenuBarHidingSettings(enabled: true, shownApps: ["com.example.one", "com.example.two"])
+        let data = try JSONCoding.encoder().encode(settings)
+        let back = try JSONCoding.decoder().decode(BrimlineSettings.self, from: data)
+        #expect(back.menuBarHiding.shownApps == ["com.example.one", "com.example.two"])
+    }
+
     @Test("every text of hiding exists in English and in French, with no dash")
     func texts() {
         for language in Language.allCases {

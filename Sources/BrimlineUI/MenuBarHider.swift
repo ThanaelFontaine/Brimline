@@ -56,9 +56,13 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
     public var usesAllowList: Bool { native }
     public var knownShownApps: [String] = []
     public var onShownApps: (([String]) -> Void)?
-    /// The allow-list in force, and the plan it follows, while the icons are hidden that way.
+    /// The allow-list in force, the plan it follows, and how many apps of the plan it hides.
     private var assertion: NSObject?
     private var plan: MenuBarHiding.NativePlan?
+    private var hiddenCount = 0
+    /// Bumped at each hide and each show: a wave whose number is no longer the current one ends any allow-list it gets
+    /// and leaves the state alone, so that no allow-list is lost and nothing is hidden after a show.
+    private var generation = 0
     /// The icons going one after the other, or coming back.
     private var wave: Task<Void, Never>?
     private var morph: Task<Void, Never>?
@@ -166,40 +170,59 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
         item.button?.toolTip = strings.menuBarHidingBarHelpHidden
         item.button?.setAccessibilityLabel(strings.menuBarHidingShow)
         animateArrow(to: 1)
+        generation += 1
+        let current = generation
+        wave?.cancel()
+        // Shown again only in part (a click during the way back): the same plan goes on from where it is, so that no
+        // icon still shown blinks, and nothing is read again.
+        if let plan, assertion != nil {
+            wave = Task { @MainActor [weak self] in await self?.hideWave(plan, from: (self?.hiddenCount ?? 0) + 1, current) }
+            return decision
+        }
         let (apps, screens) = MenuBarAllowList.snapshot()
         let own = Bundle.main.bundleIdentifier ?? "eu.thanaelfontaine.brimline"
         let known = knownShownApps
-        wave?.cancel()
         wave = Task { @MainActor [weak self] in
+            let icons = trusted ? await Task.detached(priority: .userInitiated) {
+                MenuBarAllowList.icons(of: apps, screens: screens)
+            }.value : []
+            guard let self, self.generation == current else { return }
             let plan: MenuBarHiding.NativePlan
-            if trusted {
-                let icons = await Task.detached(priority: .userInitiated) {
-                    MenuBarAllowList.icons(of: apps, screens: screens)
-                }.value
+            if !icons.isEmpty {
                 plan = MenuBarHiding.nativePlan(icons: icons, barMiddleFromRight: barMiddleFromRight, own: own)
+                if Array(plan.shown.dropFirst()) != self.knownShownApps {
+                    self.knownShownApps = Array(plan.shown.dropFirst())
+                    self.onShownApps?(self.knownShownApps)
+                }
             } else {
-                // No permission (after an update): the apps found the last time stay, every other one goes at once.
+                // No permission (after an update), or nothing read: the apps found the last time stay, every other one
+                // goes at once. The list kept is not touched.
                 plan = MenuBarHiding.NativePlan(shown: [own] + known.filter { $0 != own }, hiddenLeftToRight: [])
             }
-            guard let self, !Task.isCancelled else { return }
             self.plan = plan
-            if trusted, Array(plan.shown.dropFirst()) != self.knownShownApps {
-                self.knownShownApps = Array(plan.shown.dropFirst())
-                self.onShownApps?(self.knownShownApps)
-            }
-            // One allow-list per step, each with one app fewer, from the leftmost: the new one is in force before the
-            // previous one ends, so nothing comes back in between.
-            for count in 1...max(1, plan.hiddenLeftToRight.count) {
-                guard let next = await MenuBarAllowList.activate(allowing: plan.allowed(hiding: count)) else {
-                    return self.refusedByMacOS()
-                }
-                guard !Task.isCancelled, self.isHiding else { return MenuBarAllowList.invalidate(next) }
-                if let previous = self.assertion { MenuBarAllowList.invalidate(previous) }
-                self.assertion = next
-                if count < plan.hiddenLeftToRight.count { try? await Task.sleep(for: Self.waveStep) }
-            }
+            self.hiddenCount = 0
+            await self.hideWave(plan, from: 1, current)
         }
         return decision
+    }
+
+    /// One allow-list per step, each with one app fewer, from the leftmost: the new one is in force before the previous
+    /// one ends, so nothing comes back in between.
+    private func hideWave(_ plan: MenuBarHiding.NativePlan, from first: Int, _ current: Int) async {
+        let last = max(1, plan.hiddenLeftToRight.count)
+        guard first <= last else { return }
+        for count in first...last {
+            guard generation == current else { return }
+            guard let next = await MenuBarAllowList.activate(allowing: plan.allowed(hiding: count)) else {
+                if generation == current { refusedByMacOS() }
+                return
+            }
+            guard generation == current else { return MenuBarAllowList.invalidate(next) }
+            if let previous = assertion { MenuBarAllowList.invalidate(previous) }
+            assertion = next
+            hiddenCount = count
+            if count < last { try? await Task.sleep(for: Self.waveStep) }
+        }
     }
 
     private func showNatively() {
@@ -209,31 +232,36 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
         item?.button?.toolTip = strings.menuBarHidingBarHelp
         item?.button?.setAccessibilityLabel(strings.menuBarHidingBarName)
         animateArrow(to: 0)
-        guard let first = assertion else { plan = nil; return }
-        let plan = self.plan
+        generation += 1
+        let current = generation
+        guard assertion != nil, let plan else {
+            plan = nil
+            hiddenCount = 0
+            return
+        }
+        // Back from the app nearest the bar to the leftmost, starting from what is hidden now, then the last
+        // allow-list ends.
+        let first = hiddenCount
         wave = Task { @MainActor [weak self] in
-            // Back from the app nearest the bar to the leftmost, then the last allow-list ends.
-            var current = first
-            if let plan {
-                for count in stride(from: plan.hiddenLeftToRight.count - 1, through: 1, by: -1) {
-                    try? await Task.sleep(for: Self.waveStep)
-                    guard !Task.isCancelled, let next = await MenuBarAllowList.activate(allowing: plan.allowed(hiding: count))
-                    else { break }
-                    MenuBarAllowList.invalidate(current)
-                    current = next
-                    self?.assertion = next
-                }
+            for count in stride(from: first - 1, through: 1, by: -1) {
+                try? await Task.sleep(for: Self.waveStep)
+                guard let self, self.generation == current else { return }
+                guard let next = await MenuBarAllowList.activate(allowing: plan.allowed(hiding: count)) else { break }
+                guard self.generation == current else { return MenuBarAllowList.invalidate(next) }
+                if let previous = self.assertion { MenuBarAllowList.invalidate(previous) }
+                self.assertion = next
+                self.hiddenCount = count
             }
-            MenuBarAllowList.invalidate(current)
-            if self?.assertion === current { self?.assertion = nil; self?.plan = nil }
+            guard let self, self.generation == current else { return }
+            if let last = self.assertion { MenuBarAllowList.invalidate(last) }
+            self.assertion = nil
+            self.plan = nil
+            self.hiddenCount = 0
         }
     }
 
     /// macOS did not take an allow-list: everything is shown again, and the model is told why.
     private func refusedByMacOS() {
-        if let assertion { MenuBarAllowList.invalidate(assertion) }
-        assertion = nil
-        plan = nil
         showNatively()
         onRecheck?(.refuse(.refusedByMacOS))
     }

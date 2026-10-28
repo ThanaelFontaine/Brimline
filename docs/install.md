@@ -17,11 +17,11 @@ The script ([readable here](https://brimline.thanaelfontaine.eu/install.sh)):
 1. stops if the Mac is not on macOS 14 or later;
 2. finds the latest release on GitHub and downloads `Brimline.dmg` and `Brimline.dmg.sha256`;
 3. checks the image against its SHA-256 and installs nothing if they differ;
-4. copies `Brimline.app` to `/Applications` (or where Brimline already is, or `~/Applications` when `/Applications` is not writable), quitting the running copy first;
+4. copies `Brimline.app` to `/Applications` (or where Brimline already is, or `~/Applications` when `/Applications` is not writable), quitting the running copy first (on macOS 27, Brimline hides the icons only from `/Applications`: a copy kept in `~/Applications` is refused until it is moved);
 5. links the command at `~/.local/bin/brimline` (never over a file that is not a link);
 6. opens the app.
 
-It asks for no administrator password. Options: `BRIMLINE_VERSION=0.2.2` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`).
+It asks for no administrator password. Options: `BRIMLINE_VERSION=0.2.2` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`; on macOS 27, Brimline then refuses to hide icons until it is in `/Applications`).
 
 ## 2. The disk image
 
@@ -94,7 +94,7 @@ Your agents need one change: the command and the MCP server are called `brimline
    rm -rf ~/Library/Application\ Support/Brimline
    ```
 
-Brimline never wrote to your Keychain or to your Claude Code folders, so there is nothing to clean there.
+Brimline never wrote to your Keychain or to your Claude Code folders, so there is nothing to clean there. If you gave it the Accessibility permission (macOS 27, to hide icons), remove Brimline from System Settings, Privacy & Security, Accessibility.
 
 ## For contributors
 
