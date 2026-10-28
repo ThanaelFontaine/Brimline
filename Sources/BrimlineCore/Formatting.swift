@@ -568,8 +568,8 @@ public struct Strings: Sendable {
     }
     /// After a hiding that may leave the icons nearest the bar shown.
     public var menuBarHidingPartial: String {
-        t("Some icons may stay visible: macOS lets the bar push them by about half the screen. Keep only the icons to hide left of the bar (hold Command and drag the others to its right).",
-          "Des icônes peuvent rester visibles : macOS laisse le trait les pousser d'environ la moitié de l'écran. Ne gardez à gauche du trait que les icônes à cacher (maintenez Cmd et glissez les autres à sa droite).")
+        t("The icons closest to the bar may stay visible: macOS lets the bar push them by about half the screen only. Keep only the icons to hide left of the bar (hold Command and drag the others to its right): the bar then sits further left and pushes them all out.",
+          "Les icônes les plus proches du trait peuvent rester visibles : macOS ne laisse le trait les pousser que d'environ la moitié de l'écran. Ne gardez à gauche du trait que les icônes à cacher (maintenez Cmd et glissez les autres à sa droite) : le trait se place alors plus à gauche et les pousse toutes.")
     }
     public var menuBarHidingNote: String {
         t("Apple doesn't document this technique: it was tried on macOS 27.0.1, on a screen without a notch. Brimline itself stays right of the bar, never hidden. Quitting Brimline or turning this off shows every icon again.",

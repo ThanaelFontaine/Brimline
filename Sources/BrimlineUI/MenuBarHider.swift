@@ -77,6 +77,8 @@ public final class MenuBarHider: MenuBarSeparating {
             macOSMajor: ProcessInfo.processInfo.operatingSystemVersion.majorVersion)
         if case .hide(let length, _) = decision {
             item.length = CGFloat(length)
+            // The thin bar stays where the person put it, at the right end of the long item, not in its middle.
+            item.button?.image = Self.hidingImage(length: CGFloat(length))
             isHiding = true
             lastDecision = decision
         }
@@ -87,6 +89,7 @@ public final class MenuBarHider: MenuBarSeparating {
         recheck?.cancel()
         recheck = nil
         item?.length = NSStatusItem.variableLength
+        item?.button?.image = Self.barImage
         isHiding = false
         lastDecision = nil
     }
@@ -130,9 +133,17 @@ public final class MenuBarHider: MenuBarSeparating {
     }
 
     /// A thin vertical bar, drawn in the color of the menu bar (template image).
-    static let barImage: NSImage = {
-        let image = NSImage(size: NSSize(width: 8, height: 16), flipped: false) { rect in
-            let bar = NSBezierPath(roundedRect: NSRect(x: rect.midX - 0.75, y: 1.5, width: 1.5, height: rect.height - 3),
+    static let barImage: NSImage = barImage(width: 8)
+
+    /// The same bar at the right end of an image as long as the hiding item, so that it stays in place: AppKit centers
+    /// the image in the item, with the same margin on each side as for the short one.
+    static func hidingImage(length: CGFloat) -> NSImage {
+        barImage(width: max(8, length))
+    }
+
+    private static func barImage(width: CGFloat) -> NSImage {
+        let image = NSImage(size: NSSize(width: width, height: 16), flipped: false) { rect in
+            let bar = NSBezierPath(roundedRect: NSRect(x: rect.maxX - 4.75, y: 1.5, width: 1.5, height: rect.height - 3),
                                    xRadius: 0.75, yRadius: 0.75)
             NSColor.black.setFill()
             bar.fill()
@@ -140,5 +151,5 @@ public final class MenuBarHider: MenuBarSeparating {
         }
         image.isTemplate = true
         return image
-    }()
+    }
 }

@@ -52,7 +52,7 @@ Chaque compte a une couleur : sa pastille dans la fenêtre de la barre des menus
 Dans **Réglages, Comptes**, la ligne **Couleur** sous chaque compte permet de la changer :
 
 - **les dix couleurs de la palette** : violet, bleu, magenta, olive, encre, sapin, or, marine, cacao et lilas. Chacune a une valeur pour l'apparence claire et une pour la sombre, de sorte qu'elle reste lisible sur les deux ;
-- **Autre couleur…** ouvre le sélecteur de couleur du système (sans opacité). La couleur choisie est gardée en six chiffres (`RRGGBB`, sRVB) et reste la même en clair et en sombre ;
+- **Autre couleur…** ouvre le panneau Couleurs du système (sans opacité). La couleur choisie est gardée en six chiffres (`RRGGBB`, sRVB) et reste la même en clair et en sombre ;
 - **Revenir au défaut** redonne la couleur que Brimline donnerait à ce compte maintenant. Le bouton est grisé, avec « Couleur par défaut » à côté, quand le compte l'a déjà.
 
 Brimline prévient, et ne refuse jamais :

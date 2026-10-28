@@ -38,6 +38,7 @@ public struct MenuBarLabel: View {
 @MainActor
 public final class SettingsWindowController {
     private var window: NSWindow?
+    private var closeObserver: (any NSObjectProtocol)?
     private let model: AppModel
 
     public init(model: AppModel) {
@@ -62,6 +63,10 @@ public final class SettingsWindowController {
         window.isReleasedWhenClosed = false
         window.setContentSize(SettingsView.size)
         window.identifier = NSUserInterfaceItemIdentifier("settings")
+        closeObserver = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window,
+                                                               queue: .main) { _ in
+            MainActor.assumeIsolated { ColorPanel.shared.close() }
+        }
         return window
     }
 }
