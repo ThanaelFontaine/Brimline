@@ -601,8 +601,8 @@ public struct Strings: Sendable {
         t("2. After the gesture (once): the icons to hide are left of the bar.", "2. Après le geste (une fois) : les icônes à cacher sont à gauche du trait.")
     }
     public var menuBarHidingPictureHidden: String {
-        t("3. A click on the bar: the icons leave the menu bar, Brimline stays, and the bar becomes an arrow beside it. A click on the arrow brings them back.",
-          "3. Un clic sur le trait : les icônes quittent la barre, Brimline reste, et le trait devient une flèche à côté. Un clic sur la flèche les fait revenir.")
+        t("3. A click on the bar: the icons leave the menu bar, Brimline stays, and the bar becomes an arrow beside the icons that stay. A click on the arrow brings them back.",
+          "3. Un clic sur le trait : les icônes quittent la barre, Brimline reste, et le trait devient une flèche à côté des icônes qui restent. Un clic sur la flèche les fait revenir.")
     }
     public var menuBarHidingDiagramSpoken: String {
         t("Drawing of the menu bar: Claude, ChatGPT, Cursor and Gemini left of Brimline's bar are hidden; the icons right of it, Brimline too, are always shown.",

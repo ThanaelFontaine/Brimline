@@ -119,6 +119,20 @@ struct MenuBarHidingModelTests {
         #expect(!bar.hidden && !m.menuBarIconsHidden)
     }
 
+    @Test("a refusal after a click on the bar opens Settings on Menu Bar, where it is written")
+    func clickRefusedOpensSettings() {
+        let m = model(enabled: true)
+        let bar = FakeBar()
+        bar.answer = .refuse(.brimlineLeftOfBar)
+        var opened = 0
+        m.openSettingsAction = { opened += 1 }
+        m.attachSeparator(bar)
+        m.showMenuBarIcons()
+        bar.onClick?()
+        #expect(!m.menuBarIconsHidden && m.menuBarHidingRefusal == .brimlineLeftOfBar)
+        #expect(opened == 1 && m.settingsTab == .menuBar)
+    }
+
     @Test("showing the icons (quit, reopening the app) always gives the bar its normal length")
     func showAlwaysShows() {
         let m = model(enabled: true)

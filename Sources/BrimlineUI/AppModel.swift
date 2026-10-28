@@ -391,7 +391,7 @@ public final class AppModel {
     public func attachSeparator(_ separator: any MenuBarSeparating) {
         self.separator = separator
         separator.onRecheck = { [weak self] decision in self?.applyHiding(decision) }
-        separator.onClick = { [weak self] in self?.toggleMenuBarIcons() }
+        separator.onClick = { [weak self] in self?.clickMenuBarSeparator() }
         separator.setPresent(settings.menuBarHiding.enabled)
     }
 
@@ -429,6 +429,16 @@ public final class AppModel {
 
     public func toggleMenuBarIcons() {
         if menuBarIconsHidden { showMenuBarIcons() } else { hideMenuBarIcons() }
+    }
+
+    /// A click on the bar hides or shows the icons. A refusal opens Settings on Menu Bar, where it is written: with
+    /// the Brimline window closed, nothing else would show it.
+    public func clickMenuBarSeparator() {
+        toggleMenuBarIcons()
+        if menuBarHidingRefusal != nil {
+            settingsTab = .menuBar
+            openSettings()
+        }
     }
 
     private func applyHiding(_ decision: MenuBarHiding.Decision) {
