@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brimline : Ranger la barre des menus (planche, QUOTA-73, lot L6)</title>
+<!-- Planche autonome : aucun réseau, aucune police web, aucun logo de tiers (les icônes de Claude, ChatGPT et Cursor
+     sont lues par macOS dans l'app ; ici une tuile neutre en tient la place). Couleurs : uniquement les jetons de
+     tokens.json (tests/test_design_barre.py le vérifie), plus les deux gris de la barre des menus simulée.
+     Langue et thème des maquettes : #fr-light, #fr-dark, #en-light, #en-dark. 1 px de la planche = 1 pt de l'app. -->
+<style>
+  :root, .light {
+    --bg:#F5F6F7; --surface:#FFFFFF; --text:#15191D; --text2:#56606A; --border:#D3D8DD; --track:#E7EAED; --accent:#0B6E7A;
+    --page:var(--surface); --panel:var(--bg); --card:rgb(21 25 29 / .05); --field:var(--surface);
+    --shadow:0 10px 30px rgb(21 25 29 / .14), 0 0 0 .5px rgb(21 25 29 / .18); --menubar:#DADDE0;
+  }
+  .dark {
+    --bg:#111315; --surface:#1B1E21; --text:#ECEFF2; --text2:#9BA5AF; --border:#30353A; --track:#2B3035; --accent:#5CC8D0;
+    --page:var(--bg); --panel:var(--surface); --card:rgb(236 239 242 / .06); --field:var(--bg);
+    --shadow:0 10px 30px rgb(0 0 0 / .5), 0 0 0 .5px rgb(236 239 242 / .16); --menubar:#2F3338;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--page); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 1408px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; margin: 0 0 8px; }
+  h2 { font-size: 22px; line-height: 1.2; margin: 56px 0 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+  h3 { font-size: 15px; margin: 0 0 8px; }
+  p { max-width: 760px; margin: 0 0 12px; }
+  .lead { font-size: 17px; }
+  .muted, .cap { color: var(--text2); }
+  .cap { font-size: 13px; margin: 8px 0 0; max-width: 620px; }
+  code { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size: .9em; overflow-wrap: anywhere; }
+  ul.tight { margin: 0 0 12px; padding-left: 20px; max-width: 900px; } ul.tight li { margin: 4px 0; }
+  .switch { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; }
+  .switch a { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); color: var(--text); text-decoration: none; font-size: 13px; }
+  .switch a[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--page); }
+  .row-wrap { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; margin-top: 16px; }
+  .fig { flex: 0 0 auto; max-width: 100%; }
+  table.spec { border-collapse: collapse; font-size: 13px; width: 100%; max-width: 1100px; margin: 8px 0 16px; }
+  table.spec th, table.spec td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  table.spec th { color: var(--text2); font-weight: 600; }
+  .scroll-x { overflow-x: auto; }
+
+  /* Fenêtre des Réglages (620 pt) */
+  .mac-win { width: 620px; max-width: 100%; background: var(--panel); color: var(--text); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; font-size: 13px; line-height: 1.35; }
+  .tb { position: relative; text-align: center; font-weight: 600; padding: 10px 0 6px; }
+  .tb .lights { position: absolute; left: 14px; top: 13px; display: flex; gap: 8px; }
+  .tb .lights i { width: 12px; height: 12px; border-radius: 50%; background: rgb(128 128 128 / .35); }
+  .tabs { display: flex; justify-content: center; gap: 4px; padding: 4px 8px 8px; border-bottom: .5px solid var(--border); flex-wrap: wrap; }
+  .tabs span { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 76px; padding: 4px 6px; border-radius: 6px; font-size: 11px; color: var(--text2); white-space: nowrap; }
+  .tabs span svg { width: 20px; height: 20px; }
+  .tabs span.on { background: var(--card); color: var(--accent); }
+  .form { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 18px; }
+  .sec-title { font-size: 11px; font-weight: 600; color: var(--text2); padding: 0 4px 6px; }
+  .box { background: var(--card); border-radius: 8px; padding: 0 12px; }
+  .intro { padding: 10px 12px; }
+  .intro .h { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .intro .s { font-size: 12px; color: var(--text2); }
+  .foot { font-size: 11px; color: var(--text2); padding: 6px 4px 0; }
+  .app { display: grid; grid-template-columns: 32px 1fr auto; gap: 0 12px; align-items: center; padding: 10px 0; border-bottom: .5px solid var(--border); }
+  .app:last-child { border-bottom: 0; }
+  .tile { width: 32px; height: 32px; border-radius: 7px; background: var(--surface); box-shadow: inset 0 0 0 .5px var(--border); display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--text2); }
+  .app .n { font-weight: 600; font-size: 13px; }
+  .app .r { font-size: 12px; }
+  .app .p { font-size: 11px; color: var(--text2); }
+  .app .err { grid-column: 2 / -1; padding: 6px 0 0; }
+  .btn { border: .5px solid var(--border); background: var(--field); border-radius: 6px; padding: 2px 10px; font-size: 12px; white-space: nowrap; box-shadow: 0 .5px 1px rgb(0 0 0 / .12); }
+  .sys { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+  .sys .btn { align-self: flex-start; }
+  .sys .s { font-size: 12px; }
+  .steps { margin: 0; padding: 10px 0 4px; list-style: none; display: flex; flex-direction: column; gap: 6px; counter-reset: st; font-size: 12px; }
+  .steps li { display: flex; align-items: baseline; gap: 8px; counter-increment: st; }
+  .steps li::before { content: counter(st); flex: 0 0 18px; height: 18px; border-radius: 50%; background: var(--track); color: var(--text2); font-size: 11px; font-weight: 600; display: grid; place-items: center; transform: translateY(-1px); }
+  .key { display: inline-block; min-width: 20px; padding: 0 5px; border-radius: 4px; border: .5px solid var(--border); background: var(--field); box-shadow: 0 .5px 0 var(--border); font-size: 12px; text-align: center; line-height: 18px; }
+  .note { display: flex; gap: 6px; align-items: flex-start; font-size: 11px; color: var(--text2); padding: 4px 0 10px; }
+  .note svg { flex: 0 0 12px; margin-top: 1px; }
+  .empty { font-size: 12px; color: var(--text2); padding: 10px 0; }
+
+  /* Barre des menus simulée (illustration du geste) */
+  .menubar { display: inline-flex; align-items: center; gap: 14px; padding: 4px 12px; border-radius: 6px; background: var(--menubar); color: var(--text); font-size: 13px; }
+  .menubar i { width: 14px; height: 14px; border-radius: 3px; background: var(--text2); opacity: .7; }
+  .menubar i.drag { opacity: .25; }
+  .drag-demo { position: relative; padding-bottom: 46px; }
+  .drag-demo .ghost { position: absolute; left: 40px; top: 40px; white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+  .drag-demo .ghost i { width: 14px; height: 14px; border-radius: 3px; background: var(--text2); opacity: .7; }
+  .drag-demo svg.arrow { position: absolute; left: 41px; top: 24px; }
+  @media (max-width: 480px) { .row-wrap { gap: 24px; } h2 { margin-top: 40px; } .form { padding: 12px; } }
+</style>
+</head>
+<body class="light">
+<main>
+<h1>Brimline : Ranger la barre des menus</h1>
+<p class="lead">Planche du lot L6 de QUOTA-73 (chantier THA-1551, design THA-1574). Un onglet des Réglages explique comment retirer de la barre des menus les icônes de Claude, ChatGPT et Cursor, puisque Brimline montre déjà leur état.</p>
+<p><b>Ce qui change.</b> Un cinquième onglet, « Barre des menus », entre Général et Agents. Une phrase d'introduction, une ligne par app installée (son icône, le réglage à couper, son chemin, un bouton « Ouvrir »), un bouton vers Réglages Système, Barre des menus, et le geste ⌘ glisser en trois étapes. Aucune autorisation système, aucune lecture d'un autre processus, aucun état « autorisée / retirée » (document <code>decisions</code> du chantier).</p>
+<p><b>Pourquoi un onglet et pas une section de Général.</b> Général règle Brimline lui-même ; ce contenu parle d'autres apps et prend environ 480 pt de haut : dans Général, il pousserait « Ouvrir à la connexion » sous le pli. Un onglet nommé comme le besoin (« Barre des menus ») se trouve sans chercher. Le titre de la section garde le nom du chantier : « Ranger la barre des menus ».</p>
+<nav class="switch" aria-label="Langue et thème des maquettes">
+  <a href="#fr-light" data-k="fr-light">FR · clair</a><a href="#fr-dark" data-k="fr-dark">FR · sombre</a>
+  <a href="#en-light" data-k="en-light">EN · clair</a><a href="#en-dark" data-k="en-dark">EN · sombre</a>
+</nav>
+
+<h2 id="onglet">1. L'onglet, les trois apps installées</h2>
+<p>Taille réelle : fenêtre de 620 pt, comme les Réglages actuels. À 600 pt de haut, la dernière section passe sous le pli et le formulaire défile (comportement natif de <code>Form</code>).</p>
+<div class="row-wrap"><div class="fig" id="fig-tab" data-render="tab"></div></div>
+
+<h2 id="etats">2. États</h2>
+<p>La liste des apps se lit d'un coup au moment d'ouvrir l'onglet (<code>NSWorkspace</code>, sans attente) : <b>pas d'état de chargement</b>. Une app n'est listée que si elle est installée ; les sections Réglages Système et ⌘ glisser restent toujours, elles valent pour n'importe quelle app.</p>
+<div class="row-wrap">
+  <div class="fig" id="fig-partial"><h3 data-render="hPartial"></h3><div data-render="partial"></div></div>
+  <div class="fig" id="fig-empty"><h3 data-render="hEmpty"></h3><div data-render="empty"></div></div>
+  <div class="fig" id="fig-error"><h3 data-render="hError"></h3><div data-render="error"></div></div>
+</div>
+
+<h2 id="geste">3. Le geste ⌘ glisser</h2>
+<p>Illustration pour la documentation et le site, pas pour l'app (l'app garde les trois étapes en texte). On maintient ⌘, on attrape l'icône, on la lâche loin de la barre. Si l'app ne permet pas le retrait, l'icône revient à sa place : la note de l'onglet le dit.</p>
+<div class="row-wrap"><div class="fig drag-demo" id="fig-drag" data-render="drag"></div></div>
+
+<h2 id="dev">4. Pour le développeur (L6, THA-1575)</h2>
+<ul class="tight">
+  <li><b>Onglet</b> : <code>SettingsTab.menuBar</code>, entre <code>.general</code> et <code>.agents</code>, symbole SF <code>menubar.rectangle</code>, libellé « Barre des menus » / « Menu Bar ». Contenu : <code>Form</code> en <code>.formStyle(.grouped)</code>, comme les autres onglets.</li>
+  <li><b>Sections</b>, dans l'ordre : introduction (sans en-tête : titre 13 pt semi-gras, texte 12 pt secondaire) ; « Dans chaque app » (une ligne par app, pied 11 pt secondaire) ; « Pour toutes les apps » (texte et bouton) ; « D'un geste » (trois étapes et une note).</li>
+  <li><b>Ligne d'app</b> : icône 32 pt lue par <code>NSWorkspace.shared.icon(forFile:)</code> sur l'URL de l'app (l'icône de l'app elle-même, telle que macOS l'affiche, jamais copiée dans le dépôt) ; 12 pt d'écart ; nom 13 pt semi-gras ; « Coupez « … » » 12 pt ; chemin 11 pt secondaire ; bouton natif « Ouvrir Claude » à droite, centré verticalement. 10 pt au-dessus et au-dessous. Un seul élément VoiceOver pour le texte : « Claude. Coupez Barre de menus, dans Paramètres, Application de bureau. » ; le bouton reste à part.</li>
+  <li><b>Apps</b>, cherchées par identifiant (<code>NSWorkspace.shared.urlForApplication(withBundleIdentifier:)</code>), dans l'ordre des fournisseurs : Claude <code>com.anthropic.claudefordesktop</code>, ChatGPT <code>com.openai.codex</code>, Cursor <code>com.todesktop.230313mzl4w4u92</code>. Le nom affiché est celui de la ligne (pas celui du paquet). Ouverture : <code>NSWorkspace.shared.openApplication(at:configuration:)</code>.</li>
+  <li><b>Réglages Système</b> : ouvrir <code>x-apple.systempreferences:com.apple.ControlCenter-Settings.extension</code> ; si <code>open</code> renvoie faux, ouvrir l'app Réglages Système (<code>com.apple.systempreferences</code>) et montrer la note d'erreur sous le bouton. Adresse non documentée par Apple : à essayer sur macOS 27 avant la PR (document <code>faisabilite</code>, questions restantes).</li>
+  <li><b>Erreur d'ouverture d'une app</b> (déplacée ou supprimée depuis l'ouverture de l'onglet) : note sous la ligne, symbole <code>exclamationmark.triangle</code> 11 pt secondaire, jamais en rouge (ce n'est pas une alerte de consommation) ; la liste se relit à la prochaine ouverture de l'onglet. La note disparaît au prochain clic réussi.</li>
+  <li><b>Touche ⌘</b> : <code>Text("⌘")</code> 12 pt dans une capsule de 4 pt de rayon, filet 0,5 pt <code>border</code>, fond du champ. Numéros des étapes : rond de 18 pt, fond <code>track</code>, chiffre 11 pt semi-gras secondaire.</li>
+  <li><b>Libellés des apps</b> : lus dans les apps installées le 27/10/2026 (Claude 3.6556.2 et ChatGPT 26.1023 ont leurs textes en français ; Cursor 3.27 est en anglais, ses libellés restent en anglais dans les deux langues de Brimline). À confirmer à l'écran par la QA : ils changent d'une version de l'app à l'autre, ils vivent donc dans <code>Strings</code> et nulle part ailleurs.</li>
+  <li><b>Captures (<code>brimline-snapshots</code>)</b> : l'onglet avec les trois apps, clair et sombre, FR et EN, à 760 pt de haut pour tout montrer sans défilement.</li>
+</ul>
+<h3 style="margin-top:24px">Textes, FR et EN</h3>
+<div class="scroll-x"><table class="spec" data-render="strings"></table></div>
+</main>
+
+<script>
+const T = {
+  fr: {
+    winTitle: 'Réglages de Brimline', tabs: ['Comptes', 'Général', 'Barre des menus', 'Agents', 'À propos'],
+    title: 'Ranger la barre des menus',
+    intro: 'Brimline montre déjà où en sont Claude, ChatGPT et Cursor : leurs icônes dans la barre des menus peuvent partir. Brimline ne peut pas les retirer à leur place, macOS laisse ce choix à chaque app et à vous. Voici où le faire.',
+    inApps: 'Dans chaque app', forAll: 'Pour toutes les apps', byHand: 'D’un geste',
+    turnOff: l => `Coupez « ${l} »`, open: a => `Ouvrir ${a}`,
+    apps: {
+      claude: ['Claude', 'Barre de menus', 'Dans Paramètres › Application de bureau'],
+      chatgpt: ['ChatGPT', 'Afficher dans la barre des menus', 'Dans Paramètres › Général'],
+      cursor: ['Cursor', 'Menu Bar Icon', 'Dans Cursor Settings › General'],
+    },
+    installedOnly: 'Seules les apps installées sur ce Mac sont listées.',
+    sysText: 'macOS a aussi un interrupteur par app : Réglages Système › Barre des menus › Autoriser dans la barre des menus.',
+    sysBtn: 'Ouvrir Réglages Système, Barre des menus',
+    steps: ['Maintenez la touche %K (Commande).', 'Glissez l’icône hors de la barre des menus.', 'Relâchez : l’icône disparaît.'],
+    stepsNote: 'Si l’icône revient à sa place, son app ne permet pas ce geste : passez par son réglage.',
+    none: 'Ni Claude, ni ChatGPT, ni Cursor n’est installé sur ce Mac. Pour une autre app, passez par Réglages Système ou par le geste plus bas.',
+    appErr: a => `${a} ne s’est pas ouvert : l’app a peut-être été déplacée ou supprimée.`,
+    sysErr: 'Réglages Système s’est ouvert sur sa page d’accueil : choisissez Barre des menus dans la liste à gauche.',
+    hPartial: 'Deux apps sur trois', hEmpty: 'Aucune des trois apps', hError: 'Erreurs d’ouverture',
+    dragCap: 'Glisser hors de la barre, ⌘ enfoncée', menuClock: 'mar. 27 oct. 18:20',
+  },
+  en: {
+    winTitle: 'Brimline Settings', tabs: ['Accounts', 'General', 'Menu Bar', 'Agents', 'About'],
+    title: 'Tidy up the menu bar',
+    intro: 'Brimline already shows where Claude, ChatGPT and Cursor stand, so their menu bar icons can go. Brimline can’t remove them for you: macOS leaves that choice to each app, and to you. Here is where to do it.',
+    inApps: 'In each app', forAll: 'For every app', byHand: 'By hand',
+    turnOff: l => `Turn off “${l}”`, open: a => `Open ${a}`,
+    apps: {
+      claude: ['Claude', 'Menu bar', 'In Settings › Desktop app'],
+      chatgpt: ['ChatGPT', 'Show in menu bar', 'In Settings › General'],
+      cursor: ['Cursor', 'Menu Bar Icon', 'In Cursor Settings › General'],
+    },
+    installedOnly: 'Only the apps installed on this Mac are listed.',
+    sysText: 'macOS also has a switch for each app: System Settings › Menu Bar › Allow in the Menu Bar.',
+    sysBtn: 'Open System Settings, Menu Bar',
+    steps: ['Hold down the %K (Command) key.', 'Drag the icon out of the menu bar.', 'Let go: the icon is gone.'],
+    stepsNote: 'If the icon jumps back, its app doesn’t allow this: use its setting instead.',
+    none: 'Claude, ChatGPT and Cursor aren’t installed on this Mac. For another app, use System Settings or the gesture below.',
+    appErr: a => `${a} didn’t open: the app may have been moved or deleted.`,
+    sysErr: 'System Settings opened on its home page: choose Menu Bar in the list on the left.',
+    hPartial: 'Two apps out of three', hEmpty: 'None of the three apps', hError: 'Opening errors',
+    dragCap: 'Drag it out, holding ⌘', menuClock: 'Tue Oct 27 6:20 PM',
+  },
+};
+
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const key = '<span class="key" aria-label="Commande">⌘</span>';
+const warn = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.2 11 10.4H1z" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M6 4.6v2.8M6 8.6v.6" stroke="currentColor" stroke-width="1.1"/></svg>';
+const info = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" stroke-width="1.1"/><path d="M6 5.2v3.4M6 3.4v.6" stroke="currentColor" stroke-width="1.1"/></svg>';
+const tabIcons = [
+  '<circle cx="7" cy="7" r="3" fill="none" stroke="currentColor"/><circle cx="14" cy="7" r="3" fill="none" stroke="currentColor"/><path d="M2 17c0-3 2.4-5 5-5s5 2 5 5M10 13c1-1 2.4-1.2 4-1.2 2.6 0 4.5 2 4.5 5" fill="none" stroke="currentColor"/>',
+  '<circle cx="10" cy="10" r="3" fill="none" stroke="currentColor"/><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-dasharray="3 2"/>',
+  '<rect x="2" y="3.5" width="16" height="13" rx="2" fill="none" stroke="currentColor"/><path d="M2 7h16" stroke="currentColor"/><path d="M12.5 5.25h3.5" stroke="currentColor" stroke-width="1.2"/>',
+  '<rect x="2" y="4" width="16" height="12" rx="2" fill="none" stroke="currentColor"/><path d="M5 8l3 2-3 2M10 12h4" fill="none" stroke="currentColor"/>',
+  '<circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor"/><path d="M10 9v5M10 6v1" stroke="currentColor"/>'];
+
+function win(t, opts = {}) {
+  const tabs = t.tabs.map((x, i) => `<span class="${i === 2 ? 'on' : ''}"><svg viewBox="0 0 20 20" aria-hidden="true">${tabIcons[i]}</svg>${esc(x)}</span>`).join('');
+  const apps = opts.apps ?? ['claude', 'chatgpt', 'cursor'];
+  const row = p => {
+    const [name, label, path] = t.apps[p];
+    const err = opts.appErr === p ? `<div class="err note">${warn}<span>${esc(t.appErr(name))}</span></div>` : '';
+    return `<div class="app" role="group" aria-label="${esc(name)}"><span class="tile" aria-hidden="true">${esc(name.slice(0, 2))}</span><div><div class="n">${esc(name)}</div><div class="r">${esc(t.turnOff(label))}</div><div class="p">${esc(path)}</div></div><span class="btn" role="button">${esc(t.open(name))}</span>${err}</div>`;
+  };
+  const list = apps.length ? apps.map(row).join('') : `<div class="empty">${esc(t.none)}</div>`;
+  const steps = t.steps.map(s => `<li><span>${esc(s).replace('%K', key)}</span></li>`).join('');
+  const sysErr = opts.sysErr ? `<div class="note" style="padding:0">${warn}<span>${esc(t.sysErr)}</span></div>` : '';
+  return `<div class="mac-win" role="group" aria-label="${esc(t.winTitle)}"><div class="tb"><span class="lights"><i></i><i></i><i></i></span>${esc(t.winTitle)}</div><div class="tabs">${tabs}</div><div class="form">
+    <div class="box intro"><div class="h">${esc(t.title)}</div><div class="s">${esc(t.intro)}</div></div>
+    <div><div class="sec-title">${esc(t.inApps)}</div><div class="box">${list}</div>${apps.length ? `<div class="foot">${esc(t.installedOnly)}</div>` : ''}</div>
+    <div><div class="sec-title">${esc(t.forAll)}</div><div class="box sys"><div class="s">${esc(t.sysText)}</div><span class="btn" role="button">${esc(t.sysBtn)}</span>${sysErr}</div></div>
+    <div><div class="sec-title">${esc(t.byHand)}</div><div class="box"><ol class="steps">${steps}</ol><div class="note">${info}<span>${esc(t.stepsNote)}</span></div></div></div>
+  </div></div>`;
+}
+
+const R = {
+  tab: t => win(t),
+  partial: t => win(t, { apps: ['claude', 'cursor'] }),
+  empty: t => win(t, { apps: [] }),
+  error: t => win(t, { appErr: 'chatgpt', sysErr: true }),
+  hPartial: t => esc(t.hPartial), hEmpty: t => esc(t.hEmpty), hError: t => esc(t.hError),
+  drag: t => `<span class="menubar"><i></i><i class="drag"></i><i></i><i></i><span>${esc(t.menuClock)}</span></span>
+    <svg class="arrow" width="12" height="16" viewBox="0 0 12 16" aria-hidden="true"><path d="M6 1v13M1.5 9.5 6 14l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+    <span class="ghost"><i></i>${key}<span>${esc(t.dragCap)}</span></span>`,
+  strings() {
+    const f = T.fr, e = T.en;
+    const rows = [
+      ['Onglet', f.tabs[2], e.tabs[2]], ['Titre', f.title, e.title], ['Introduction', f.intro, e.intro],
+      ['Section', f.inApps, e.inApps], ['Ligne Claude', `${f.turnOff(f.apps.claude[1])} · ${f.apps.claude[2]}`, `${e.turnOff(e.apps.claude[1])} · ${e.apps.claude[2]}`],
+      ['Ligne ChatGPT', `${f.turnOff(f.apps.chatgpt[1])} · ${f.apps.chatgpt[2]}`, `${e.turnOff(e.apps.chatgpt[1])} · ${e.apps.chatgpt[2]}`],
+      ['Ligne Cursor', `${f.turnOff(f.apps.cursor[1])} · ${f.apps.cursor[2]}`, `${e.turnOff(e.apps.cursor[1])} · ${e.apps.cursor[2]}`],
+      ['Bouton', f.open('Claude'), e.open('Claude')], ['Pied', f.installedOnly, e.installedOnly],
+      ['Section', f.forAll, e.forAll], ['Texte', f.sysText, e.sysText], ['Bouton', f.sysBtn, e.sysBtn],
+      ['Section', f.byHand, e.byHand], ['Étape 1', f.steps[0].replace('%K', '⌘'), e.steps[0].replace('%K', '⌘')], ['Étape 2', f.steps[1], e.steps[1]], ['Étape 3', f.steps[2], e.steps[2]],
+      ['Note', f.stepsNote, e.stepsNote], ['Aucune app', f.none, e.none], ['Erreur, app', f.appErr('ChatGPT'), e.appErr('ChatGPT')], ['Erreur, Réglages Système', f.sysErr, e.sysErr],
+    ];
+    return `<thead><tr><th>Où</th><th>FR</th><th>EN</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td lang="en">${esc(r[2])}</td></tr>`).join('')}</tbody>`;
+  },
+};
+
+function render() {
+  const k = (location.hash || '#fr-light').slice(1);
+  const [lang, theme] = /^(fr|en)-(light|dark)$/.test(k) ? k.split('-') : ['fr', 'light'];
+  document.body.className = theme;
+  const t = T[lang];
+  document.querySelectorAll('[data-render]').forEach(el => {
+    el.innerHTML = R[el.dataset.render](t);
+    if (el.dataset.render !== 'strings') el.lang = lang;
+  });
+  document.querySelectorAll('.switch a').forEach(a => a.setAttribute('aria-current', String(a.dataset.k === lang + '-' + theme)));
+}
+addEventListener('hashchange', render);
+render();
+</script>
+</body>
+</html>
