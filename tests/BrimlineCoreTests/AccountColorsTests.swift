@@ -94,7 +94,8 @@ struct AccountColorsTests {
         // The real file: the key is there and readable.
         let tokens = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("design/tokens.json")
-        if let real = try? Data(contentsOf: tokens) { #expect(try paletteTokens(real) != nil) }
+        let real = try #require(try? Data(contentsOf: tokens), "design/tokens.json must be there")
+        #expect(try paletteTokens(real) != nil)
     }
 
     // MARK: Color arithmetic

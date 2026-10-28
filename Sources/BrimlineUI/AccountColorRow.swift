@@ -46,27 +46,31 @@ struct AccountColorRow: View {
                 .frame(width: Self.labelWidth, alignment: .leading)
                 .accessibilityHidden(true)
             HStack(spacing: SGTheme.swatchSpacing) {
-                ForEach(AccountPalette.entries.indices, id: \.self) { slot in
-                    Swatch(color: .palette(slot), name: s.colorName(.palette(slot)), selected: current == .palette(slot)) {
-                        model.setColor(.palette(slot), for: account)
+                HStack(spacing: SGTheme.swatchSpacing) {
+                    ForEach(AccountPalette.entries.indices, id: \.self) { slot in
+                        Swatch(color: .palette(slot), name: s.colorName(.palette(slot)), selected: current == .palette(slot)) {
+                            model.setColor(.palette(slot), for: account)
+                        }
                     }
+                }
+                // One group with one choice, as VoiceOver reads a set of radio buttons: "Color of Asso", then each
+                // name. "Other color…" stays outside it: the representation replaces what it covers, and the real
+                // picker must stay reachable.
+                .accessibilityRepresentation {
+                    Picker(s.colorGroup(model.title(for: account)), selection: Binding(
+                        get: { Self.choice(current) },
+                        set: { choice in
+                            if AccountPalette.entries.indices.contains(choice) { model.setColor(.palette(choice), for: account) }
+                        }
+                    )) {
+                        ForEach(AccountPalette.entries.indices, id: \.self) { slot in
+                            Text(s.colorName(.palette(slot))).tag(slot)
+                        }
+                        if case .custom = current { Text(s.colorName(current)).tag(AccountPalette.entries.count) }
+                    }
+                    .pickerStyle(.radioGroup)
                 }
                 OtherColor(account: account, model: model, current: current)
-            }
-            // One group with one choice, as VoiceOver reads a set of radio buttons: "Color of Asso", then each name.
-            .accessibilityRepresentation {
-                Picker(s.colorGroup(model.title(for: account)), selection: Binding(
-                    get: { Self.choice(current) },
-                    set: { choice in
-                        if AccountPalette.entries.indices.contains(choice) { model.setColor(.palette(choice), for: account) }
-                    }
-                )) {
-                    ForEach(AccountPalette.entries.indices, id: \.self) { slot in
-                        Text(s.colorName(.palette(slot))).tag(slot)
-                    }
-                    if case .custom = current { Text(s.colorName(current)).tag(AccountPalette.entries.count) }
-                }
-                .pickerStyle(.radioGroup)
             }
         }
     }
