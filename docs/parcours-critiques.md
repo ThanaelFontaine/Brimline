@@ -5,7 +5,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Verified on: 2026-10-28
 - origin/main commit verified: `0eb12654d1fc81d178d4cc22cfadd383a6c6dcb4` (version 0.1.0)
 - Environment: macOS 27.0.1 on Apple silicon, Swift with the Command Line Tools only (no Xcode).
-- J1 to J4 are the steps of `.github/workflows/checks.yml`; their result of the day is the one of the full run on origin/main of the same day. J5 to J9 were run on this commit.
+- J1 to J5 are the steps of `.github/workflows/checks.yml`; their result of the day is the one of the full local run on origin/main of the same day (the CI run on that commit was green). J6 to J9 were run on this commit.
 
 ## Journeys
 
@@ -35,11 +35,11 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 
 ### J4: the whole Swift test suite
 
-- Proves: the 442 tests of `tests/BrimlineCoreTests` and `tests/BrimlineUITests` (Swift Testing).
+- Proves: the 516 tests (442 in `tests/BrimlineCoreTests`, 74 in `tests/BrimlineUITests`) (Swift Testing).
 - How: `swift test`
-- Expected: "Test run with 442 tests ... passed".
+- Expected: the two lines "Test run with 74 tests in 12 suites passed" and "Test run with 442 tests in 43 suites passed".
 - Automated: CI (step "Swift tests").
-- Result on 2026-10-28: RED once, then green. In the full run, `launchedAsPlanned` (`tests/BrimlineCoreTests/Providers/AntigravityEndToEndTests.swift`) failed once on `#expect(text.contains("--print /usage --sandbox\n"))`; it passed on the two following full runs and six times under CPU load. This journey re-ran the suite that holds it (`swift test --filter AntigravityEndToEndTests`, 9 tests) five times in a row: five greens. Flaky, not reproduced; root cause not established. What the test does: it launches a stand-in `agy` script that appends its arguments and environment to a log file, then reads that log back; the failing assertion is the one that looks for the arguments of the second launch in that file. To investigate, run the suite in a loop under CPU load and keep the log content of the first failure.
+- Result on 2026-10-28: RED once, then green. In the full local run (the CI run of the same commit was green), `launchedAsPlanned` (`tests/BrimlineCoreTests/Providers/AntigravityEndToEndTests.swift`) failed once on `#expect(text.contains("--print /usage --sandbox\n"))`; it passed on the two following full runs and six times under CPU load. This journey re-ran the suite that holds it (`swift test --filter AntigravityEndToEndTests`, 9 tests) five times in a row: five greens. Flaky, not reproduced; root cause not established. What the test does: it launches a stand-in `agy` script that appends its arguments and environment to a log file, then reads that log back; the failing assertion is the one that looks for the arguments of the second launch in that file. To investigate, run the suite in a loop under CPU load and keep the log content of the first failure.
 
 ### J5: the app bundle builds
 
@@ -63,7 +63,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - How: `swift test --filter BrimlineUITests`, then `swift test --filter "MenuBarGaugeTests|MenuBarAccessibilityTests|PanelLayoutTests|StatusTextTests|MenuBarHidingTests|MenuBarTidyTests|FormattingTests|RankingNoFigureTests|CacheAndRankingTests"`, then the demo renderer: `swift run brimline-snapshots <empty folder>` (it draws the views off screen, at invented data, with a fake menu bar environment, and writes 68 PNG files).
 - Expected: tests pass; the renderer ends with exit code 0 and writes the same 68 files as `docs/images/`.
 - Automated: tests yes (part of J4); the renderer is manual (it is not in CI and nothing compares its output).
-- Result on 2026-10-28: green for the tests (74 and 78 tests). Renderer: exit code 0, 68 files written, 50 byte-identical to `docs/images/`; 18 differ (the two QA sheets with the long panel and the settings tabs). Looked at: `qa-panel-many-light.png` differs only by the scroll bar, drawn in the committed image and absent in the new one (a system setting of the machine, not a change of the app). The settings images differ only in a 30 by 30 px square at the bottom right corner (largest channel difference 52); the content is unchanged. Treat a diff outside such a square as a real change. Not verified: the real app drawing itself in a real menu bar (see J10).
+- Result on 2026-10-28: green for the tests (74 and 78 tests). Renderer: exit code 0, 68 files written, 50 byte-identical to `docs/images/`; 18 differ (the long panel sheets (2), the full accounts settings sheets (2) and 14 settings tab images). Looked at: `qa-panel-many-light.png` differs only by the scroll bar, drawn in the committed image and absent in the new one (a system setting of the machine, not a change of the app). The settings images differ only in a 30 by 30 px square at the bottom right corner (largest channel difference 52); the content is unchanged. Treat a diff outside such a square as a real change. Not verified: the real app drawing itself in a real menu bar (see J10).
 
 ### J8: no secret in logs, cache, settings or answers
 
