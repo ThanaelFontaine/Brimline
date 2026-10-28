@@ -24,7 +24,7 @@ struct MenuBarHidingTests {
         // 921 + 50 = 971: the last place where every icon is surely pushed out.
         #expect(MenuBarHiding.decide(placement: placement(bar: 971), screenWidths: [1920], macOSMajor: 27) == .hide(length: 921, partial: false))
         #expect(MenuBarHiding.decide(placement: placement(bar: 972), screenWidths: [1920], macOSMajor: 27) == .hide(length: 921, partial: true))
-        // The bar measured on 28/10/2026 at 1512 pt: macOS pushed it by 864 pt, and took it out from 1000 pt.
+        // The bar measured on 28/10/2026 at 1512 pt: 900, 921, 930 and 940 pt pushed it, 950 pt got it taken out.
         #expect(MenuBarHiding.decide(placement: placement(bar: 1512, brimline: [1660]), screenWidths: [1920], macOSMajor: 27)
                 == .hide(length: 921, partial: true))
     }

@@ -8,8 +8,9 @@ import Foundation
 /// beside it out of the visible part of the menu bar, where macOS does not draw them. To show them, the bar gets its
 /// normal length back. Hidden Bar and Dozer used the same technique before macOS 27.
 ///
-/// Apple does not document it. Measured on macOS 27.0.1 (a 1920 pt screen, no notch): a length between 380 and 940 pt
-/// pushes the icons, wherever the bar is; from 960 pt, macOS takes the bar out and hides nothing (10,000, the length of
+/// Apple does not document it. Measured on macOS 27.0.1 (a 1920 pt screen, no notch): with the bar at 838 pt, a length
+/// between 380 and 940 pt pushes the icons and from 960 pt macOS takes the bar out and hides nothing; with the bar at
+/// 1512 pt, 900 to 940 pt push and 950 pt takes it out (10,000, the length of
 /// Hidden Bar, no longer works). An icon pushed onto the menus of the app in front is not drawn; one that still fits
 /// beside them stays shown. So the length is computed from the screens, and when the bar is so far right that the push
 /// may leave some icons shown, the person is told. Not tried on a MacBook with a notch, nor with several screens.
@@ -20,7 +21,7 @@ public enum MenuBarHiding {
     public static let autosaveName = "brimline-separator"
 
     /// The share of the narrowest screen the bar takes when it hides, on macOS 27 and later: under the half of the
-    /// screen where macOS takes the bar out (960 pt of 1920 in the measures, 940 still pushed).
+    /// screen where macOS takes the bar out (950 pt of 1920 in the measures, 940 still pushed, 921 tried at both places).
     public static let modernShare = 0.48
 
     /// What stays at the left of the menu bar whatever app is in front (the Apple menu, a short app menu), in points.
