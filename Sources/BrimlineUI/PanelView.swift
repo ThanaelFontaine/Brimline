@@ -169,6 +169,10 @@ public struct PanelView: View {
         return VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
             Button {
                 model.toggleMenuBarIcons()
+                // While this window is open, Brimline is the app in front, and it has no menus: the left of the menu
+                // bar is empty, so the pushed icons are drawn there. Once hidden, the window goes and the app that was
+                // in front comes back with its menus, which take that room.
+                if model.menuBarIconsHidden { NSApp.hide(nil) }
             } label: {
                 Label(hidden ? s.menuBarHidingShow : s.menuBarHidingHide, systemImage: hidden ? "eye" : "eye.slash")
             }

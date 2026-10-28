@@ -133,9 +133,9 @@ private struct Swatch: View {
     }
 }
 
-/// "Other color…": a dashed dot marked "+" that opens the system color picker; once a free color is chosen it is
-/// filled with it and ringed. The picker is the system's, laid invisibly over the dot so that the keyboard and
-/// VoiceOver reach the real control.
+/// "Other color…": a dashed dot marked "+" that opens the system color panel; once a free color is chosen it is
+/// filled with it and ringed. A real button, so that the keyboard and VoiceOver reach it. (Up to 0.2.1 it was the
+/// SwiftUI color picker laid invisibly over the dot, which did not open on a click.)
 private struct OtherColor: View {
     var account: Account
     var model: AppModel
@@ -144,34 +144,58 @@ private struct OtherColor: View {
     var body: some View {
         let s = model.strings
         let custom: Bool = { if case .custom = current { return true } else { return false } }()
-        ZStack {
-            Circle()
-                .fill(custom ? SGTheme.account(current) : Color.clear)
-                .frame(width: SGTheme.swatch, height: SGTheme.swatch)
-            if !custom {
-                Circle()
-                    .strokeBorder(Color.secondary, style: StrokeStyle(lineWidth: 1, dash: [2.5, 2.5]))
-                    .frame(width: SGTheme.swatch, height: SGTheme.swatch)
-                Image(systemName: "plus")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(Color.secondary)
+        Button {
+            let dark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ColorPanel.shared.open(initial: NSColor(hex: current.rgb(dark: dark))) { picked in
+                if let color = SystemColorPicker.accountColor(from: Color(nsColor: picked)) { model.setColor(color, for: account) }
             }
-            ColorPicker(s.otherColor, selection: Binding(
-                get: { Color(nsColor: NSColor(hex: current.rgb(dark: NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua))) },
-                set: { picked in
-                    if let color = SystemColorPicker.accountColor(from: picked) { model.setColor(color, for: account) }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(custom ? SGTheme.account(current) : Color.clear)
+                    .frame(width: SGTheme.swatch, height: SGTheme.swatch)
+                if !custom {
+                    Circle()
+                        .strokeBorder(Color.secondary, style: StrokeStyle(lineWidth: 1, dash: [2.5, 2.5]))
+                        .frame(width: SGTheme.swatch, height: SGTheme.swatch)
+                    Image(systemName: "plus")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(Color.secondary)
                 }
-            ), supportsOpacity: false)
-                .labelsHidden()
-                .frame(width: SGTheme.swatch, height: SGTheme.swatch)
-                .clipShape(Circle())
-                .opacity(0.02)
-                .accessibilityLabel(s.otherColor)
+            }
+            .contentShape(Circle())
         }
+        .buttonStyle(.plain)
         .overlay(SelectionRing(shown: custom))
         .help(s.otherColor)
+        .accessibilityLabel(s.otherColor)
+        .accessibilityAddTraits(custom ? .isSelected : [])
+    }
+}
+
+/// The system color panel, shared by every account: each opening says which account the next colors go to.
+@MainActor
+final class ColorPanel: NSObject {
+    static let shared = ColorPanel()
+    private var onPick: ((NSColor) -> Void)?
+
+    func open(initial: NSColor, onPick: @escaping (NSColor) -> Void) {
+        let panel = NSColorPanel.shared
+        // The color is set before the target, so that showing the current color changes nothing.
+        self.onPick = nil
+        panel.showsAlpha = false
+        panel.color = initial
+        self.onPick = onPick
+        panel.setTarget(self)
+        panel.setAction(#selector(changed(_:)))
+        panel.isContinuous = true
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
     }
 
+    @objc private func changed(_ sender: NSColorPanel) {
+        onPick?(sender.color)
+    }
 }
 
 /// What the system color picker gives back, as an account color.

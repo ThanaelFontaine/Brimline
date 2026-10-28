@@ -52,7 +52,7 @@ Every account has a color: its dot in the menu bar window, and its part of the g
 In **Settings, Accounts**, the **Color** line under each account lets you change it:
 
 - **the ten colors of the palette**: violet, blue, magenta, olive, ink, pine, gold, navy, cocoa and lilac. Each one has a value for the light and one for the dark appearance, so it stays readable on both;
-- **Other color…** opens the system color picker (without opacity). The color you pick is kept as six digits (`RRGGBB`, sRGB) and is the same in light and in dark;
+- **Other color…** opens the system color panel (without opacity). The color you pick is kept as six digits (`RRGGBB`, sRGB) and is the same in light and in dark;
 - **Reset to default** gives back the color Brimline would give this account now. It is greyed, with "Default color" beside it, when the account already has it.
 
 Brimline warns, and never refuses:
