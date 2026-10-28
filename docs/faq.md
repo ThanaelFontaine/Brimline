@@ -71,9 +71,11 @@ To keep the icons and still hide them, **Settings, Menu Bar, Hide without removi
 
 Brimline is a menu bar app. To open the settings, use **Settings…** in its window, or open the app again from Finder or Spotlight.
 
-## Why isn't there a downloadable app?
+## Is there a downloadable app? Does it run on Windows or Linux?
 
-Distributing a Mac app outside the App Store without warnings needs an Apple Developer ID and notarization. Brimline is built on your Mac instead, in a few minutes: see [install.md](install.md).
+Yes for the Mac, no for the rest. Brimline is a **Mac app only** (macOS 14 or later, Apple silicon or Intel); there is no Windows or Linux version. Install it in one line (`curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh`), with the disk image `Brimline.dmg` of each release, or from the source: see [install.md](install.md).
+
+The app is not notarized by Apple: that needs a paid Apple Developer account. A disk image downloaded in a browser therefore needs **Open Anyway** once, in System Settings, Privacy & Security ([install.md](install.md#2-the-disk-image) says how).
 
 ## Is Brimline's code public?
 

@@ -204,12 +204,12 @@
     <h3>La barre qui va avec</h3>
     <div data-render="panelBar"></div>
     <div class="vo" data-render="panelVo"></div>
-    <p class="cap" style="max-width:none">Secours a une dernière valeur (expiré) : comptée, sa part est atténuée. Gemini n'a pas de chiffre : hors de la jauge, cité en dernier. Le pourcentage écrit à côté (réglage « Afficher le pourcentage ») reste celui du compte le plus chargé : 94 %.</p>
+    <p class="cap" style="max-width:none">Projet perso a une dernière valeur (expiré) : comptée, sa part est atténuée. Gemini n'a pas de chiffre : hors de la jauge, cité en dernier. Le pourcentage écrit à côté (réglage « Afficher le pourcentage ») reste celui du compte le plus chargé : 94 %.</p>
   </div>
 </div>
 
 <h2 id="reglages">6. Les Réglages : la couleur de chaque compte</h2>
-<p>Onglet Comptes, sous chaque compte : la palette de dix pastilles, « Autre couleur… » (le sélecteur de couleur du système, sans opacité), et « Revenir au défaut ». Une seule ligne de plus par compte. Exemple : Asso a pris une couleur libre trop proche du violet de Principal, Secours une couleur libre trop pâle pour le mode clair. Les avertissements n'empêchent rien : ils disent pourquoi, et ce qu'on y gagne.</p>
+<p>Onglet Comptes, sous chaque compte : la palette de dix pastilles, « Autre couleur… » (le sélecteur de couleur du système, sans opacité), et « Revenir au défaut ». Une seule ligne de plus par compte. Exemple : Travail a pris une couleur libre trop proche du violet de Perso, Projet perso une couleur libre trop pâle pour le mode clair. Les avertissements n'empêchent rien : ils disent pourquoi, et ce qu'on y gagne.</p>
 <div class="row-wrap"><div class="fig" id="fig-settings" data-render="settings"></div></div>
 
 <h2 id="palette">7. La palette des comptes</h2>
@@ -223,11 +223,11 @@
   <li><b>Élément (L4)</b> : variante A. Mesures de la section 3 et de <code>tokens.json</code> (<code>menubarGauge</code>). La largeur ne bouge pas quand l'alerte apparaît (la place du « ! » est toujours réservée) : la barre ne se redispose pas.</li>
   <li><b>Couleurs</b> : cuve et trait en <code>NSColor.labelColor</code> résolu pour l'apparence du bouton ; parts aux couleurs des comptes (valeur claire ou sombre selon cette apparence) ; part atténuée à l'opacité 0,45 ; repère d'alerte en <code>gaugeCrit</code>. Aucun compte compté : le glyphe vertical actuel, image modèle, cuve vide.</li>
   <li><b>Parts</b> : en pixels de l'écran, la plus grande part de reste à l'arrondi ; une part non nulle fait au moins 1 pixel, pris sur le vide, jamais sur une autre part ; la somme ne dépasse jamais la course.</li>
-  <li><b>Infobulle de l'élément</b> : « Moyenne 45 % sur 5 comptes · Agence à 94 % ». VoiceOver : la phrase de la section 5 (L2, <code>menuBarAccessibility</code>).</li>
+  <li><b>Infobulle de l'élément</b> : « Moyenne 45 % sur 5 comptes · Client à 94 % ». VoiceOver : la phrase de la section 5 (L2, <code>menuBarAccessibility</code>).</li>
   <li><b>Panneau (L5)</b> : <code>SGAccountDot</code> de 8 pt avant le titre de la carte, 6 pt d'écart ; adresse et offre alignées sur le titre (retrait de 14 pt) ; en-tête de groupe sans pastille ; une carte à phrase seule prend le nom du fournisseur pour titre.</li>
   <li><b>Réglages (L5)</b> : pastilles de 18 pt, 6 pt d'écart, choisie entourée d'un anneau de 1,5 pt à la couleur du texte ; focus clavier à l'anneau d'accent du système. « Autre couleur… » ouvre <code>ColorPicker</code> (sans opacité), converti en hex sRGB ; la pastille prend alors la couleur choisie. « Revenir au défaut » est grisé quand la couleur est déjà celle par défaut, et « Couleur par défaut » s'écrit à côté.</li>
   <li><b>Avertissements</b> : proximité quand deux comptes visibles ont un écart CIEDE2000 sous 10 dans l'une des deux apparences (affiché sur les deux comptes) ; contraste quand une couleur libre passe sous 3:1 sur la piste dans l'une des deux apparences (le ratio est écrit). Icône triangle en <code>gaugeWarn</code>, texte secondaire de 11 pt.</li>
-  <li><b>VoiceOver des pastilles</b> : un groupe à choix unique, libellé « Couleur de Asso », chaque option son nom (« Violet », « Couleur libre ») ; l'avertissement est lu après.</li>
+  <li><b>VoiceOver des pastilles</b> : un groupe à choix unique, libellé « Couleur de Travail », chaque option son nom (« Violet », « Couleur libre ») ; l'avertissement est lu après.</li>
 </ul>
 <h3 style="margin-top:24px">Textes nouveaux, FR et EN</h3>
 <div class="scroll-x"><table class="spec" data-render="strings"></table></div>
@@ -255,10 +255,10 @@ const T = {
     voGroup: n => `Couleur de ${n}`,
     cases: {
       one: 'Un compte', three: 'Trois comptes', ten: 'Dix comptes',
-      thanael: 'Exemple de Thanaël', thanaelCap: 'Claude à 88 %, ChatGPT à 21 %, Gemini à 40 % (Gemini lu par Antigravity) : parts de 29, 7 et 13 %, total 50 %. Avec la moyenne, une jauge remplie à 80 % veut dire des comptes presque tous pleins.',
+      thanael: 'Un exemple', thanaelCap: 'Claude à 88 %, ChatGPT à 21 %, Gemini à 40 % (Gemini lu par Antigravity) : parts de 29, 7 et 13 %, total 50 %. Avec la moyenne, une jauge remplie à 80 % veut dire des comptes presque tous pleins.',
       nofig: 'Un compte sans chiffre', nofigCap: 'Gemini en phrase seule : hors de N et hors de la jauge, pour ne pas diluer les autres. Deux comptes comptés, total 50 %. VoiceOver et le panneau le citent.',
-      stale: 'Une dernière valeur', staleCap: 'Secours (marine) est expiré : sa dernière valeur reste comptée, sa part est atténuée (opacité 0,45).',
-      alert: 'Alerte : un compte à 94 %', alertCap: 'Agence à 94 %, quatre comptes presque vides : moyenne 20 %. Le trait devient « ! » en rouge (forme et couleur), le chiffre écrit dit 94 %, VoiceOver commence par l\'alerte.',
+      stale: 'Une dernière valeur', staleCap: 'Projet perso (marine) est expiré : sa dernière valeur reste comptée, sa part est atténuée (opacité 0,45).',
+      alert: 'Alerte : un compte à 94 %', alertCap: 'Client à 94 %, quatre comptes presque vides : moyenne 20 %. Le trait devient « ! » en rouge (forme et couleur), le chiffre écrit dit 94 %, VoiceOver commence par l\'alerte.',
       full: 'Un compte à 100 %, neuf à 0', fullCap: 'Total 10 % : la moyenne cache le compte bloqué, l\'alerte le montre. Sa part fait 6,4 pt.',
       empty: 'Aucun compte compté', emptyCap: 'Le glyphe vertical actuel, image modèle, cuve vide : rien d\'inventé. Même cas quand seuls des comptes sans chiffre existent.',
     },
@@ -285,10 +285,10 @@ const T = {
     voGroup: n => `Color of ${n}`,
     cases: {
       one: 'One account', three: 'Three accounts', ten: 'Ten accounts',
-      thanael: 'Thanaël\'s example', thanaelCap: 'Claude at 88%, ChatGPT at 21%, Gemini at 40% (Gemini read through Antigravity): shares of 29, 7 and 13%, 50% in total. With the average, a gauge filled to 80% means nearly every account is full.',
+      thanael: 'An example', thanaelCap: 'Claude at 88%, ChatGPT at 21%, Gemini at 40% (Gemini read through Antigravity): shares of 29, 7 and 13%, 50% in total. With the average, a gauge filled to 80% means nearly every account is full.',
       nofig: 'An account without a number', nofigCap: 'Gemini as a sentence only: left out of N and out of the gauge, so it does not dilute the others. Two counted accounts, 50% in total. VoiceOver and the panel mention it.',
-      stale: 'A last known value', staleCap: 'Secours (navy) is expired: its last value still counts, its share is dimmed (opacity 0.45).',
-      alert: 'Alert: one account at 94%', alertCap: 'Agence at 94%, four nearly empty accounts: 20% on average. The line turns into a red "!" (shape and color), the written number says 94%, VoiceOver starts with the alert.',
+      stale: 'A last known value', staleCap: 'Projet perso (navy) is expired: its last value still counts, its share is dimmed (opacity 0.45).',
+      alert: 'Alert: one account at 94%', alertCap: 'Client at 94%, four nearly empty accounts: 20% on average. The line turns into a red "!" (shape and color), the written number says 94%, VoiceOver starts with the alert.',
       full: 'One account at 100%, nine at 0', fullCap: '10% in total: the average hides the blocked account, the alert shows it. Its share is 6.4 pt wide.',
       empty: 'No counted account', emptyCap: 'Today\'s upright glyph, template image, empty tank: nothing made up. Same when only accounts without a number exist.',
     },
@@ -314,7 +314,7 @@ const CUSTOM_CLOSE = '#6A4FD3', CUSTOM_PALE = '#D5DCE2';
 
 // ---------- Comptes d'exemple (slot = emplacement de palette, ou couleur libre) ----------
 const ACC = {
-  principal: { n: 'Principal', slot: 0 }, asso: { n: 'Asso', slot: 5 }, agence: { n: 'Agence', slot: 6 }, secours: { n: 'Secours', slot: 7 },
+  principal: { n: 'Perso', slot: 0 }, asso: { n: 'Travail', slot: 5 }, agence: { n: 'Client', slot: 6 }, secours: { n: 'Projet perso', slot: 7 },
   plus: { n: 'ChatGPT Plus', slot: 1 }, work: { n: 'Codex travail', slot: 8 }, grok: { n: 'SuperGrok', slot: 3 }, cursor: { n: 'Cursor Pro', slot: 4 },
   gemini: { n: 'Gemini', slot: 2 }, lab: { n: 'Research lab', slot: 9 },
 };
@@ -575,15 +575,15 @@ const R = {
   settings(t) {
     const fr = t === T.fr;
     const name = i => fr ? SLOTS[i][1] : SLOTS[i][2];
-    // Couleurs choisies dans l'exemple : Asso et Secours en couleur libre.
+    // Couleurs choisies dans l'exemple : Travail et Projet perso en couleur libre.
     const rows = [
-      { k: 'principal', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude', label: 'Principal', sel: 0, def: true },
-      { k: 'asso', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude-asso', label: 'Asso', custom: CUSTOM_CLOSE, warn: [t.close('Principal')] },
-      { k: 'agence', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude-agence', label: 'Agence', sel: 6, def: true, focus: 7 },
-      { k: 'secours', sub: `Claude · Max · ${t.expiredSt}`, path: 'keychain:secours', label: 'Secours', custom: CUSTOM_PALE, warn: [t.contrast(t.light, fr ? '1,4' : '1.4')] },
+      { k: 'principal', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude', label: 'Perso', sel: 0, def: true },
+      { k: 'asso', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude-travail', label: 'Travail', custom: CUSTOM_CLOSE, warn: [t.close('Perso')] },
+      { k: 'agence', sub: `Claude · Max · ${t.upToDate}`, path: '~/.claude-client', label: 'Client', sel: 6, def: true, focus: 7 },
+      { k: 'secours', sub: `Claude · Max · ${t.expiredSt}`, path: 'keychain:projet', label: 'Projet perso', custom: CUSTOM_PALE, warn: [t.contrast(t.light, fr ? '1,4' : '1.4')] },
     ];
     // Le violet trop proche est aussi signalé sur Principal.
-    rows[0].warn = [t.close('Asso')];
+    rows[0].warn = [t.close('Travail')];
     const acct = r => {
       const sw = SLOTS.map((s, i) => `<span class="sw${r.sel === i ? ' on' : ''}${r.focus === i ? ' focus' : ''}" style="--c:var(--a${i})" role="radio" aria-checked="${r.sel === i}" aria-label="${esc(name(i))}" title="${esc(name(i))}"></span>`).join('');
       const other = r.custom ? `<span class="sw other filled on" style="--c:${r.custom}" role="radio" aria-checked="true" aria-label="${esc(t.customName)}" title="${esc(t.customName)}"></span>` : `<span class="sw other" role="radio" aria-checked="false" aria-label="${esc(t.other)}" title="${esc(t.other)}">+</span>`;
@@ -628,16 +628,16 @@ const R = {
   strings() {
     const f = T.fr, e = T.en;
     const rows = [
-      ['VoiceOver, alerte', f.voAlert('Agence', 94), e.voAlert('Agence', 94)],
+      ['VoiceOver, alerte', f.voAlert('Client', 94), e.voAlert('Client', 94)],
       ['VoiceOver, moyenne', f.voMain(45, 5), e.voMain(45, 5)],
-      ['VoiceOver, un compte', f.voOne('Secours', 9, true), e.voOne('Secours', 9, true)],
+      ['VoiceOver, un compte', f.voOne('Projet perso', 9, true), e.voOne('Projet perso', 9, true)],
       ['VoiceOver, sans chiffre', f.voNoFig('Gemini'), e.voNoFig('Gemini')],
-      ['Infobulle de l\'élément', f.tip(45, 5, { n: 'Agence', p: 94 }), e.tip(45, 5, { n: 'Agence', p: 94 })],
+      ['Infobulle de l\'élément', f.tip(45, 5, { n: 'Client', p: 94 }), e.tip(45, 5, { n: 'Client', p: 94 })],
       ['Réglages, légende', f.colorCap, e.colorCap],
       ['Réglages, libellé', f.color, e.color], ['Bouton', f.other, e.other], ['Bouton', f.reset, e.reset], ['Note', f.isDefault, e.isDefault],
-      ['Avertissement de proximité', f.close('Principal'), e.close('Principal')],
+      ['Avertissement de proximité', f.close('Perso'), e.close('Perso')],
       ['Avertissement de contraste', f.contrast(f.light, '1,4'), e.contrast(e.light, '1.4')],
-      ['Option couleur libre', f.customName, e.customName], ['VoiceOver du groupe', f.voGroup('Asso'), e.voGroup('Asso')],
+      ['Option couleur libre', f.customName, e.customName], ['VoiceOver du groupe', f.voGroup('Travail'), e.voGroup('Travail')],
       ...SLOTS.map((s, i) => ['Couleur ' + i, s[1], s[2]]),
     ];
     return '<thead><tr><th>Où</th><th>FR</th><th>EN</th></tr></thead><tbody>' + rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('') + '</tbody>';

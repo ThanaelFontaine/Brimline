@@ -1,8 +1,7 @@
 # Brimline
 
-*Formerly Sightglass. Renamed on 26 October 2026, before the first public release, because the name Sightglass is already carried by close software (the reason is in the [changelog](CHANGELOG.md)).*
-
 [![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/license-PolyForm%20Shield%201.0.0-blue.svg)](LICENSE)
+[![Platform: macOS 14+](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey.svg)](#install)
 [![Status: in development](https://img.shields.io/badge/status-in%20development-orange.svg)](CHANGELOG.md)
 
 *[Version française](README.fr.md)*
@@ -11,6 +10,12 @@
 
 If you use several Claude accounts (or Claude and ChatGPT, Gemini, Grok, Cursor), the built-in indicators show one account at a time, without telling you which one. Brimline puts them side by side: the five hour session, the week, the week per model, and when each one resets.
 
+```bash
+curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
+```
+
+**A Mac app only:** macOS 14 (Sonoma) or later, Apple silicon or Intel. There is no Windows or Linux version. Other ways to install: [below](#install).
+
 <p align="center">
   <img src="docs/images/panel-light.png" width="364" alt="The Brimline window: three accounts with their session, weekly and per model limits">
   <img src="docs/images/panel-dark.png" width="364" alt="The same window in dark mode">
@@ -18,9 +23,43 @@ If you use several Claude accounts (or Claude and ChatGPT, Gemini, Grok, Cursor)
 
 The same numbers are readable by your agents (a command with JSON output and a local MCP server), so an agent can pick the account that still has room.
 
-> **Status:** private, not announced: the repository and the site are not public yet. The current version is 0.2.0. It works with Claude (through Claude Code, with several accounts) and adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
+> **Status:** private, not announced: the repository and the site are not public yet, so the install line and the download links above and below only work once they are. The current version is 0.2.1. It works with Claude (through Claude Code, with several accounts) and adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
 
 The *brim* is the edge a tank fills up to, and the *line* is the limit drawn above it: Brimline shows how close you are to the edge, at a glance.
+
+*Formerly Sightglass: renamed on 26 October 2026, before its first public release (the reason is in the [changelog](CHANGELOG.md)).*
+
+## How it works
+
+1. **It finds your accounts.** Each Claude account is a Claude Code folder on your Mac (`~/.claude`, `~/.claude-work`, ...), signed in once with `/login`: Brimline lists them by itself. ChatGPT, Gemini, Grok and Cursor are read through their own official tools, once you switch them on in Settings.
+2. **It reads, never writes.** Brimline uses the sign-in those tools already keep and asks each provider for your usage, the same request the official tool makes. It never signs you in, never renews or copies a token, and sends nothing anywhere else.
+3. **It sums it up in the menu bar.** One gauge, one colored part per account, and a red "!" as soon as one account reaches 90 %. Click it for the window: one card per account, one bar per limit, and when it resets.
+4. **Your agents can ask too.** `brimline status --json` and a local MCP server (`best_account`) let an agent pick the account that still has room.
+
+## Install
+
+Brimline is a **Mac app only**: macOS 14 (Sonoma) or later, on Apple silicon or Intel (one universal app; tried on Apple silicon only so far). There is no Windows or Linux version.
+
+**In one line**, in Terminal:
+
+```bash
+curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
+```
+
+The script ([read it first](https://brimline.thanaelfontaine.eu/install.sh) if you like) downloads the latest release from GitHub, checks it against its published SHA-256, puts `Brimline.app` in `/Applications` (or `~/Applications` when `/Applications` is not writable), links the `brimline` command at `~/.local/bin/brimline` and opens the app. No administrator password, nothing written outside those places. Run the same line again to update.
+
+**Or the disk image:** download [Brimline.dmg](https://github.com/ThanaelFontaine/Brimline/releases/latest/download/Brimline.dmg) (its SHA-256 is [next to it](https://github.com/ThanaelFontaine/Brimline/releases/latest)), open it and drag Brimline onto Applications. Brimline is not notarized by Apple (that needs a paid Apple Developer account), so macOS blocks it the first time you open it: close the message, then go to **System Settings, Privacy & Security** and click **Open Anyway**, then **Open** ([Apple's page](https://support.apple.com/en-us/102445)). macOS asks this once.
+
+**Or from the source**, with Apple's Command Line Tools (no Xcode, no Apple account):
+
+```bash
+git clone https://github.com/ThanaelFontaine/Brimline.git
+cd Brimline
+scripts/build_app.sh     # builds build/Brimline.app
+scripts/install.sh       # copies it to ~/Applications, links the command, opens the app
+```
+
+Brimline then lives in the menu bar, not in the Dock: look for its gauge at the top right of the screen. Requirements, what macOS shows, updating and uninstalling: [docs/install.md](docs/install.md).
 
 ## Principles
 
@@ -51,27 +90,15 @@ Each new provider was tried on **27 October 2026** on the maker's own account, *
 
 What exactly is read, where the source comes from and what each try showed: [docs/providers.md](docs/providers.md).
 
-## Install
-
-There is no notarized download yet: you build Brimline on your Mac, with Apple's Command Line Tools (no Xcode, no Apple account).
-
-```bash
-git clone https://github.com/ThanaelFontaine/Brimline.git
-cd Brimline
-scripts/build_app.sh     # builds build/Brimline.app
-scripts/install.sh       # copies it to ~/Applications, links the command, opens the app
-```
-
-Add `--login` to `install.sh` to also open Brimline at login (or turn it on later in **Settings, General**).
-
-Requirements, what macOS shows, updating and uninstalling: [docs/install.md](docs/install.md).
-
 ## Use
 
-1. **Link your accounts.** Each Claude account is a Claude Code configuration folder (`~/.claude`, `~/.claude-work`, ...), chosen with `CLAUDE_CONFIG_DIR` and signed in once with `/login`. Brimline finds them by itself. Step by step: [docs/accounts.md](docs/accounts.md).
-2. **Read the menu bar, then click it.** The glyph lies down and becomes a gauge: one colored part per account that has a number (the tightest limit of each, divided by the number of accounts, so the whole gauge is their average), packed to the left in the order of the panel, each in the color of its account. At the end of the gauge, the limit line stands free; as soon as one account reaches 90 %, it becomes a red "!" (a shape, not only a color), whatever the average is. A last known value is drawn dimmed, an account with no number is left out (the panel and VoiceOver name it), and with no number at all the upright glyph comes back. The percentage you can turn on in Settings is the most loaded account's, never the average; the tooltip says "Average 45% across 5 accounts" and the alerts, and VoiceOver reads the whole sentence. The colors are the ones you choose in the settings (ten by default, the same as the dots of the panel). ![The menu bar element on a light bar: 1, 3 and 10 accounts, an alert, a last known value and no account, at 2x and 1x](docs/images/menubar-gauge-light.png) The cards are grouped by provider (its name, "ChatGPT via Codex"); each card shows its name, after a dot in the color of the account (you choose it in the settings), then one gauge per limit with its percentage and its reset time ("resets in 2 h 10 (14:30)"), a limit of one model on a compact line under it. A provider that gives no limit Brimline can read (Gemini without Antigravity, or a free Grok account: "xAI returns no credit limit for this account.") shows one sentence and no gauge; "Learn more" opens the rest of it.
-3. **Settings** (from the window, or by opening the app again): hide an account, give it a label, add a Claude Code or Codex folder, change the refresh interval (2 to 15 minutes), show the percentage of the most loaded account next to the gauge, open at login, and choose the color of each account (ten colors or any other; Brimline warns when two colors are hard to tell apart or one is hard to see). Each provider has its own block with a switch, one line that says what Brimline reads and where it asks ("What is read" opens [providers](docs/providers.md)), and a "Don't read this account" box per account: Claude is on; every other provider is **off until you turn it on** (Gemini is read by launching Google's Antigravity command `agy --print /usage`, the one third-party program Brimline launches, and only its verified builds (Antigravity CLI 1.4.8 and 1.4.9, checked on 27 and 28/10/2026) are launched: see [providers](docs/providers.md); Cursor is read through the sign-in its app keeps, with one request to cursor.com: see [providers](docs/providers.md)), and a provider that is off is not touched at all (`brimline providers` does the same from the terminal).
-4. **Tidy the menu bar** (Settings, Menu Bar): Claude, ChatGPT and Cursor each put their own icon in the menu bar, and Brimline already shows where they stand. Brimline **cannot touch another app's icon**: macOS has no public way for an app to do it, and the non-public ways (Accessibility, Screen Recording) are broken on macOS 27 and need permissions a usage tracker should not ask for. So this tab asks for none: for each of the three apps installed on the Mac it names the switch of its icon ("Turn off “Menu bar”"), says where it is, and opens the app; it opens System Settings on Menu Bar (where macOS has its own "Allow in the Menu Bar" switch for each app); and it explains the Command-drag gesture. It reads nothing of these apps but where they are installed. **Hide without removing** (off by default): turned on, Brimline adds a thin bar of its own to the menu bar; drag once, with Command held down, the icons to hide to the left of that bar, and the "Hide the icons" button of the Brimline window hides them by making Brimline's own bar long, and shows them again. No permission is asked; Brimline stays right of its bar, never hidden, and quitting it or turning the setting off shows every icon. The technique is not documented by Apple and was tried on macOS 27.0.1 on a screen without a notch only: [docs/menu-bar.md](docs/menu-bar.md).
+- **Link your accounts.** One Claude Code folder per Claude account, chosen with `CLAUDE_CONFIG_DIR` and signed in once with `/login`; Brimline finds them by itself. Other providers: switch them on in Settings, Accounts. Step by step: [docs/accounts.md](docs/accounts.md).
+- **Read the menu bar.** The glyph lies down and becomes a gauge: one colored part per account (its tightest limit), so the whole gauge is their average. As soon as one account reaches 90 %, the limit line turns into a red "!" (a shape, not only a color). The tooltip and VoiceOver say it in words.
+
+  ![The menu bar element on a light bar: 1, 3 and 10 accounts, an alert, a last known value and no account, at 2x and 1x](docs/images/menubar-gauge-light.png)
+- **Open the window.** Cards grouped by provider, one gauge per limit with its percentage and its reset time ("resets in 2 h 10 (14:30)"). A provider that gives no readable limit says so in one sentence, never with a made-up number.
+- **Settings** (from the window, or by opening the app again): hide an account or give it a label, choose its color, switch each provider on or off, mark an account "Don't read this account", change the refresh interval (2 to 15 minutes), show the percentage next to the gauge, open at login.
+- **Tidy the menu bar** (Settings, Menu Bar): where to turn off the icons of Claude, ChatGPT and Cursor, and an optional "Hide without removing", with no permission asked: [docs/menu-bar.md](docs/menu-bar.md).
 
 Every state is said in words, never by color alone:
 

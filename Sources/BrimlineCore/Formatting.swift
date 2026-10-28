@@ -636,7 +636,7 @@ public struct Strings: Sendable {
     public func menuBarAccessibility(_ percent: Double?) -> String {
         percent.map { "Brimline, \(percentText($0))" } ?? "Brimline"
     }
-    /// What VoiceOver reads for the gauge of the menu bar: the alert first ("Alert: Claude Agency at 94%."), then the
+    /// What VoiceOver reads for the gauge of the menu bar: the alert first ("Alert: Claude Client at 94%."), then the
     /// average and each account with its percentage, then the accounts that have no figure. One element, one sentence.
     public func menuBarAccessibility(_ gauge: GaugeModel, names: (String) -> String) -> String {
         var parts: [String] = []
@@ -665,7 +665,7 @@ public struct Strings: Sendable {
         }
         return parts.joined(separator: " ")
     }
-    /// The tooltip of the menu bar element: "Average 45% across 5 accounts · Agency at 94%" (the alerts after a middle dot).
+    /// The tooltip of the menu bar element: "Average 45% across 5 accounts · Client at 94%" (the alerts after a middle dot).
     public func menuBarTooltip(_ gauge: GaugeModel, names: (String) -> String) -> String {
         let count = gauge.segments.count
         guard count > 0 else { return "Brimline" }
@@ -699,7 +699,7 @@ public struct Strings: Sendable {
         case .custom: return customColorName
         }
     }
-    /// The name of the group of choices of one account ("Color of Claude Agency").
+    /// The name of the group of choices of one account ("Color of Claude Client").
     public func colorGroup(_ account: String) -> String { t("Color of \(account)", "Couleur de \(account)") }
     /// The sentence under a color that is not a good choice. `account` names the other account of a close pair.
     public func colorWarning(_ warning: ColorWarning, account: (String) -> String) -> String {

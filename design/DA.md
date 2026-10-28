@@ -204,8 +204,8 @@ Le glyphe se couche et sa cuve devient la jauge : une cuve ouverte, fermée à g
 - **Pourcentage à côté** (réglage) : texte système de la barre, chiffres à chasse fixe, 4 pt après l'image ; c'est celui du compte le plus chargé, jamais la moyenne.
 - **Comptes sans chiffre** (phrase seule, jamais lu, illimité) : hors de N et hors de la jauge ; VoiceOver et le panneau les citent.
 - **Aucun compte compté** : le glyphe vertical ci-dessous, image modèle, cuve vide.
-- **Infobulle** : « Moyenne 45 % sur 5 comptes · Agence à 94 % ».
-- **VoiceOver** : un seul élément, l'alerte d'abord : « Alerte : Agence à 94 %. Brimline, utilisé 45 % en moyenne sur 5 comptes : Principal 58 %, …, Secours 9 %, valeur ancienne, ChatGPT Plus 41 %. Gemini : pas de chiffre. »
+- **Infobulle** : « Moyenne 45 % sur 5 comptes · Client à 94 % ».
+- **VoiceOver** : un seul élément, l'alerte d'abord : « Alerte : Client à 94 %. Brimline, utilisé 45 % en moyenne sur 5 comptes : Perso 58 %, …, Projet perso 9 %, valeur ancienne, ChatGPT Plus 41 %. Gemini : pas de chiffre. »
 
 Variantes montrées et écartées (planche, section 4) : « une case par compte » (le total ne se lit plus, 5 pt par case à dix comptes), « glyphe à côté » (deux objets, près de 80 pt), verticale (8 pt de course).
 

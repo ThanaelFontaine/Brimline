@@ -1,8 +1,7 @@
 # Brimline
 
-*Anciennement Sightglass. Renommé le 26 octobre 2026, avant la première publication, parce que le nom Sightglass est déjà porté par des logiciels proches (la raison est dans le [CHANGELOG](CHANGELOG.md)).*
-
 [![Licence : PolyForm Shield 1.0.0](https://img.shields.io/badge/licence-PolyForm%20Shield%201.0.0-blue.svg)](LICENSE)
+[![Plateforme : macOS 14+](https://img.shields.io/badge/plateforme-macOS%2014%2B-lightgrey.svg)](#installer)
 [![État : en développement](https://img.shields.io/badge/%C3%A9tat-en%20d%C3%A9veloppement-orange.svg)](CHANGELOG.md)
 
 *[English version](README.md)*
@@ -11,6 +10,12 @@
 
 Avec plusieurs comptes Claude (ou Claude et ChatGPT, Gemini, Grok, Cursor), les indicateurs intégrés montrent un compte à la fois, sans dire lequel. Brimline les met côte à côte : limite de session de 5 heures, limite de la semaine, limite de la semaine par modèle, et l'heure où chacune repart.
 
+```bash
+curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
+```
+
+**Une app Mac seulement :** macOS 14 (Sonoma) ou plus récent, puce Apple ou Intel. Il n'existe pas de version Windows ni Linux. Les autres façons d'installer : [plus bas](#installer).
+
 <p align="center">
   <img src="docs/images/panel-fr-light.png" width="364" alt="La fenêtre de Brimline : trois comptes avec leurs limites de session, de semaine et par modèle">
   <img src="docs/images/panel-fr-dark.png" width="364" alt="La même fenêtre en mode sombre">
@@ -18,9 +23,43 @@ Avec plusieurs comptes Claude (ou Claude et ChatGPT, Gemini, Grok, Cursor), les 
 
 Les mêmes chiffres sont lisibles par tes agents (une commande à sortie JSON et un serveur MCP local) : un agent peut choisir le compte qui a encore de la marge.
 
-> **État :** privé, rien n'est annoncé : le dépôt et le site ne sont pas encore publics. La version actuelle est la 0.2.0. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
+> **État :** privé, rien n'est annoncé : le dépôt et le site ne sont pas encore publics, donc la ligne d'installation et les liens de téléchargement ci-dessus et ci-dessous ne marchent qu'une fois publics. La version actuelle est la 0.2.1. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
 
 Le *brim* est le bord jusqu'où monte une cuve, et la *line* la limite tracée au-dessus : Brimline montre d'un coup d'œil à quelle distance du bord tu en es.
+
+*Anciennement Sightglass : renommé le 26 octobre 2026, avant sa première publication (la raison est dans le [CHANGELOG](CHANGELOG.md)).*
+
+## Comment ça marche
+
+1. **Il trouve tes comptes.** Chaque compte Claude est un dossier Claude Code sur ton Mac (`~/.claude`, `~/.claude-work`, ...), connecté une fois avec `/login` : Brimline les liste seul. ChatGPT, Gemini, Grok et Cursor se lisent par leurs propres outils officiels, une fois allumés dans les Réglages.
+2. **Il lit, n'écrit jamais.** Brimline se sert de la connexion que ces outils gardent déjà et demande à chaque fournisseur ta consommation, la même requête que l'outil officiel. Il ne te connecte jamais, ne renouvelle ni ne copie aucun jeton, et n'envoie rien ailleurs.
+3. **Il résume tout dans la barre des menus.** Une jauge, une part colorée par compte, et un « ! » rouge dès qu'un compte atteint 90 %. Clique dessus pour la fenêtre : une carte par compte, une barre par limite, et l'heure où elle repart.
+4. **Tes agents peuvent demander aussi.** `brimline status --json` et un serveur MCP local (`best_account`) permettent à un agent de choisir le compte qui a encore de la marge.
+
+## Installer
+
+Brimline est une **app Mac seulement** : macOS 14 (Sonoma) ou plus récent, sur puce Apple ou Intel (une seule app universelle ; essayée sur puce Apple seulement pour l'instant). Il n'existe pas de version Windows ni Linux.
+
+**En une ligne**, dans le Terminal :
+
+```bash
+curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
+```
+
+Le script ([à lire d'abord](https://brimline.thanaelfontaine.eu/install.sh) si tu veux) télécharge la dernière version depuis GitHub, la vérifie avec son SHA-256 publié, met `Brimline.app` dans `/Applications` (ou `~/Applications` quand `/Applications` n'est pas modifiable), relie la commande `brimline` à `~/.local/bin/brimline` et ouvre l'app. Aucun mot de passe administrateur, rien d'écrit ailleurs. La même ligne, relancée, met à jour.
+
+**Ou l'image disque :** télécharge [Brimline.dmg](https://github.com/ThanaelFontaine/Brimline/releases/latest/download/Brimline.dmg) (son SHA-256 est [à côté](https://github.com/ThanaelFontaine/Brimline/releases/latest)), ouvre-la et glisse Brimline sur Applications. Brimline n'est pas notarisé par Apple (il faudrait un compte Apple Developer payant) : macOS le bloque la première fois que tu l'ouvres. Ferme le message, puis va dans **Réglages Système, Confidentialité et sécurité** et clique sur **Ouvrir quand même**, puis **Ouvrir** ([la page d'Apple](https://support.apple.com/fr-fr/102445)). macOS ne le demande qu'une fois.
+
+**Ou depuis la source**, avec les Command Line Tools d'Apple (ni Xcode, ni compte Apple) :
+
+```bash
+git clone https://github.com/ThanaelFontaine/Brimline.git
+cd Brimline
+scripts/build_app.sh     # construit build/Brimline.app
+scripts/install.sh       # la copie dans ~/Applications, relie la commande, ouvre l'app
+```
+
+Brimline vit ensuite dans la barre des menus, pas dans le Dock : cherche sa jauge en haut à droite de l'écran. Prérequis, ce que montre macOS, mise à jour et désinstallation : [docs/install.md](docs/install.md) (en anglais).
 
 ## Principes
 
@@ -51,27 +90,15 @@ Chaque nouveau fournisseur a été essayé le **27 octobre 2026** sur le compte 
 
 Ce qui est lu exactement, d'où vient la source et ce que chaque essai a montré : [docs/providers.md](docs/providers.md) (en anglais).
 
-## Installer
-
-Il n'y a pas encore d'app notariée à télécharger : tu construis Brimline sur ton Mac, avec les Command Line Tools d'Apple (ni Xcode, ni compte Apple).
-
-```bash
-git clone https://github.com/ThanaelFontaine/Brimline.git
-cd Brimline
-scripts/build_app.sh     # construit build/Brimline.app
-scripts/install.sh       # la copie dans ~/Applications, relie la commande, ouvre l'app
-```
-
-Ajoute `--login` à `install.sh` pour ouvrir aussi Brimline à la connexion (ou active-le plus tard dans **Réglages, Général**).
-
-Prérequis, ce que montre macOS, mise à jour et désinstallation : [docs/install.md](docs/install.md) (en anglais).
-
 ## Utiliser
 
-1. **Associe tes comptes.** Chaque compte Claude est un dossier de configuration de Claude Code (`~/.claude`, `~/.claude-work`, ...), choisi avec `CLAUDE_CONFIG_DIR` et connecté une fois avec `/login`. Brimline les trouve seul. Pas à pas : [docs/accounts.fr.md](docs/accounts.fr.md).
-2. **Lis la barre des menus, puis clique dessus.** Le glyphe se couche et devient une jauge : une part colorée par compte qui a un chiffre (sa limite la plus serrée, divisée par le nombre de comptes, donc la jauge entière est leur moyenne), tassées à gauche dans l'ordre du panneau, chacune à la couleur de son compte. Au bout de la jauge, le trait de la limite reste libre ; dès qu'un compte atteint 90 %, il devient un « ! » rouge (une forme, pas seulement une couleur), quelle que soit la moyenne. Une dernière valeur connue est atténuée, un compte sans chiffre est laissé de côté (le panneau et VoiceOver le nomment), et sans aucun chiffre le glyphe vertical revient. Le pourcentage que les Réglages peuvent afficher est celui du compte le plus chargé, jamais la moyenne ; l'infobulle dit « Moyenne 45 % sur 5 comptes » et les alertes, et VoiceOver lit la phrase entière. Les couleurs sont celles que tu choisis dans les réglages (dix par défaut, les mêmes que les pastilles du panneau). ![L'élément de la barre des menus sur une barre claire : 1, 3 et 10 comptes, une alerte, une dernière valeur connue et aucun compte, en 2x et en 1x](docs/images/menubar-gauge-light.png) Les cartes sont regroupées par fournisseur (son nom, « ChatGPT par Codex ») ; chaque carte montre son nom, après un point de la couleur du compte (tu la choisis dans les réglages), puis une jauge par limite avec son pourcentage et son heure de remise à zéro (« repart dans 2 h 10 (14:30) »), une limite propre à un modèle tenant sur une ligne compacte dessous. Un fournisseur qui ne donne aucune limite lisible par Brimline (Gemini sans Antigravity, ou un compte Grok gratuit : « xAI ne renvoie aucune limite de crédits pour ce compte. ») montre une phrase et pas de jauge ; « En savoir plus » ouvre le reste.
-3. **Réglages** (depuis la fenêtre, ou en rouvrant l'app) : masquer un compte, lui donner un libellé, ajouter un dossier Claude Code ou Codex, changer l'intervalle d'actualisation (2 à 15 minutes), afficher le pourcentage du compte le plus chargé à côté de la jauge, ouvrir à la connexion, et choisir la couleur de chaque compte (dix couleurs ou une autre ; Brimline prévient quand deux couleurs se distinguent mal ou qu'une se voit mal). Chaque fournisseur a son bloc, avec un interrupteur, une ligne qui dit ce que Brimline lit et où il le demande (« Ce qui est lu » ouvre [providers](docs/providers.md)), et une case « Ne pas lire ce compte » par compte : Claude est allumé ; tout autre fournisseur est **coupé tant que tu ne l'allumes pas** (Gemini se lit en lançant la commande d'Antigravity de Google, `agy --print /usage`, le seul programme tiers que Brimline lance, et seules ses builds vérifiées (Antigravity CLI 1.4.8 et 1.4.9, les 27 et 28/10/2026) sont lancées : voir [providers](docs/providers.md) ; Cursor est lu par la connexion que son app garde, avec une requête à cursor.com : voir [providers](docs/providers.md)), et un fournisseur coupé n'est pas touché du tout (`brimline providers` fait la même chose depuis le terminal).
-4. **Ranger la barre des menus** (Réglages, Barre des menus) : Claude, ChatGPT et Cursor posent chacun leur icône dans la barre des menus, et Brimline montre déjà où ils en sont. Brimline **ne peut pas toucher à l'icône d'une autre app** : macOS n'offre aucune voie publique pour cela, et les voies non publiques (Accessibilité, Enregistrement de l'écran) sont cassées sous macOS 27 et demandent des autorisations qu'un suivi de consommation ne doit pas réclamer. Cet onglet n'en demande donc aucune : pour chacune des trois apps installées sur le Mac, il nomme l'interrupteur de son icône (« Coupez « Barre de menus » »), dit où il est et ouvre l'app ; il ouvre Réglages Système sur Barre des menus (où macOS a son propre interrupteur « Autoriser dans la barre des menus » par app) ; et il explique le geste Commande + glisser. Il ne lit de ces apps que l'endroit où elles sont installées. **Cacher sans retirer** (coupé par défaut) : allumé, Brimline ajoute à la barre des menus un fin trait à lui ; glisse une fois, en maintenant Cmd, les icônes à cacher à gauche de ce trait, et le bouton « Cacher les icônes » de la fenêtre de Brimline les cache en allongeant le trait de Brimline, puis les montre à nouveau. Aucune autorisation n'est demandée ; Brimline reste à droite de son trait, jamais caché, et le quitter ou couper le réglage remet toutes les icônes. La technique n'est pas documentée par Apple et n'a été essayée que sur macOS 27.0.1, sur un écran sans encoche : [docs/menu-bar.fr.md](docs/menu-bar.fr.md).
+- **Associe tes comptes.** Un dossier Claude Code par compte Claude, choisi avec `CLAUDE_CONFIG_DIR` et connecté une fois avec `/login` ; Brimline les trouve seul. Les autres fournisseurs : allume-les dans Réglages, Comptes. Pas à pas : [docs/accounts.fr.md](docs/accounts.fr.md).
+- **Lis la barre des menus.** Le glyphe se couche et devient une jauge : une part colorée par compte (sa limite la plus serrée), donc la jauge entière est leur moyenne. Dès qu'un compte atteint 90 %, le trait de la limite devient un « ! » rouge (une forme, pas seulement une couleur). L'infobulle et VoiceOver le disent en mots.
+
+  ![L'élément de la barre des menus sur une barre claire : 1, 3 et 10 comptes, une alerte, une dernière valeur connue et aucun compte, en 2x et en 1x](docs/images/menubar-gauge-light.png)
+- **Ouvre la fenêtre.** Les cartes regroupées par fournisseur, une jauge par limite avec son pourcentage et son heure de remise à zéro (« repart dans 2 h 10 (14:30) »). Un fournisseur qui ne donne aucune limite lisible le dit en une phrase, jamais avec un chiffre inventé.
+- **Réglages** (depuis la fenêtre, ou en rouvrant l'app) : masquer un compte ou lui donner un libellé, choisir sa couleur, allumer ou couper chaque fournisseur, marquer un compte « Ne pas lire ce compte », changer l'intervalle d'actualisation (2 à 15 minutes), afficher le pourcentage à côté de la jauge, ouvrir à la connexion.
+- **Ranger la barre des menus** (Réglages, Barre des menus) : où couper les icônes de Claude, ChatGPT et Cursor, et un « Cacher sans retirer » optionnel, sans aucune autorisation demandée : [docs/menu-bar.fr.md](docs/menu-bar.fr.md).
 
 L'app suit la langue du Mac (anglais ou français). Chaque état est dit en mots, jamais par la seule couleur :
 

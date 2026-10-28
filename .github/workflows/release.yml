@@ -5,7 +5,11 @@
 # 1. Reads VERSION. 0.0.0 is the development version: nothing is released.
 # 2. If release vX.Y.Z already exists, there is nothing to do.
 # 3. Otherwise it creates the tag on the checked commit (or reuses a tag that already points
-#    there) and the release with the notes. Re-running is safe.
+#    there) and the release with the notes.
+# 4. It builds the app and its disk image from that commit and attaches Brimline.dmg and
+#    Brimline.dmg.sha256 to the release, unless the release already has them. The names carry no
+#    version, so .../releases/latest/download/Brimline.dmg is always the latest one (the site and
+#    the one-line installer rely on it). Re-running is safe.
 #
 # Events created with GITHUB_TOKEN (the tag, the release) do not start other workflows: the whole
 # chain starts here. Never create a tag or a release by hand.
@@ -29,7 +33,7 @@ jobs:
   release:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -71,3 +75,23 @@ jobs:
             gh release create "$TAG" --target "$HEAD_SHA" --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
           fi
           echo "Release $TAG created."
+
+      - name: App and disk image
+        if: ${{ steps.plan.outputs.skip != 'true' }}
+        run: |
+          scripts/build_app.sh
+          scripts/build_dmg.sh build/Brimline.app build
+
+      - name: Attach the disk image
+        if: ${{ steps.plan.outputs.skip != 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          TAG="v$VERSION"
+          if gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qx 'Brimline.dmg'; then
+            echo "Release $TAG already has Brimline.dmg: nothing to do."
+            exit 0
+          fi
+          gh release upload "$TAG" build/Brimline.dmg build/Brimline.dmg.sha256
+          echo "Brimline.dmg and its SHA-256 attached to $TAG."

@@ -6,6 +6,21 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-28
+
+Brimline 0.2.1 changes nothing in what the app does: it is the version you can install without building it. Each release now carries a disk image, `Brimline.dmg`, built by the release workflow, and a one-line installer downloads it. Still private: the repository and the site are not public yet, so the download links only work once they are. The full notes are in [docs/releases/v0.2.1.md](docs/releases/v0.2.1.md).
+
+### Added
+
+- **A disk image with every release.** `Brimline.dmg` (and `Brimline.dmg.sha256`) is attached to each GitHub release by the release workflow. Opening it shows Brimline next to a shortcut to Applications, on a background that says to drag one onto the other and how to get past the first launch of an app that is not notarized (System Settings, Privacy & Security, Open Anyway). The name carries no version, so `releases/latest/download/Brimline.dmg` is always the latest one. `scripts/build_dmg.sh` builds the same image on any Mac (dmgbuild and Pillow, exact versions in `packaging/requirements-dmg.txt`, installed in `.build/dmg-venv`, never system wide) and checks it: the app, its command, the Applications shortcut and the signature.
+- **Install in one line.** `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh` downloads the latest disk image, checks its SHA-256 (nothing is installed if it differs), copies Brimline to `/Applications` (or where it already is, or `~/Applications`), links the `brimline` command at `~/.local/bin/brimline` and opens the app; run it again to update. No administrator password. The script lives on the site. In our tests on macOS 27, the app it installs does not carry the quarantine flag that browsers set.
+
+### Changed
+
+- **One app for Apple silicon and Intel.** `scripts/build_app.sh` builds a universal app (`--arch arm64 --arch x86_64`) and checks that both executables are. Intel was not tried on a real Mac yet.
+- **README and install guide.** The README opens with the install line, says plainly that Brimline is a Mac app only (no Windows or Linux version), has a short "How it works" and a shorter "Use"; [docs/install.md](docs/install.md) gives the three ways to install (one line, disk image, source), with the "Open Anyway" steps of Apple's own page. The FAQ answers "Does it run on Windows or Linux?".
+- **Example names.** The last examples of the code comments and design boards use the same neutral accounts as the pictures (Personal, Work, Client, Side project).
+
 ## [0.2.0] - 2026-10-28
 
 Brimline 0.2.0 is the first version under the name Brimline (it was Sightglass), with a new icon, and it stops being a Claude-only tool: it now reads ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each off until you turn it on and each tried on a real account on 27 October 2026 (on a free plan only for ChatGPT, Grok and Cursor: nothing is claimed for a paid plan). The menu bar glyph lies down and becomes a gauge with one colored part per account, and every account has its own color you can change. Claude accounts that have no folder on the Mac can be read from what Claude Code reports, and Settings gets a tab to tidy the menu bar (or hide its other icons without removing them). Like 0.1.0, it is private: the repository and the site are not public yet, nothing is announced. The full notes are in [docs/releases/v0.2.0.md](docs/releases/v0.2.0.md).
