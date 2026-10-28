@@ -22,7 +22,7 @@ struct MenuBarAccessibilityTests {
         return Strings(language).menuBarAccessibility(gauge) { id in names[id] ?? id }
     }
 
-    let agency = Account(provider: .claude, source: "/tmp/voice/client", email: nil, organization: nil, seatTier: nil, keychainService: nil)
+    let client = Account(provider: .claude, source: "/tmp/voice/client", email: nil, organization: nil, seatTier: nil, keychainService: nil)
     var names: [String: String] {
         ["claude:/tmp/voice/client": "Claude Client", "claude:/tmp/voice/main": "Claude", "chatgpt:/tmp/voice/gpt": "ChatGPT",
          "gemini:/tmp/voice/gem": "Gemini"]
@@ -30,7 +30,7 @@ struct MenuBarAccessibilityTests {
 
     @Test("English: the alert first, then the average and each account, then the accounts with no figure")
     func english() {
-        let usages = [read(agency, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
+        let usages = [read(client, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
                       AccountUsage(account: acct(.gemini, "gem"), status: .ok, fetchedAt: now, checkedAt: now)]
         #expect(sentence(usages, names: names, language: .en)
                 == "Alert: Claude Client at 94%. Brimline, 37% used on average across 3 accounts: Claude Client 94%, Claude 8%, ChatGPT 10%. Gemini: no figure.")
@@ -38,7 +38,7 @@ struct MenuBarAccessibilityTests {
 
     @Test("French: l'alerte d'abord, puis la moyenne et chaque compte, puis les comptes sans chiffre")
     func french() {
-        let usages = [read(agency, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
+        let usages = [read(client, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
                       AccountUsage(account: acct(.gemini, "gem"), status: .ok, fetchedAt: now, checkedAt: now)]
         #expect(sentence(usages, names: names, language: .fr)
                 == "Alerte : Claude Client à 94 %. Brimline, utilisé 37 % en moyenne sur 3 comptes : Claude Client 94 %, Claude 8 %, ChatGPT 10 %. Gemini : pas de chiffre.")
@@ -76,7 +76,7 @@ struct MenuBarAccessibilityTests {
 
     @Test("The sentence has no dash of any length")
     func noDash() {
-        let usages = [read(agency, 94), read(acct(.chatgpt, "gpt"), 10), AccountUsage(account: acct(.gemini, "gem"), status: .ok)]
+        let usages = [read(client, 94), read(acct(.chatgpt, "gpt"), 10), AccountUsage(account: acct(.gemini, "gem"), status: .ok)]
         for language in [Language.en, .fr] {
             let text = sentence(usages, names: names, language: language)
             #expect(!text.contains("\u{2014}") && !text.contains("\u{2013}"))
@@ -85,7 +85,7 @@ struct MenuBarAccessibilityTests {
 
     @Test("The tooltip: the average, then the alerts after a middle dot, in English and in French")
     func tooltip() {
-        let usages = [read(agency, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
+        let usages = [read(client, 94), read(acct(.claude, "main"), 8), read(acct(.chatgpt, "gpt"), 10),
                       AccountUsage(account: acct(.gemini, "gem"), status: .ok, fetchedAt: now, checkedAt: now)]
         let gauge = MenuBarGauge.model(usages, settings: allOn, providers: Set(Provider.allCases), now: now)
         let name: (String) -> String = { names[$0] ?? $0 }

@@ -47,7 +47,7 @@ fi
 
 PYTHON="${PYTHON:-python3}"
 if ! "$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
-  echo "build_dmg: needs Python 3.10 or later, found: $("$PYTHON" --version 2>&1 || echo none)." >&2
+  echo "build_dmg: needs Python 3.10 or later, found: $("$PYTHON" --version 2>/dev/null || echo none)." >&2
   echo "build_dmg: install one (python.org or Homebrew), or set PYTHON=/path/to/python3." >&2
   exit 1
 fi

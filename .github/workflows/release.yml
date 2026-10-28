@@ -12,7 +12,9 @@
 #    published, which creates the tag on the checked commit (or uses a tag that already points
 #    there). So a release is never "latest" without its disk image: the site and the one-line
 #    installer download .../releases/latest/download/Brimline.dmg and its .sha256.
-#    An existing release that lacks a file gets both again (--clobber).
+#    An existing release that lacks a file gets both again (--clobber). A draft left by a run that
+#    stopped between creating and publishing (it has no tag yet) is completed from the checked
+#    commit, then published.
 # Re-running is safe. The file names carry no version; the version is in the app's Info.plist.
 #
 # Events created with GITHUB_TOKEN (the tag, the release) do not start other workflows: the whole
@@ -66,6 +68,11 @@ jobs:
             fi
           fi
           if gh release view "$TAG" >/dev/null 2>&1; then
+            if [ "$(gh release view "$TAG" --json isDraft --jq '.isDraft')" = "true" ]; then
+              echo "Release $TAG is a draft left by an earlier run: it is completed and published."
+              echo "action=publish" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             ASSETS="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
             if printf '%s\n' "$ASSETS" | grep -qx 'Brimline.dmg' && printf '%s\n' "$ASSETS" | grep -qx 'Brimline.dmg.sha256'; then
               echo "Release $TAG already has its disk image: nothing to do."
@@ -102,6 +109,16 @@ jobs:
             build/Brimline.dmg build/Brimline.dmg.sha256
           gh release edit "$TAG" --draft=false
           echo "Release $TAG created with Brimline.dmg and its SHA-256."
+
+      - name: Complete and publish the draft release
+        if: ${{ steps.plan.outputs.action == 'publish' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          gh release upload "$TAG" build/Brimline.dmg build/Brimline.dmg.sha256 --clobber
+          gh release edit "$TAG" --draft=false
+          echo "Release $TAG published with Brimline.dmg and its SHA-256."
 
       - name: Attach the disk image to the existing release
         if: ${{ steps.plan.outputs.action == 'attach' }}

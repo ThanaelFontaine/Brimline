@@ -58,7 +58,7 @@ struct GaugeColorsModelTests {
                          fetchedAt: now, checkedAt: now)
         }
         var settings = BrimlineSettings()
-        settings.labels = [b.id: "Agency"]
+        settings.labels = [b.id: "Client"]
         let model = AppModel(preview: UsageSnapshot(generatedAt: now, accounts: [usage(a, 20), usage(b, 94)]), settings: settings,
                              now: now, language: .en, timeZone: TimeZone(identifier: "Europe/Paris")!, home: URL(fileURLWithPath: "/tmp/gauge"),
                              launchAtLogin: false)

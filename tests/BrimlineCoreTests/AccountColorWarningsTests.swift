@@ -139,7 +139,7 @@ struct AccountColorWarningsTests {
     @Test("The group read by VoiceOver names the account, and the labels of the line are written in both languages")
     func labels() {
         #expect(Strings(.en).colorGroup("Claude Client") == "Color of Claude Client")
-        #expect(Strings(.fr).colorGroup("Claude Agence") == "Couleur de Claude Agence")
+        #expect(Strings(.fr).colorGroup("Claude Client") == "Couleur de Claude Client")
         #expect(Strings(.fr).otherColor == "Autre couleur…" && Strings(.en).otherColor == "Other color…")
         #expect(Strings(.fr).resetColor == "Revenir au défaut" && Strings(.en).resetColor == "Reset to default")
         #expect(Strings(.fr).defaultColor == "Couleur par défaut" && Strings(.en).defaultColor == "Default color")
