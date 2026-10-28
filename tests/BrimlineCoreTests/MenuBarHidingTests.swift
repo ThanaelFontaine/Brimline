@@ -120,7 +120,7 @@ struct MenuBarHidingTests {
         }
         #expect(Strings(.fr).menuBarHidingToggle == "Cacher les icônes placées à gauche du trait")
         #expect(Strings(.en).menuBarHidingToggle == "Hide the icons placed left of the bar")
-        #expect(Strings(.en).menuBarHidingPartial.hasPrefix("Some icons may stay visible"))
+        #expect(Strings(.en).menuBarHidingPartial.hasPrefix("The icons closest to the bar may stay visible"))
         #expect(!Strings(.en).menuBarHidingRefusal(.brimlineLeftOfBar).contains("too far right"))
         #expect(Links.menuBarDoc(.fr).lastPathComponent == "menu-bar.fr.md")
         #expect(Links.menuBarDoc(.en).lastPathComponent == "menu-bar.md")
