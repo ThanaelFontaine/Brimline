@@ -19,27 +19,34 @@ public struct AccountDiscovery: Sendable {
         self.reportsDirectory = reportsDirectory
     }
 
-    public func discover() -> [Account] {
+    /// "Do not read" closes the report of an address: the addresses in `closedReports` (marks kept by address) and
+    /// the address of every folder whose id is in `unreadAccounts`. A closed report is never linked to a folder, and
+    /// is listed as an account of its own only when no folder has the address (that account is marked too).
+    public func discover(closedReports: Set<String> = [], unreadAccounts: Set<String> = []) -> [Account] {
         let folders = discoverFolders()
         guard let reportsDirectory else { return folders }
-        return Self.merge(folders: folders, reports: ClaudeReportStore(directory: reportsDirectory).list())
+        var closed = closedReports
+        for folder in folders where unreadAccounts.contains(folder.id) {
+            if let email = folder.claudeReportEmail { closed.insert(email) }
+        }
+        return Self.merge(folders: folders, reports: ClaudeReportStore(directory: reportsDirectory).list(), closed: closed)
     }
 
     /// Links each report to the folders signed in with its address (case does not matter), and adds one account
     /// for each report no folder has, after the folders, by address. Such an account has no Keychain item: its
-    /// numbers come from its report only.
-    public static func merge(folders: [Account], reports: [(email: String, file: URL)]) -> [Account] {
+    /// numbers come from its report only. A closed address is linked to no folder.
+    public static func merge(folders: [Account], reports: [(email: String, file: URL)],
+                             closed: Set<String> = []) -> [Account] {
         var accounts = folders
-        var linked = Set<String>()
+        var withFolder = Set<String>()
         for report in reports {
-            for index in accounts.indices where accounts[index].email.flatMap(ClaudeReportEmail.normalize) == report.email {
-                accounts[index].claudeReport = report.file.path
-                linked.insert(report.email)
+            for index in accounts.indices where accounts[index].claudeReportEmail == report.email {
+                if !closed.contains(report.email) { accounts[index].claudeReport = report.file.path }
+                withFolder.insert(report.email)
             }
         }
-        for report in reports.sorted(by: { $0.email < $1.email }) where !linked.contains(report.email) {
-            accounts.append(Account(source: report.file.path, email: report.email, organization: nil, seatTier: nil,
-                                    keychainService: nil, claudeReport: report.file.path))
+        for report in reports.sorted(by: { $0.email < $1.email }) where !withFolder.contains(report.email) {
+            accounts.append(.claudeReportOnly(email: report.email, file: report.file.path))
         }
         return accounts
     }

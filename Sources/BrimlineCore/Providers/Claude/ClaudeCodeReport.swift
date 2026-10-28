@@ -197,15 +197,39 @@ public enum ClaudeCodeReportParser {
     /// Reads stream-json lines in order. The windows of the last readable event win, window by window; a stream
     /// whose every event was unreadable is a format change; a stream with no event gives nothing.
     public static func parseStream<S: Sequence>(lines: S, now: Date) -> ClaudeCodeExtraction where S.Element == String {
+        var reader = StreamReader(now: now)
+        for line in lines { reader.add(line) }
+        return reader.extraction
+    }
+
+    /// Reads stream-json from a file descriptor (the standard input) to its end, in blocks: a line longer than
+    /// `maxLineBytes` is dropped without being held whole, and only the lines that name `rate_limit_event` are
+    /// decoded.
+    public static func parseStream(descriptor: Int32, now: Date) -> ClaudeCodeExtraction {
+        var reader = StreamReader(now: now)
+        let marker = Data("rate_limit_event".utf8)
+        BoundedInput.forEachLine(descriptor: descriptor, maxLineBytes: maxLineBytes) { line in
+            guard line.range(of: marker) != nil else { return }
+            reader.add(String(decoding: line, as: UTF8.self))
+        }
+        return reader.extraction
+    }
+
+    /// The stream-json lines one by one.
+    struct StreamReader {
+        let now: Date
         var fiveHour: ClaudeCodeWindow?
         var sevenDay: ClaudeCodeWindow?
         var sawEvent = false
         var readOne = false
-        for line in lines {
-            guard line.utf8.count <= maxLineBytes, line.contains("rate_limit_event") else { continue }
+
+        init(now: Date) { self.now = now }
+
+        mutating func add(_ line: String) {
+            guard line.utf8.count <= maxLineBytes, line.contains("rate_limit_event") else { return }
             switch parseEvent(line, now: now) {
             case .notAnEvent:
-                continue
+                return
             case .unreadable:
                 sawEvent = true
             case .windows(let five, let seven):
@@ -215,12 +239,22 @@ public enum ClaudeCodeReportParser {
                 if let seven { sevenDay = seven }
             }
         }
-        if fiveHour != nil || sevenDay != nil {
-            return .observed(ClaudeCodeObservation(source: .streamJSON, fiveHour: fiveHour, sevenDay: sevenDay))
+
+        var extraction: ClaudeCodeExtraction {
+            if fiveHour != nil || sevenDay != nil {
+                return .observed(ClaudeCodeObservation(source: .streamJSON, fiveHour: fiveHour, sevenDay: sevenDay))
+            }
+            // Events were read but gave neither window (another kind of limit only): nothing to record.
+            if readOne { return .nothing }
+            return sawEvent ? .formatChanged(.streamJSON) : .nothing
         }
-        // Events were read but gave neither window (another kind of limit only): nothing to record.
-        if readOne { return .nothing }
-        return sawEvent ? .formatChanged(.streamJSON) : .nothing
+    }
+
+    /// The `transcript_path` of a status line JSON, when it is a non-empty string.
+    public static func transcriptPath(_ data: Data) -> String? {
+        guard let object = try? JSONSerialization.jsonObject(with: data), let root = object as? [String: Any],
+              let path = root["transcript_path"] as? String, !path.isEmpty else { return nil }
+        return path
     }
 
     enum Event: Equatable {
@@ -268,9 +302,12 @@ public enum ClaudeCodeReportParser {
     }
 }
 
-/// The addresses reports are filed under: lower case, a plain address, 254 characters at most, so that it can
-/// name a file as it is (no `/`, no leading dot, no space).
+/// The addresses reports are filed under: lower case, a plain address, 200 characters at most, so that it can
+/// name a file as it is (no `/`, no leading dot, no space), its lock and its temporary file included (a file
+/// name has 255 bytes at most).
 public enum ClaudeReportEmail {
+    public static let maxLength = 200
+
     private static let alphanumerics = Set("abcdefghijklmnopqrstuvwxyz0123456789")
     private static let localCharacters = alphanumerics.union("._%+-")
     private static let domainCharacters = alphanumerics.union("-")
@@ -279,7 +316,7 @@ public enum ClaudeReportEmail {
     /// with a letter or a digit, one `@`, then at least two labels of letters, digits and `-`. Otherwise nil.
     public static func normalize(_ text: String) -> String? {
         let email = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard email.utf8.count <= 254 else { return nil }
+        guard email.utf8.count <= maxLength else { return nil }
         let parts = email.split(separator: "@", omittingEmptySubsequences: false)
         guard parts.count == 2, let first = parts[0].first, alphanumerics.contains(first),
               parts[0].allSatisfy(localCharacters.contains) else { return nil }
@@ -292,17 +329,54 @@ public enum ClaudeReportEmail {
     /// default folder when the variable is not set (`~/.claude.json`, then `~/.claude/.claude.json`).
     public static func auto(environment: [String: String] = ProcessInfo.processInfo.environment,
                             home: URL = FileManager.default.homeDirectoryForCurrentUser) -> String? {
-        let fm = FileManager.default
-        var candidates: [String] = []
+        autoAccount(environment: environment, home: home)?.email
+    }
+
+    /// `.claude.json` keeps the history of every project: it may be large, never this large.
+    public static let maxConfigBytes = 16 * 1024 * 1024
+
+    /// The address and the Claude Code folder `auto` stands for. `.claude.json` is opened without following a
+    /// link, must be the user's own regular file of 16 MiB at most, and only `oauthAccount.emailAddress` of it
+    /// is decoded.
+    public static func autoAccount(environment: [String: String] = ProcessInfo.processInfo.environment,
+                                   home: URL = FileManager.default.homeDirectoryForCurrentUser)
+        -> (email: String, configDirectory: String)? {
         let defaultDir = KeychainServiceName.normalize(home.appendingPathComponent(".claude").path)
+        let directory: String
+        let candidates: [String]
         if let dir = environment["CLAUDE_CONFIG_DIR"].map(KeychainServiceName.normalize), !dir.isEmpty, dir != defaultDir {
+            directory = dir
             candidates = [(dir as NSString).appendingPathComponent(".claude.json")]
         } else {
+            directory = defaultDir
             candidates = [home.appendingPathComponent(".claude.json").path, home.appendingPathComponent(".claude/.claude.json").path]
         }
-        guard let file = candidates.first(where: { fm.fileExists(atPath: $0) }),
-              let email = AccountDiscovery.readIdentity(configFile: file)?.email else { return nil }
-        return normalize(email)
+        struct File: Decodable {
+            struct OAuthAccount: Decodable { var emailAddress: String? }
+            var oauthAccount: OAuthAccount?
+        }
+        for candidate in candidates {
+            do throws(SecretFile.Failure) {
+                let file = try SecretFile.readJSON(File.self, url: URL(fileURLWithPath: candidate), maxBytes: maxConfigBytes)
+                guard let email = file.oauthAccount?.emailAddress.flatMap(normalize) else { return nil }
+                return (email, directory)
+            } catch {
+                if error == .notFound { continue }
+                return nil
+            }
+        }
+        return nil
+    }
+
+    /// True when a status line's `transcript_path` lies in `<configDirectory>/projects/`, where Claude Code keeps
+    /// the session history of that folder (https://code.claude.com/docs/en/env-vars, `CLAUDE_CONFIG_DIR`). Paths
+    /// are compared as written and with their links resolved.
+    public static func transcript(_ transcriptPath: String, isIn configDirectory: String) -> Bool {
+        let transcripts = [KeychainServiceName.normalize(transcriptPath),
+                           (KeychainServiceName.normalize(transcriptPath) as NSString).resolvingSymlinksInPath]
+        let folders = [KeychainServiceName.normalize(configDirectory),
+                       (KeychainServiceName.normalize(configDirectory) as NSString).resolvingSymlinksInPath]
+        return transcripts.contains { t in folders.contains { t.hasPrefix($0 + "/projects/") } }
     }
 }
 
@@ -362,10 +436,9 @@ public struct ClaudeReportStore: Sendable {
     @discardableResult
     public func record(_ extraction: ClaudeCodeExtraction, email: String, now: Date = Date()) throws -> ClaudeCodeReport? {
         guard extraction != .nothing else { return nil }
-        guard folderIsSafe(mayBeMissing: true) else { throw Failure.unsafeFolder }
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
-                                                attributes: [.posixPermissions: 0o700])
-        guard folderIsSafe(mayBeMissing: false) else { throw Failure.unsafeFolder }
+        guard folderIsSafe(mayBeMissing: true, privateOnly: true) else { throw Failure.unsafeFolder }
+        try createFolder()
+        guard folderIsSafe(mayBeMissing: false, privateOnly: true) else { throw Failure.unsafeFolder }
         // Two sessions of one account may write at once: a lock per address, waited for a little, never forever.
         let lock = Lock(path: directory.appendingPathComponent(".\(email).lock").path)
         defer { lock.release() }
@@ -377,11 +450,29 @@ public struct ClaudeReportStore: Sendable {
         return next
     }
 
-    /// The folder is a real folder (not a link) of the user's; with `mayBeMissing`, its absence is fine too.
-    func folderIsSafe(mayBeMissing: Bool) -> Bool {
+    /// Creates the folder and the missing folders above it, each `0700`. A folder that exists is never changed.
+    func createFolder() throws {
+        var missing: [String] = []
+        var path = directory.standardizedFileURL.path
+        var info = stat()
+        while path != "/", lstat(path, &info) != 0 {
+            guard errno == ENOENT else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+            missing.append(path)
+            path = (path as NSString).deletingLastPathComponent
+        }
+        for folder in missing.reversed() where mkdir(folder, 0o700) != 0 && errno != EEXIST {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
+    }
+
+    /// The folder is a real folder (not a link) of the user's; with `mayBeMissing`, its absence is fine too. With
+    /// `privateOnly`, a folder that others may read or write is refused: the command writes only in a folder of
+    /// its own (`--dir ~` is refused, never turned to `0700`).
+    func folderIsSafe(mayBeMissing: Bool, privateOnly: Bool = false) -> Bool {
         var info = stat()
         guard lstat(directory.path, &info) == 0 else { return mayBeMissing && errno == ENOENT }
-        return (info.st_mode & S_IFMT) == S_IFDIR && info.st_uid == getuid()
+        guard (info.st_mode & S_IFMT) == S_IFDIR && info.st_uid == getuid() else { return false }
+        return !privateOnly || (info.st_mode & 0o077) == 0
     }
 
     /// An advisory lock (`flock`) on a file of its own, tried for half a second at most.

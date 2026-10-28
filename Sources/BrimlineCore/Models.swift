@@ -55,8 +55,26 @@ public struct Account: Codable, Sendable, Hashable, Identifiable {
     }
 
     /// A Claude account known only by its Claude Code report: no folder on this Mac, no Keychain item.
-    /// Its `source` is the report's path.
+    /// Its `source` is the report's path, its id `claude:report:<address>` (see `claudeReportID`).
     public var readsReportOnly: Bool { provider == .claude && keychainService == nil && claudeReport != nil }
+
+    /// The id of the account known by the Claude Code report of `email` (a normalized address): it depends on the
+    /// address only, so its "Don't read this account" mark holds whatever folder the reports are in. The same id
+    /// closes the report of that address for every account (see `BrimlineSettings.closedReports`).
+    public static func claudeReportID(_ email: String) -> String { "claude:report:\(email)" }
+
+    /// A Claude account known by its report only.
+    public static func claudeReportOnly(email: String, file: String) -> Account {
+        var account = Account(source: file, email: email, organization: nil, seatTier: nil, keychainService: nil,
+                              claudeReport: file)
+        account.id = claudeReportID(email)
+        return account
+    }
+
+    /// The normalized address of a Claude account, when it has a plain one.
+    public var claudeReportEmail: String? {
+        provider == .claude ? email.flatMap(ClaudeReportEmail.normalize) : nil
+    }
 
     /// The name shown when no address is known.
     /// The folder, or "Cursor" for Cursor, whose connection is a database file in a folder of the app.

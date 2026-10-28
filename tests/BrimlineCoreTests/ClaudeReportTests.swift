@@ -315,6 +315,15 @@ struct ClaudeReportTests {
         #expect(kept.sessionLimit?.percent == 30)
         #expect(kept.observedAt == nil)
 
+        // Expired, with numbers from Anthropic older than the report: the report wins.
+        var older = direct
+        older.fetchedAt = now.addingTimeInterval(-600)
+        let newer = await expired.refresh(account: account, settings: BrimlineSettings(), previous: older, now: now)
+        #expect(newer.status == .ok)
+        #expect(newer.observedAt == now.addingTimeInterval(-60))
+        #expect(newer.sessionLimit?.percent == 64)
+        #expect(newer.weeklyLimit?.percent == 12)
+
         // No Keychain item at all: the report too.
         let missing = UsageService(credentials: FakeCredentials([:]), http: FakeHTTP([:]))
         #expect(await missing.refresh(account: account, settings: BrimlineSettings(), previous: nil, now: now).observedAt != nil)

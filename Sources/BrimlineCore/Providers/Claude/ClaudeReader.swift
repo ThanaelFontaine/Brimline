@@ -25,8 +25,10 @@ public struct ClaudeReader: ProviderReader {
     public var allowedURLs: [URL] { [ClaudeUsageAPI.url] }
 
     public func discover(home: URL, settings: BrimlineSettings) -> [Account] {
-        AccountDiscovery(home: home, extraFolders: settings.extraFolders,
-                         reportsDirectory: reportsDirectory ?? BrimlinePaths(home: home).claudeReportsDirectory).discover()
+        let discovery = AccountDiscovery(home: home, extraFolders: settings.extraFolders,
+                                         reportsDirectory: reportsDirectory ?? BrimlinePaths(home: home).claudeReportsDirectory)
+        // "Do not read" closes the report of the address: the marks kept by address, and the folders marked now.
+        return discovery.discover(closedReports: settings.closedReports, unreadAccounts: Set(settings.unreadAccounts))
     }
 
     public func read(account: Account, now: Date) async -> ProviderReading {

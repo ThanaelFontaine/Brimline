@@ -184,7 +184,27 @@ struct ClaudeReportsBlock: View {
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            CopyableCode(model: model, text: model.statuslineCommand, copyLabel: s.copy, copiedLabel: s.copied)
+            let commands = model.statuslineCommands
+            if commands.isEmpty {
+                Text(s.reportsNoAddress)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(commands, id: \.email) { entry in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.email)
+                        .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    CopyableCode(model: model, text: entry.command, copyLabel: s.copy, copiedLabel: s.copied)
+                }
+            }
+            Text(s.reportsAuto)
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            CopyableCode(model: model, text: model.statuslineAutoCommand, copyLabel: s.copy, copiedLabel: s.copied)
             HStack(alignment: .firstTextBaseline, spacing: SGTheme.Space.s) {
                 Text(s.reportsFolder)
                     .font(.system(size: 11))

@@ -10,7 +10,7 @@ Every provider added in 0.2.0 was tried on **27 October 2026**, on the account o
 
 | Provider | What Brimline reads | Source | Plan tried (27/10/2026) | State |
 |---|---|---|---|---|
-| Claude | The Claude Code sign-in (Keychain), one request to Anthropic | Not documented | Real accounts, since v0.1.0 | Read and checked |
+| Claude | The Claude Code sign-in (Keychain), one request to Anthropic; or a Claude Code report, no request | Not documented (the reports: status line documented) | Real accounts, since v0.1.0 | Read and checked |
 | ChatGPT, through Codex | `~/.codex/auth.json`, one request to `chatgpt.com` | Not documented (Codex's public code) | ChatGPT Free, through Codex: the month at 0 % (a 30 day window) | Read and checked on that plan; **comparison with OpenAI's usage page pending** |
 | Gemini, through Antigravity | The text of `agy --print /usage` (Brimline launches Google's program) | The command is documented, the format of its text is not | A Google account, through Antigravity CLI 1.4.8 (`agy` does not say the plan): five limits, none used | Read and checked, with two limits stated below: the percentage was seen live at 100 % remaining only, and the reference is the text of `agy` itself |
 | Grok, through the Grok CLI | `~/.grok/auth.json`, one request to `cli-chat-proxy.grok.com` | Not documented (the CLI's public code) | A free account, Grok CLI 1.0.70: **xAI returned no credit limit**, so no percentage is shown | Read and checked for that sentence only; no official page to compare with |
@@ -18,7 +18,7 @@ Every provider added in 0.2.0 was tried on **27 October 2026**, on the account o
 
 ## Claude
 
-Read from the Claude Code sign-in in the macOS Keychain, with one request to `https://api.anthropic.com/api/oauth/usage` (not documented by Anthropic). See [Linking your accounts](accounts.md) and [SECURITY.md](../SECURITY.md).
+Read from the Claude Code sign-in in the macOS Keychain, with one request to `https://api.anthropic.com/api/oauth/usage` (not documented by Anthropic). An account Brimline cannot read that way (no folder on this Mac, or a session expired) can be read from the limits Claude Code itself gives to its status line or prints in stream-json, with no request: [Claude Code reports](accounts.md#claude-code-reports-an-account-brimline-cannot-read-directly). See [Linking your accounts](accounts.md) and [SECURITY.md](../SECURITY.md).
 
 ## ChatGPT, through Codex
 
