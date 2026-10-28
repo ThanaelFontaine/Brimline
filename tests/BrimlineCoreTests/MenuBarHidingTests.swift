@@ -1,0 +1,124 @@
+import Foundation
+import Testing
+@testable import BrimlineCore
+
+/// Hiding the icons placed left of Brimline's bar (QUOTA-73): the length of the bar, and when hiding is refused.
+/// The numbers come from the measures of 28/10/2026 on macOS 27.0.1 (a 1920 pt screen, no notch).
+@Suite("Menu bar hiding: length and checks")
+struct MenuBarHidingTests {
+    func placement(bar: Double, screen: Double = 1920, brimline: [Double] = [1500]) -> MenuBarHiding.Placement {
+        MenuBarHiding.Placement(barLeft: bar, screenWidth: screen, brimlineLefts: brimline)
+    }
+
+    @Test("a bar at 838 pt on a 1920 pt screen hides with a length of 864 pt (45 %)")
+    func measuredCase() {
+        let decision = MenuBarHiding.decide(placement: placement(bar: 838), screenWidths: [1920], macOSMajor: 27)
+        #expect(decision == .hide(length: 864))
+        // Inside the range that hid in the measures (380 to 940 pt), under the 960 pt where macOS takes the bar out.
+        #expect((380...940).contains(864.0))
+    }
+
+    @Test("a bar too far right is refused: the icons stay shown")
+    func tooFarRight() {
+        // 864 + 50 = 914: the last place that still hides.
+        #expect(MenuBarHiding.decide(placement: placement(bar: 914), screenWidths: [1920], macOSMajor: 27) == .hide(length: 864))
+        #expect(MenuBarHiding.decide(placement: placement(bar: 915), screenWidths: [1920], macOSMajor: 27) == .refuse(.barTooFarRight))
+        #expect(MenuBarHiding.decide(placement: placement(bar: 1400), screenWidths: [1920], macOSMajor: 27) == .refuse(.barTooFarRight))
+    }
+
+    @Test("with several screens, the narrowest one counts, for the length and for the place")
+    func narrowestScreenCounts() {
+        #expect(MenuBarHiding.hidingLength(screenWidths: [1920, 1280, 2560], macOSMajor: 27) == 576)
+        // 838 pt on the 1920 pt screen is 1082 pt from its right edge, so 198 pt on the 1280 pt one: it hides.
+        #expect(MenuBarHiding.decide(placement: placement(bar: 838), screenWidths: [1920, 1280], macOSMajor: 27) == .hide(length: 576))
+        // 1300 pt on the 1920 pt screen is 660 pt on the 1280 pt one: more than 576 + 50, refused.
+        #expect(MenuBarHiding.decide(placement: placement(bar: 1300), screenWidths: [1920, 1280], macOSMajor: 27) == .refuse(.barTooFarRight))
+    }
+
+    @Test("macOS 26 and before keep the formula of Hidden Bar")
+    func olderMacOS() {
+        #expect(MenuBarHiding.hidingLength(screenWidths: [1920], macOSMajor: 26) == 3840)
+        #expect(MenuBarHiding.hidingLength(screenWidths: [200], macOSMajor: 15) == 500)
+        #expect(MenuBarHiding.hidingLength(screenWidths: [1440, 6016], macOSMajor: 14) == 10_000)
+        // Such a length is never too short for the place of the bar.
+        #expect(MenuBarHiding.decide(placement: placement(bar: 1700, brimline: [1800]), screenWidths: [1920], macOSMajor: 26)
+                == .hide(length: 3840))
+    }
+
+    @Test("macOS 27 and later never use the length that macOS takes the bar out with")
+    func modernLengthStaysUnderHalf() {
+        for width in [1024.0, 1280, 1440, 1512, 1728, 1920, 2560, 3008, 5120] {
+            let length = MenuBarHiding.hidingLength(screenWidths: [width], macOSMajor: 27)!
+            #expect(length < width / 2, "\(width)")
+            #expect(length == (width * 0.45).rounded(.down))
+        }
+        #expect(MenuBarHiding.hidingLength(screenWidths: [1920], macOSMajor: 28) == 864)
+    }
+
+    @Test("Brimline left of its bar is never hidden: refused")
+    func brimlineLeftOfBar() {
+        #expect(MenuBarHiding.decide(placement: placement(bar: 838, brimline: [800]), screenWidths: [1920], macOSMajor: 27)
+                == .refuse(.brimlineLeftOfBar))
+        #expect(MenuBarHiding.decide(placement: placement(bar: 838, brimline: [1500, 838]), screenWidths: [1920], macOSMajor: 27)
+                == .refuse(.brimlineLeftOfBar))
+    }
+
+    @Test("a place that cannot be read is refused rather than guessed")
+    func placeUnknown() {
+        #expect(MenuBarHiding.decide(placement: nil, screenWidths: [1920], macOSMajor: 27) == .refuse(.placeUnknown))
+        #expect(MenuBarHiding.decide(placement: placement(bar: 838, brimline: []), screenWidths: [1920], macOSMajor: 27)
+                == .refuse(.placeUnknown))
+        #expect(MenuBarHiding.decide(placement: placement(bar: 838), screenWidths: [], macOSMajor: 27) == .refuse(.placeUnknown))
+        #expect(MenuBarHiding.decide(placement: placement(bar: -10), screenWidths: [1920], macOSMajor: 27) == .refuse(.placeUnknown))
+        #expect(MenuBarHiding.decide(placement: placement(bar: 2000), screenWidths: [1920], macOSMajor: 27) == .refuse(.placeUnknown))
+        #expect(MenuBarHiding.hidingLength(screenWidths: [0], macOSMajor: 27) == nil)
+    }
+
+    @Test("the name the bar's place is saved under never changes")
+    func autosaveNameIsStable() {
+        #expect(MenuBarHiding.autosaveName == "brimline-separator")
+    }
+
+    @Test("the setting is off by default, in a new file and in a file written before it")
+    func settingOffByDefault() throws {
+        #expect(BrimlineSettings().menuBarHiding.enabled == false)
+        let old = try JSONCoding.decoder().decode(BrimlineSettings.self, from: Data(#"{"schemaVersion":1,"refreshMinutes":10}"#.utf8))
+        #expect(old.menuBarHiding.enabled == false)
+        #expect(old.refreshMinutes == 10)
+        let broken = try JSONCoding.decoder().decode(BrimlineSettings.self, from: Data(#"{"menuBarHiding":"yes","refreshMinutes":10}"#.utf8))
+        #expect(broken.menuBarHiding.enabled == false)
+        #expect(broken.refreshMinutes == 10)
+    }
+
+    @Test("the setting is saved as menuBarHiding.enabled and read back")
+    func settingRoundTrip() throws {
+        var settings = BrimlineSettings()
+        settings.menuBarHiding.enabled = true
+        let data = try JSONCoding.encoder().encode(settings)
+        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        #expect((object?["menuBarHiding"] as? [String: Any])?["enabled"] as? Bool == true)
+        #expect(try JSONCoding.decoder().decode(BrimlineSettings.self, from: data).menuBarHiding.enabled == true)
+    }
+
+    @Test("every text of hiding exists in English and in French, with no dash")
+    func texts() {
+        for language in Language.allCases {
+            let s = Strings(language)
+            let all = [s.menuBarHidingTitle, s.menuBarHidingToggle, s.menuBarHidingHowTo, s.menuBarHidingHide,
+                       s.menuBarHidingShow, s.menuBarHidingNote, s.menuBarHidingGuide, s.menuBarHidingBarName,
+                       s.menuBarHidingBarHelp, s.menuBarHidingDiagramHidden, s.menuBarHidingDiagramShown,
+                       s.menuBarHidingDiagramGesture, s.menuBarHidingDiagramSpoken]
+                + [MenuBarHiding.Refusal.placeUnknown, .brimlineLeftOfBar, .barTooFarRight].map(s.menuBarHidingRefusal)
+            for text in all {
+                #expect(!text.isEmpty)
+                #expect(!text.contains("\u{2014}") && !text.contains("\u{2013}"), "\(text)")
+            }
+        }
+        #expect(Strings(.fr).menuBarHidingToggle == "Cacher les icônes placées à gauche du trait")
+        #expect(Strings(.en).menuBarHidingToggle == "Hide the icons placed left of the bar")
+        #expect(Strings(.fr).menuBarHidingRefusal(.barTooFarRight)
+                == "Le trait est trop à droite pour cacher de façon fiable : glissez-le plus à gauche.")
+        #expect(Links.menuBarDoc(.fr).lastPathComponent == "menu-bar.fr.md")
+        #expect(Links.menuBarDoc(.en).lastPathComponent == "menu-bar.md")
+    }
+}

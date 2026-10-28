@@ -123,6 +123,8 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
     /// The color of each account, by account id (QUOTA-72). Given when an account is first seen and then kept, so it
     /// does not change when another account appears. A user entry: read one by one, an invalid one is ignored.
     public var accountColors: [String: AccountColor] = [:]
+    /// Hiding the icons placed left of Brimline's bar (QUOTA-73). Off by default.
+    public var menuBarHiding = MenuBarHidingSettings()
 
     public init() {}
 
@@ -172,6 +174,8 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
         // A file written before the colors has no key; a color that is not one of ours is dropped, the others stay.
         let colors = (try? c.decodeIfPresent([String: LossyColor].self, forKey: .accountColors)) ?? nil
         accountColors = (colors ?? [:]).compactMapValues(\.color)
+        // A file written before this setting has no key, and one that cannot be read leaves it off.
+        menuBarHiding = ((try? c.decodeIfPresent(MenuBarHidingSettings.self, forKey: .menuBarHiding)) ?? nil) ?? defaults.menuBarHiding
     }
 
     /// One color of `accountColors`, decoded without failing the whole file when it is not valid.

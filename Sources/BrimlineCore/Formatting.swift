@@ -510,6 +510,65 @@ public struct Strings: Sendable {
         t("System Settings didn't open. Open it from the Apple menu, then choose Menu Bar.",
           "Réglages Système ne s'est pas ouvert. Ouvrez-le depuis le menu Pomme, puis choisissez Barre des menus.")
     }
+
+    // Settings, Menu Bar tab, and the Brimline window: hiding the icons placed left of Brimline's bar (QUOTA-73).
+    public var menuBarHidingTitle: String { t("Hide without removing", "Cacher sans retirer") }
+    public var menuBarHidingToggle: String {
+        t("Hide the icons placed left of the bar", "Cacher les icônes placées à gauche du trait")
+    }
+    public var menuBarHidingHowTo: String {
+        t("Once: hold Command and drag the icons to hide (Claude, ChatGPT, Cursor, Gemini) to the left of Brimline's bar in the menu bar. Then the “Hide the icons” button of the Brimline window hides and shows them. No permission is asked.",
+          "Une fois : maintenez Cmd et glissez dans la barre des menus les icônes à cacher (Claude, ChatGPT, Cursor, Gemini) à gauche du trait de Brimline. Ensuite, le bouton « Cacher les icônes » de la fenêtre de Brimline les cache et les montre. Aucune autorisation n'est demandée.")
+    }
+    public var menuBarHidingHide: String { t("Hide the icons", "Cacher les icônes") }
+    public var menuBarHidingShow: String { t("Show the hidden icons", "Montrer les icônes cachées") }
+    /// Why the icons were not hidden (they stay shown).
+    public func menuBarHidingRefusal(_ refusal: MenuBarHiding.Refusal) -> String {
+        switch refusal {
+        case .barTooFarRight:
+            t("The bar is too far right to hide reliably: drag it further left.",
+              "Le trait est trop à droite pour cacher de façon fiable : glissez-le plus à gauche.")
+        case .brimlineLeftOfBar:
+            t("Brimline's icon is left of the bar: drag it right of the bar, or it would be hidden too.",
+              "L'icône de Brimline est à gauche du trait : glissez-la à droite du trait, sinon elle serait cachée aussi.")
+        case .placeUnknown:
+            t("Brimline couldn't read where the bar is, so nothing is hidden.",
+              "Brimline n'a pas pu lire où est le trait : rien n'est caché.")
+        }
+    }
+    public var menuBarHidingNote: String {
+        t("Apple doesn't document this technique: it was tried on macOS 27.0.1, on a screen without a notch. Brimline itself stays right of the bar, never hidden. Quitting Brimline or turning this off always shows every icon again.",
+          "Apple ne documente pas cette technique : elle a été essayée sur macOS 27.0.1, sur un écran sans encoche. Brimline reste à droite du trait, jamais caché. Quitter Brimline ou couper ce réglage remet toujours toutes les icônes.")
+    }
+    public var menuBarHidingGuide: String { t("How hiding works", "Comment marche le masquage") }
+    /// The name VoiceOver reads for the bar, and its help tag.
+    public var menuBarHidingBarName: String { t("Brimline's bar", "Trait de Brimline") }
+    public var menuBarHidingBarHelp: String {
+        t("Brimline: the icons left of this bar can be hidden from the Brimline window.",
+          "Brimline : les icônes à gauche de ce trait peuvent être cachées depuis la fenêtre de Brimline.")
+    }
+    /// The drawing of the gesture.
+    public var menuBarHidingDiagramHidden: String { t("Hidden", "Cachées") }
+    public var menuBarHidingDiagramShown: String { t("Always shown, Brimline too", "Toujours visibles, Brimline aussi") }
+    public var menuBarHidingDiagramGesture: String {
+        t("drag each icon to hide left of the bar", "glissez chaque icône à cacher à gauche du trait")
+    }
+    /// The picture of the gesture in the documentation, step by step.
+    public var menuBarHidingPictureBefore: String {
+        t("1. Turned on: Brimline's bar appears, left of the icons.", "1. Réglage allumé : le trait de Brimline apparaît, à gauche des icônes.")
+    }
+    public var menuBarHidingPictureDrag: String { t("hold Command, drag each icon left of the bar", "maintenez Cmd, glissez chaque icône à gauche du trait") }
+    public var menuBarHidingPictureAfter: String {
+        t("2. After the gesture (once): the icons to hide are left of the bar.", "2. Après le geste (une fois) : les icônes à cacher sont à gauche du trait.")
+    }
+    public var menuBarHidingPictureHidden: String {
+        t("3. “Hide the icons”: they leave the menu bar, Brimline stays. “Show the hidden icons” brings them back.",
+          "3. « Cacher les icônes » : elles quittent la barre, Brimline reste. « Montrer les icônes cachées » les fait revenir.")
+    }
+    public var menuBarHidingDiagramSpoken: String {
+        t("Drawing of the menu bar: Claude, ChatGPT, Cursor and Gemini left of Brimline's bar are hidden; the icons right of it, Brimline too, are always shown.",
+          "Dessin de la barre des menus : Claude, ChatGPT, Cursor et Gemini, à gauche du trait de Brimline, sont cachées ; les icônes à sa droite, Brimline compris, restent visibles.")
+    }
     public var version: String { t("Version", "Version") }
     public var development: String { t("development version", "version de développement") }
     public var licenseLine: String {
@@ -603,6 +662,10 @@ public enum Links {
     /// What Brimline reads for each provider (the "What is read" link of the settings).
     public static var providersDoc: URL { documentationBase.appendingPathComponent("providers.md") }
     public static var agentsDoc: URL { documentationBase.appendingPathComponent("agents.md") }
+    /// The guide to the menu bar (tidying it, hiding icons), in French when the interface is in French.
+    public static func menuBarDoc(_ language: Language) -> URL {
+        documentationBase.appendingPathComponent(language == .fr ? "menu-bar.fr.md" : "menu-bar.md")
+    }
     public static var faq: URL { documentationBase.appendingPathComponent("faq.md") }
     public static let repository = URL(string: "https://github.com/ThanaelFontaine/Brimline")!
 }

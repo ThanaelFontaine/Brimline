@@ -404,9 +404,120 @@ struct MenuBarTab: View {
                 }
                 MenuBarNote(text: s.menuBarStepsNote, symbol: "info.circle")
             }
+            MenuBarHidingSection(model: model)
         }
         .formStyle(.grouped)
         .onAppear { model.refreshMenuBarApps() }
+    }
+}
+
+/// "Hide without removing" (QUOTA-73): the switch of Brimline's bar, the one gesture to make, and the button.
+/// Off by default; on, Brimline adds its bar to the menu bar and hides only what the person put left of it.
+public struct MenuBarHidingSection: View {
+    @Bindable var model: AppModel
+
+    public init(model: AppModel) {
+        self.model = model
+    }
+
+    public var body: some View {
+        let s = model.strings
+        let on = model.settings.menuBarHiding.enabled
+        Section(s.menuBarHidingTitle) {
+            Toggle(s.menuBarHidingToggle, isOn: Binding(
+                get: { on },
+                set: { model.setMenuBarHiding($0) }
+            ))
+            VStack(alignment: .leading, spacing: SGTheme.Space.s) {
+                Text(s.menuBarHidingHowTo)
+                    .font(.system(size: 12))
+                    .fixedSize(horizontal: false, vertical: true)
+                MenuBarHidingDiagram(strings: s)
+            }
+            if on {
+                HStack {
+                    Button(model.menuBarIconsHidden ? s.menuBarHidingShow : s.menuBarHidingHide) {
+                        model.toggleMenuBarIcons()
+                    }
+                    Spacer()
+                }
+                if let refusal = model.menuBarHidingRefusal {
+                    MenuBarNote(text: s.menuBarHidingRefusal(refusal), symbol: "exclamationmark.triangle")
+                }
+            }
+            VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
+                MenuBarNote(text: s.menuBarHidingNote, symbol: "info.circle")
+                Link(destination: Links.menuBarDoc(s.language)) {
+                    Label(s.menuBarHidingGuide, systemImage: "questionmark.circle")
+                }
+                .font(.system(size: 11))
+                .foregroundStyle(SGTheme.accent)
+            }
+        }
+    }
+}
+
+/// A drawing of the menu bar for the one gesture: the icons put left of Brimline's bar are hidden, the others,
+/// Brimline included, stay. Neutral tiles with first letters, never the logo of another app.
+public struct MenuBarHidingDiagram: View {
+    var strings: Strings
+
+    public init(strings: Strings) {
+        self.strings = strings
+    }
+
+    private static let tile: CGFloat = 18
+    private static let gap: CGFloat = 6
+    private static let hiddenNames = ["Cl", "Ch", "Cu", "Ge"]
+    private static var hiddenWidth: CGFloat { CGFloat(hiddenNames.count) * tile + CGFloat(hiddenNames.count - 1) * gap }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
+            HStack(spacing: 10) {
+                HStack(spacing: Self.gap) {
+                    ForEach(Self.hiddenNames, id: \.self) { name in
+                        Text(name)
+                            .font(.system(size: 8, weight: .semibold))
+                            .frame(width: Self.tile, height: Self.tile)
+                            .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(Color.primary.opacity(0.12)))
+                            .opacity(0.55)
+                    }
+                }
+                .frame(width: Self.hiddenWidth)
+                Capsule()
+                    .fill(SGTheme.accent)
+                    .frame(width: 2, height: 16)
+                HStack(spacing: 10) {
+                    Image(systemName: "wifi")
+                    Image(systemName: "magnifyingglass")
+                    Image(nsImage: BrimlineGlyph.image(level: 0.58))
+                    Text("12:20").monospacedDigit()
+                }
+                .font(.system(size: 11))
+            }
+            .padding(.horizontal, SGTheme.Space.s)
+            .frame(height: 26)
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Color.primary.opacity(0.05)))
+            HStack(spacing: 10) {
+                Text(strings.menuBarHidingDiagramHidden)
+                    .frame(width: Self.hiddenWidth, alignment: .center)
+                Color.clear.frame(width: 2, height: 1)
+                Text(strings.menuBarHidingDiagramShown)
+            }
+            .font(.system(size: 10))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, SGTheme.Space.s)
+            HStack(spacing: SGTheme.Space.xs) {
+                Image(systemName: "arrow.left")
+                CommandKey()
+                Text(strings.menuBarHidingDiagramGesture)
+            }
+            .font(.system(size: 11))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, SGTheme.Space.s)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(strings.menuBarHidingDiagramSpoken)
     }
 }
 

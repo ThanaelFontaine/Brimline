@@ -26,6 +26,10 @@ public final class AppModel {
     public private(set) var menuBarAppFailed: MenuBarApp?
     /// How the last "Open System Settings" ended, for the note under its button.
     public private(set) var menuBarSystemOutcome: MenuBarTidy.SettingsOutcome?
+    /// The icons placed left of Brimline's bar are hidden now (QUOTA-73). Always false at launch.
+    public private(set) var menuBarIconsHidden = false
+    /// Why the last try did not hide them, for the note in the window and in the Menu Bar tab.
+    public private(set) var menuBarHidingRefusal: MenuBarHiding.Refusal?
 
     public let strings: Strings
     public let time: TimeFormatter
@@ -35,6 +39,8 @@ public final class AppModel {
     /// How the Menu Bar tab finds and opens apps (macOS in the app; fixed in the images and the tests).
     @ObservationIgnored public var menuBar = MenuBarEnvironment.live
     @ObservationIgnored public private(set) var menuBarIcons: [String: NSImage] = [:]
+    /// Brimline's bar in the menu bar, given by the app once its own icon is there (see `attachSeparator`).
+    @ObservationIgnored public private(set) var separator: (any MenuBarSeparating)?
 
     @ObservationIgnored private let service: UsageService?
     @ObservationIgnored private let cache: UsageCache?
@@ -121,7 +127,9 @@ public final class AppModel {
         guard let settingsStore else { return }
         let onDisk = settingsStore.load()
         guard onDisk != settings else { return }
+        let hidingChanged = onDisk.menuBarHiding != settings.menuBarHiding
         settings = onDisk
+        if hidingChanged { applyMenuBarHidingSetting() }
         rescan()
     }
 
@@ -281,6 +289,59 @@ public final class AppModel {
     public func openSystemMenuBarSettings() {
         menuBarSystemOutcome = MenuBarTidy.openSystemSettings(
             openURL: { menuBar.openURL($0) }, openApp: { menuBar.openBundle($0) })
+    }
+
+    // MARK: Hiding the icons left of Brimline's bar
+
+    /// Takes Brimline's bar and puts it in the menu bar when the setting is on (it is not there otherwise).
+    public func attachSeparator(_ separator: any MenuBarSeparating) {
+        self.separator = separator
+        separator.onRecheck = { [weak self] decision in self?.applyHiding(decision) }
+        separator.setPresent(settings.menuBarHiding.enabled)
+    }
+
+    /// On: the bar appears, every icon still shown. Off: every icon is shown and the bar goes away.
+    public func setMenuBarHiding(_ enabled: Bool) {
+        update { $0.menuBarHiding.enabled = enabled }
+        applyMenuBarHidingSetting()
+    }
+
+    private func applyMenuBarHidingSetting() {
+        let on = settings.menuBarHiding.enabled
+        if !on {
+            menuBarIconsHidden = false
+            menuBarHidingRefusal = nil
+        }
+        separator?.setPresent(on)
+    }
+
+    /// Hides the icons left of the bar, after the bar has checked its place; a refusal leaves them shown, with a note.
+    public func hideMenuBarIcons() {
+        guard settings.menuBarHiding.enabled else { return }
+        guard let separator else { return applyHiding(.refuse(.placeUnknown)) }
+        applyHiding(separator.hide())
+    }
+
+    /// Shows every icon again.
+    public func showMenuBarIcons() {
+        separator?.show()
+        menuBarIconsHidden = false
+        menuBarHidingRefusal = nil
+    }
+
+    public func toggleMenuBarIcons() {
+        if menuBarIconsHidden { showMenuBarIcons() } else { hideMenuBarIcons() }
+    }
+
+    private func applyHiding(_ decision: MenuBarHiding.Decision) {
+        switch decision {
+        case .hide:
+            menuBarIconsHidden = true
+            menuBarHidingRefusal = nil
+        case .refuse(let refusal):
+            menuBarIconsHidden = false
+            menuBarHidingRefusal = refusal
+        }
     }
 
     public func copy(_ text: String) {

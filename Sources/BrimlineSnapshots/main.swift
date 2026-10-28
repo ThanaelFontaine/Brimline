@@ -216,6 +216,122 @@ func fakeMenuBar() -> MenuBarEnvironment {
     openApp: { _ in true }, openURL: { _ in true }, openBundle: { _ in true })
 }
 
+/// Brimline's bar in the images: it answers what the image needs, and puts nothing in the real menu bar.
+@MainActor
+final class PictureBar: MenuBarSeparating {
+    var answer: MenuBarHiding.Decision
+    var onRecheck: ((MenuBarHiding.Decision) -> Void)?
+    init(_ answer: MenuBarHiding.Decision) { self.answer = answer }
+    func setPresent(_ present: Bool) {}
+    func hide() -> MenuBarHiding.Decision { answer }
+    func show() {}
+}
+
+/// A model with hiding on (QUOTA-73), its icons hidden or not, or refused for `refusal`.
+@MainActor
+func hidingModel(_ accounts: [AccountUsage], language: Language, hidden: Bool = false,
+                 refusal: MenuBarHiding.Refusal? = nil) -> AppModel {
+    var s = settings
+    s.menuBarHiding.enabled = true
+    let m = model(accounts, language: language, settings: s)
+    m.attachSeparator(PictureBar(refusal.map { .refuse($0) } ?? .hide(length: 864)))
+    if hidden || refusal != nil { m.hideMenuBarIcons() }
+    return m
+}
+
+/// The picture of the one gesture, for the guide and for Thanaël's try: before, after the Command-drag, hidden.
+/// Neutral tiles with first letters, never the logo of another app.
+struct HidingGesturePicture: View {
+    var strings: Strings
+    static let tile: CGFloat = 22
+    static let gap: CGFloat = 8
+    static let names = ["Cl", "Ch", "Cu", "Ge"]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            step(strings.menuBarHidingPictureBefore) {
+                VStack(alignment: .leading, spacing: 2) {
+                    dragArrow
+                    strip { bar; tiles(); rest }
+                }
+            }
+            step(strings.menuBarHidingPictureAfter) { strip { tiles(); bar; rest } }
+            step(strings.menuBarHidingPictureHidden) { strip { rest } }
+        }
+        .padding(20)
+        .frame(width: 600, alignment: .leading)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private func step<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.system(size: 13, weight: .semibold)).fixedSize(horizontal: false, vertical: true)
+            content()
+        }
+    }
+
+    private func strip<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        HStack(spacing: 12) { content() }
+            .font(.system(size: 13))
+            .padding(.horizontal, 12)
+            .frame(height: 32)
+            .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Color.primary.opacity(0.06)))
+    }
+
+    private func tiles() -> some View {
+        HStack(spacing: Self.gap) {
+            ForEach(Self.names, id: \.self) { name in
+                Text(name)
+                    .font(.system(size: 10, weight: .semibold))
+                    .frame(width: Self.tile, height: Self.tile)
+                    .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Color.primary.opacity(0.13)))
+            }
+        }
+    }
+
+    private var bar: some View {
+        Capsule().fill(SGTheme.accent).frame(width: 2.5, height: 20)
+    }
+
+    private var rest: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "wifi")
+            Image(systemName: "magnifyingglass")
+            Image(nsImage: BrimlineGlyph.image(level: 0.58))
+            Text("12:20").monospacedDigit()
+        }
+    }
+
+    /// An arrow from the tiles to the left of the bar, with the Command key.
+    private var dragArrow: some View {
+        HStack(spacing: 6) {
+            ZStack(alignment: .topLeading) {
+                Path { p in
+                    // From above the tiles (their middle is 12 + 2.5 + 12 + 49 pt from the left of the strip) to the left of the bar.
+                    p.move(to: CGPoint(x: 75, y: 22))
+                    p.addQuadCurve(to: CGPoint(x: 8, y: 22), control: CGPoint(x: 42, y: -6))
+                    p.move(to: CGPoint(x: 8, y: 22))
+                    p.addLine(to: CGPoint(x: 6, y: 13))
+                    p.move(to: CGPoint(x: 8, y: 22))
+                    p.addLine(to: CGPoint(x: 16, y: 17))
+                }
+                .stroke(SGTheme.accent, style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+            }
+            .frame(width: 90, height: 26)
+            Text("⌘")
+                .font(.system(size: 12))
+                .padding(.horizontal, 6)
+                .padding(.vertical, 1)
+                .background(RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .fill(Color(nsColor: .textBackgroundColor))
+                    .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).stroke(Color.primary.opacity(0.25), lineWidth: 0.5)))
+            Text(strings.menuBarHidingPictureDrag)
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 @MainActor
 func render<V: View>(_ view: V, size: CGSize?, dark: Bool, name: String) throws {
     let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)!
@@ -385,7 +501,7 @@ func run() throws {
         for tab in [SettingsTab.accounts, .menuBar, .agents] {
             let m = model(accountsTabUsages + [stateAccounts[2]], language: .en, settings: accountsTabSettings)
             m.settingsTab = tab
-            let height: CGFloat = tab == .menuBar ? 880 : 1180
+            let height: CGFloat = 1180
             try render(WindowFrame(title: m.strings.settingsTitle, content: SettingsView(model: m, height: height)),
                        size: CGSize(width: SettingsView.size.width + 24, height: height + 31 + 24),
                        dark: dark, name: "qa-settings-\(tab.rawValue)-full-\(suffix)")
@@ -400,6 +516,26 @@ func run() throws {
         try render(WindowFrame(title: frMenuBar.strings.settingsTitle, content: SettingsView(model: frMenuBar, height: 880)),
                    size: CGSize(width: SettingsView.size.width + 24, height: 880 + 31 + 24),
                    dark: dark, name: "settings-menuBar-fr-\(suffix)")
+
+        // Hiding the icons left of Brimline's bar (QUOTA-73): the section turned on, the drawing of the one gesture,
+        // and the button of the window in its three states.
+        for language in [Language.en, .fr] {
+            let lang = language == .fr ? "-fr" : ""
+            let on = hidingModel([], language: language)
+            try render(WindowFrame(title: on.strings.settingsTitle,
+                                   content: Form { MenuBarHidingSection(model: on) }.formStyle(.grouped)
+                                       .frame(width: SettingsView.size.width, height: 400)),
+                       size: CGSize(width: SettingsView.size.width + 24, height: 400 + 31 + 24),
+                       dark: dark, name: "settings-menuBar-hiding\(lang)-\(suffix)")
+            try render(PanelFrame(content: HidingGesturePicture(strings: on.strings)),
+                       size: nil, dark: dark, name: "menubar-hiding-gesture\(lang)-\(suffix)")
+            try render(sheet([
+                AnyView(PanelFrame(content: PanelView(model: hidingModel(mainAccounts, language: language), opaqueBackground: true))),
+                AnyView(PanelFrame(content: PanelView(model: hidingModel(mainAccounts, language: language, hidden: true), opaqueBackground: true))),
+                AnyView(PanelFrame(content: PanelView(model: hidingModel(mainAccounts, language: language, refusal: .barTooFarRight),
+                                                      opaqueBackground: true))),
+            ]), size: nil, dark: dark, name: "qa-panel-menubar-hiding\(lang)-\(suffix)")
+        }
     }
 }
 
