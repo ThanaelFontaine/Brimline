@@ -47,15 +47,27 @@ struct AccountColorsTests {
         }
     }
 
+    struct TokensUnreadable: Error, CustomStringConvertible { var description: String }
+
+    /// The slots of `accountPalette` and the colors of `design/tokens.json`; nil only when the file has no
+    /// `accountPalette` key. A key that is there but unreadable throws, so the check never passes on nothing.
+    func paletteTokens(_ data: Data) throws -> (slots: [[String: Any]], color: [String: [String: Any]])? {
+        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw TokensUnreadable(description: "tokens.json is not an object")
+        }
+        guard let palette = root["accountPalette"] else { return nil }
+        guard let palette = palette as? [String: Any], let slots = palette["slots"] as? [[String: Any]],
+              let color = root["color"] as? [String: [String: Any]] else {
+            throw TokensUnreadable(description: "accountPalette, its slots or color cannot be read")
+        }
+        return (slots, color)
+    }
+
     @Test("The palette matches design/tokens.json when the board's tokens are there")
     func matchesTokens() throws {
         let tokens = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("design/tokens.json")
-        guard let data = try? Data(contentsOf: tokens),
-              let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let palette = root["accountPalette"] as? [String: Any],
-              let slots = palette["slots"] as? [[String: Any]],
-              let color = root["color"] as? [String: [String: Any]] else { return }
+        guard let data = try? Data(contentsOf: tokens), let (slots, color) = try paletteTokens(data) else { return }
         func value(_ mode: String, _ token: String) -> UInt32? {
             guard let entry = color[mode]?[token] as? [String: Any], let hex = entry["value"] as? String else { return nil }
             return UInt32(hex.dropFirst(), radix: 16)
@@ -68,6 +80,21 @@ struct AccountColorsTests {
             #expect(entry.light == value("light", token), "\(token) light")
             #expect(entry.dark == value("dark", token), "\(token) dark")
         }
+    }
+
+    @Test("The tokens check passes only when accountPalette is absent: a key that cannot be read fails")
+    func tokensCheckIsNotVacuous() throws {
+        func data(_ json: String) -> Data { Data(json.utf8) }
+        #expect(try paletteTokens(data(#"{"color": {}}"#)) == nil, "no key: nothing to compare")
+        #expect(try paletteTokens(data(#"{"accountPalette": {"slots": []}, "color": {}}"#))?.slots.isEmpty == true)
+        for broken in [#"{"accountPalette": 3}"#, #"{"accountPalette": {}, "color": {}}"#,
+                       #"{"accountPalette": {"slots": "x"}, "color": {}}"#, #"{"accountPalette": {"slots": []}}"#, "[]"] {
+            #expect(throws: TokensUnreadable.self, "\(broken)") { try paletteTokens(data(broken)) }
+        }
+        // The real file: the key is there and readable.
+        let tokens = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("design/tokens.json")
+        if let real = try? Data(contentsOf: tokens) { #expect(try paletteTokens(real) != nil) }
     }
 
     // MARK: Color arithmetic
@@ -178,6 +205,8 @@ struct AccountColorsTests {
         let slots = accounts.map { slot(settings.accountColors[$0.id]) }
         #expect(slots.allSatisfy { ($0 ?? -1) >= 0 && ($0 ?? 99) < 10 })
         #expect(Set(slots.compactMap { $0 }).count == 10)
+        // The first ten as before; then each next account takes the least used slot, the lowest number on a tie.
+        #expect(slots == [0, 5, 6, 7, 8, 9, 1, 2, 3, 4, 0, 1, 2])
     }
 
     @Test("A color given is kept when an account appears before the others")
