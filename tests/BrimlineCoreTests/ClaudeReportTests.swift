@@ -92,6 +92,21 @@ struct ClaudeReportTests {
         #expect(observed(ClaudeCodeReportParser.parseStream(lines: [event(#"{"five_hour":{"utilization":1.02}}"#)], now: now))?.fiveHour?.percent == 100)
     }
 
+    @Test("Only a line whose type is rate_limit_event is decoded, blanks around its colon allowed")
+    func streamEventType() throws {
+        for line in [#"{"type":"rate_limit_event"}"#, #"{"session_id":"s", "type" : "rate_limit_event"}"#,
+                     "{\"type\":\t\"rate_limit_event\"}"] {
+            #expect(ClaudeCodeReportParser.namesEventType(Data(line.utf8)), "\(line)")
+        }
+        for line in [#"{"type":"assistant","text":"{\"type\":\"rate_limit_event\"}"}"#, #"{"type":"assistant","text":"rate_limit_event"}"#,
+                     #"{"kind":"rate_limit_event"}"#, #"{"type":"rate_limit_events"}"#, #"{"subtype":"rate_limit_event"}"#,
+                     #""type""rate_limit_event""#, #"rate_limit_event"#] {
+            #expect(!ClaudeCodeReportParser.namesEventType(Data(line.utf8)), "\(line)")
+        }
+        let spaced = event(#"{"five_hour":{"utilization":0.5}}"#).replacingOccurrences(of: #""type":"#, with: #""type": "#)
+        #expect(observed(ClaudeCodeReportParser.parseStream(lines: [spaced], now: now))?.fiveHour?.percent == 50)
+    }
+
     @Test("A line longer than 64 KiB is never parsed")
     func streamLineBound() {
         let padding = String(repeating: "x", count: ClaudeCodeReportParser.maxLineBytes)

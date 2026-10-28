@@ -32,12 +32,14 @@ struct ClaudeReportCommandTests {
     /// Runs the command with its input on a pipe that a producer fills piece by piece, `delay` apart, the first piece
     /// after `delay` too: like `claude -p`, which writes while the command already runs. Says whether one of the
     /// producer's writes failed (the pipe closed early: `EPIPE`).
+    /// With `nonBlocking`, the reading end is `O_NONBLOCK`, as a program before in the pipe may leave it.
     func run(_ command: ClaudeReportCommand, _ arguments: [String], pieces: [String],
-             delay: useconds_t = 50_000) -> (outcome: ClaudeReportCommand.Outcome, writeFailed: Bool) {
+             delay: useconds_t = 50_000, nonBlocking: Bool = false) -> (outcome: ClaudeReportCommand.Outcome, writeFailed: Bool) {
         signal(SIGPIPE, SIG_IGN)
         var ends: [Int32] = [0, 0]
         precondition(pipe(&ends) == 0)
         let (reading, writing) = (ends[0], ends[1])
+        if nonBlocking { precondition(fcntl(reading, F_SETFL, fcntl(reading, F_GETFL) | O_NONBLOCK) == 0) }
         let failed = Flag()
         let done = DispatchSemaphore(value: 0)
         Thread.detachNewThread {
@@ -117,6 +119,23 @@ struct ClaudeReportCommandTests {
         #expect(try store(home).load("someone@example.com").status == .formatChanged)
     }
 
+    @Test("An input left non-blocking by the program before is still read to its end, and its numbers kept")
+    func nonBlockingInput() throws {
+        let home = try TemporaryHome()
+        let pieces = ["{\"type\":\"system\"}\n", event(#"{"five_hour":{"utilization":0.5}}"#) + "\n", "{\"type\":\"result\"}\n"]
+        // The producer writes its first piece only after a while: until then a read says "nothing yet" (EAGAIN).
+        let usage = run(command(home), ["claude", "--account", "a@example.com", "--bogus"], pieces: pieces, nonBlocking: true)
+        #expect(usage.outcome.code == ClaudeReportCommand.Exit.usage)
+        #expect(!usage.writeFailed)
+        let recorded = run(command(home), ["claude", "--account", "a@example.com"], pieces: pieces, nonBlocking: true)
+        #expect(recorded.outcome == ClaudeReportCommand.Outcome(code: 0))
+        #expect(!recorded.writeFailed)
+        #expect(try store(home).load("a@example.com").fiveHour?.percent == 50)
+        let line = statusline(#"{"five_hour":{"used_percentage":12,"resets_at":\#(epoch + 3600)}}"#)
+        let shown = run(command(home), ["claude", "--account", "a@example.com", "--statusline"], pieces: [line], nonBlocking: true)
+        #expect(shown.outcome.output == "5 h 12%")
+    }
+
     // MARK: Long lines
 
     @Test("A line longer than 64 KiB is dropped whole, across blocks, and the lines after it are read")
@@ -139,6 +158,41 @@ struct ClaudeReportCommandTests {
                                pieces: [huge, event(#"{"five_hour":{"utilization":0.1}}"#) + "\n"])
         #expect(outcome.code == 0)
         #expect(try store(home).load("a@example.com").fiveHour?.percent == 10)
+    }
+
+    @Test("Memory stays bounded however many lines name the event: each line is decoded and freed on its own")
+    func memoryBounded() throws {
+        let (r, w) = try pipePair()
+        // 768 lines of 64 000 bytes whose type is rate_limit_event (48 MB): each one is decoded, none is kept.
+        let line = Array((#"{"type":"rate_limit_event","pad":""# + String(repeating: "z", count: 64_000 - 36) + "\"}\n").utf8)
+        let writer = Thread {
+            for _ in 0..<768 {
+                var offset = 0
+                while offset < line.count {
+                    let n = line[offset...].withUnsafeBytes { Darwin.write(w, $0.baseAddress, $0.count) }
+                    if n <= 0 { break }
+                    offset += n
+                }
+            }
+            close(w)
+        }
+        let before = footprint()
+        writer.start()
+        let extraction = ClaudeCodeReportParser.parseStream(descriptor: r, now: now)
+        let growth = footprint() - before
+        close(r)
+        #expect(extraction == .formatChanged(.streamJSON))
+        #expect(growth < 16 << 20, "grew by \(growth >> 20) MiB")
+    }
+
+    /// The memory of this process as macOS counts it (`phys_footprint`).
+    func footprint() -> Int {
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+        let result = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count) }
+        }
+        return result == KERN_SUCCESS ? Int(info.phys_footprint) : 0
     }
 
     func pipePair() throws -> (Int32, Int32) {
@@ -189,12 +243,54 @@ struct ClaudeReportCommandTests {
         // The default folder: transcripts in ~/.claude/projects, address in ~/.claude.json.
         let main = run(command(home), arguments, pieces: [statusline(limits, transcript: home.path(".claude/projects/-tmp/s.jsonl"))])
         #expect(main.outcome.output == "5 h 12%")
-        // No transcript_path: nothing to compare, the folder of the command is taken.
-        #expect(run(work, arguments, pieces: [statusline(limits)]).outcome.output == "5 h 12%")
+        // No transcript_path: nothing says whose numbers they are, nothing is written or shown.
+        #expect(run(work, arguments, pieces: [statusline(limits)]).outcome == ClaudeReportCommand.Outcome(code: 0))
         // An address written out is never compared.
         let explicit = run(command(home), ["claude", "--account", "other@example.net", "--statusline"],
                            pieces: [statusline(limits, transcript: "/elsewhere/projects/x/s.jsonl")])
         #expect(explicit.outcome.output == "5 h 12%")
+    }
+
+    @Test("auto: a transcript_path missing, not a text, empty, relative or with . or .. is refused")
+    func autoTranscriptStrict() throws {
+        let home = try TemporaryHome()
+        try home.write(".claude.json", claudeJSON(email: "main@example.com"))
+        try home.mkdir(".claude/projects/-tmp")
+        let limits = #"{"five_hour":{"used_percentage":12,"resets_at":\#(epoch + 3600)}}"#
+        let arguments = ["claude", "--account", "auto", "--statusline"]
+        let folder = home.path(".claude")
+        for raw in ["null", "42", #""""#, #"["\#(folder)/projects/-tmp/s.jsonl"]"#, #""-tmp/s.jsonl""#, #"".claude/projects/-tmp/s.jsonl""#,
+                    #""~/.claude/projects/-tmp/s.jsonl""#, #""\#(folder)/projects/-tmp/../-tmp/s.jsonl""#,
+                    #""\#(folder)/projects/./-tmp/s.jsonl""#, #""\#(folder)-work/../.claude/projects/-tmp/s.jsonl""#] {
+            let line = String(statusline(limits).dropLast()) + #","transcript_path":\#(raw)}"#
+            #expect(run(command(home), arguments, pieces: [line]).outcome == ClaudeReportCommand.Outcome(code: 0), "\(raw)")
+        }
+        #expect(store(home).list().isEmpty)
+        #expect(run(command(home), arguments, pieces: [statusline(limits, transcript: "\(folder)/projects/-tmp/s.jsonl")]).outcome.output == "5 h 12%")
+    }
+
+    @Test("auto: a transcript not created yet is placed by the links of the folders above it")
+    func autoTranscriptNotYetCreated() throws {
+        let home = try TemporaryHome()
+        try home.write(".claude.json", claudeJSON(email: "main@example.com"))
+        try home.mkdir(".claude/projects/-tmp")
+        try home.mkdir(".claude-work/projects/-tmp")
+        try FileManager.default.createSymbolicLink(atPath: home.path("alias"), withDestinationPath: home.path(".claude"))
+        try FileManager.default.createSymbolicLink(atPath: home.path("other"), withDestinationPath: home.path(".claude-work"))
+        let limits = #"{"five_hour":{"used_percentage":12,"resets_at":\#(epoch + 3600)}}"#
+        let arguments = ["claude", "--account", "auto", "--statusline"]
+        // The session writes ~/.claude through a link, and its transcript does not exist yet (nor its project folder).
+        for transcript in ["alias/projects/-tmp/new.jsonl", "alias/projects/-new/new.jsonl"] {
+            #expect(!FileManager.default.fileExists(atPath: home.path(transcript)))
+            let seen = run(command(home), arguments, pieces: [statusline(limits, transcript: home.path(transcript))])
+            #expect(seen.outcome.output == "5 h 12%", "\(transcript)")
+        }
+        // A link to another folder is still another folder.
+        #expect(run(command(home), arguments, pieces: [statusline(limits, transcript: home.path("other/projects/-tmp/new.jsonl"))]).outcome
+                == ClaudeReportCommand.Outcome(code: 0))
+        #expect(ClaudeReportEmail.transcript(home.path("alias/projects/-tmp/new.jsonl"), isIn: home.path(".claude")))
+        #expect(ClaudeReportEmail.transcript(home.path(".claude/projects/-tmp/new.jsonl"), isIn: home.path("alias")))
+        #expect(!ClaudeReportEmail.transcript(home.path("other/projects/-tmp/new.jsonl"), isIn: home.path(".claude")))
     }
 
     @Test("auto reads .claude.json without following a link")
