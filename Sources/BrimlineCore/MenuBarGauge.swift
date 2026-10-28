@@ -8,7 +8,7 @@ public struct GaugeSegment: Sendable, Equatable {
     public var percent: Double
     /// The part of the whole gauge, from 0 to 1: `percent / 100 / N`, with `N` the number of counted accounts.
     public var share: Double
-    /// The numbers are the last known ones (expired, unavailable, to reconnect, format changed): drawn dimmed.
+    /// The numbers are the last known ones (expired, unavailable, format changed): drawn dimmed.
     public var stale: Bool
 
     public init(accountID: String, provider: Provider, percent: Double, share: Double, stale: Bool) {
@@ -52,7 +52,8 @@ public enum MenuBarGauge {
     /// The gauge of the menu bar.
     ///
     /// - Counted: the accounts of a provider that is on, neither hidden nor "Do not read", with at least one
-    ///   limit that has a number (up to date, or the last known one).
+    ///   limit that has a number (up to date, or the last known one). An account whose sign-in is missing, refused
+    ///   or not readable is not counted even when it keeps old numbers (as `Ranking.rank` leaves it out).
     /// - `percent`: their tightest limit now (`AccountUsage.highestPercent(at:)`).
     /// - `share`: `percent / 100 / N`, so the total is the average and never goes over 100 %.
     public static func model(_ usages: [AccountUsage], settings: BrimlineSettings,
@@ -62,13 +63,15 @@ public enum MenuBarGauge {
                 && !settings.isHidden(usage.account.id)
                 && !settings.isUnread(usage.account.id)
         })
-        let counted = candidates.compactMap { usage in usage.highestPercent(at: now).map { (usage, $0) } }
+        let counted = candidates.compactMap { usage in
+            figure(usage, at: now).map { (usage, $0) }
+        }
         let n = Double(counted.count)
         let segments = counted.map { usage, percent in
             GaugeSegment(accountID: usage.account.id, provider: usage.account.provider, percent: percent,
                          share: min(max(percent, 0), 100) / 100 / n, stale: usage.status != .ok)
         }
-        let withoutFigure = candidates.filter { $0.highestPercent(at: now) == nil }.map(\.account.id)
+        let withoutFigure = candidates.filter { figure($0, at: now) == nil }.map(\.account.id)
         let fresh = segments.filter { !$0.stale }
         let alerts = segments.filter { $0.percent >= alertThreshold }
             .enumerated()
@@ -76,6 +79,15 @@ public enum MenuBarGauge {
             .map(\.element)
         return GaugeModel(segments: segments, total: min(1, segments.reduce(0) { $0 + $1.share }),
                           mostLoaded: highest(fresh) ?? highest(segments), alerts: alerts, withoutFigure: withoutFigure)
+    }
+
+    /// The account's tightest percentage now, or nil when it counts for nothing: no number, or a sign-in that is
+    /// missing, refused or not readable (its old numbers are not a reading of today).
+    private static func figure(_ usage: AccountUsage, at now: Date) -> Double? {
+        switch usage.status {
+        case .signedOut, .reconnect, .notReadable: return nil
+        default: return usage.highestPercent(at: now)
+        }
     }
 
     /// The panel's order: providers in `PanelLayout.providerOrder`, then the accounts as they came.

@@ -76,6 +76,38 @@ public enum AccountColor: Sendable, Equatable, Hashable, Codable {
     }
 }
 
+extension AccountColor {
+    /// A free color from the three channels of the system picker, in sRGB, each from 0 to 1. A channel outside that
+    /// range is brought back to it (a wide-gamut color can leave it); the result is always six valid digits.
+    public static func custom(red: Double, green: Double, blue: Double) -> AccountColor {
+        func byte(_ channel: Double) -> UInt32 {
+            guard channel.isFinite else { return 0 }
+            return UInt32((min(max(channel, 0), 1) * 255).rounded())
+        }
+        let value = byte(red) << 16 | byte(green) << 8 | byte(blue)
+        let digits = String(value, radix: 16, uppercase: true)
+        return .custom(String(repeating: "0", count: 6 - digits.count) + digits)
+    }
+
+    /// The appearance where this color is the hardest to see on the empty track of a gauge, and its contrast there
+    /// (truncated to one decimal, so "3.0:1" is never written under the 3:1 threshold). Nil when both reach 3:1.
+    public var lowContrast: (dark: Bool, ratio: Double)? {
+        let light = ColorMath.contrastRatio(rgb(dark: false), AccountPalette.trackLight)
+        let dark = ColorMath.contrastRatio(rgb(dark: true), AccountPalette.trackDark)
+        let weakest = dark < light ? (dark: true, ratio: dark) : (dark: false, ratio: light)
+        guard weakest.ratio < AccountPalette.minContrast else { return nil }
+        return (weakest.dark, (weakest.ratio * 10).rounded(.down) / 10)
+    }
+}
+
+/// A warning under the color of an account in the settings. Never a refusal: it says why, and what is lost.
+public enum ColorWarning: Sendable, Equatable {
+    /// Its color and another visible account's are hard to tell apart in the gauge.
+    case close(accountID: String)
+    /// Its color is hard to see on the track of a gauge, in the dark or in the light appearance.
+    case lowContrast(dark: Bool, ratio: Double)
+}
+
 /// Two accounts whose colors are too close in one of the two appearances.
 public struct ClosePair: Sendable, Equatable {
     public var first: String
@@ -157,6 +189,21 @@ public enum AccountPalette {
             }
         }
         return pairs.sorted { $0.deltaE < $1.deltaE }
+    }
+}
+
+extension AccountPalette {
+    /// The warnings under the color of `accountID`: a color too close to another visible account's (one warning per
+    /// account, the closest first), then a color that is too pale or too dark for the track.
+    /// - Parameter visible: the colors of the visible accounts, in the panel's order (the ones the gauge shows).
+    public static func warnings(for accountID: String, color: AccountColor,
+                                visible: [(id: String, color: AccountColor)]) -> [ColorWarning] {
+        var list: [ColorWarning] = []
+        for pair in closePairs(visible) where pair.first == accountID || pair.second == accountID {
+            list.append(.close(accountID: pair.first == accountID ? pair.second : pair.first))
+        }
+        if let low = color.lowContrast { list.append(.lowContrast(dark: low.dark, ratio: low.ratio)) }
+        return list
     }
 }
 

@@ -72,6 +72,8 @@ public final class AppModel {
         time = TimeFormatter(language: language, timeZone: timeZone)
         self.now = now
         fixedNow = now
+        // As the app does at its first scan, so the images show the dots an account really gets (nothing is written).
+        self.settings.assignDefaultColors(to: accounts)
     }
 
     // MARK: Lifecycle
@@ -248,6 +250,50 @@ public final class AppModel {
         update { s in
             s.unreadAccounts.removeAll { $0 == accountID }
             if unread { s.unreadAccounts.append(accountID) }
+        }
+    }
+
+    // MARK: Colors of the accounts
+
+    /// The color of an account: the one kept in the settings, else the one the rule gives it now (an account seen
+    /// for the first time, before the next scan has kept it).
+    public func color(for account: Account) -> AccountColor {
+        settings.accountColors[account.id]
+            ?? AccountPalette.defaultColor(for: account, among: accounts, assigned: settings.accountColors)
+    }
+
+    /// Is this account's color the one "Back to default" would give? Then there is nothing to go back to.
+    public func hasDefaultColor(_ account: Account) -> Bool {
+        var s = settings
+        s.resetColor(for: account, accounts: accounts)
+        return s.accountColors[account.id] == color(for: account)
+    }
+
+    /// The user chose a color (a slot of the palette, or a free one from the system picker).
+    public func setColor(_ color: AccountColor, for account: Account) {
+        update { $0.accountColors[account.id] = color }
+    }
+
+    /// "Back to default": the color the rule gives this account now, kept like any other.
+    public func resetColor(for account: Account) {
+        update { $0.resetColor(for: account, accounts: accounts) }
+    }
+
+    /// The colors of the accounts the gauge shows, in the panel's order: visible, and of a provider that is on.
+    var visibleColors: [(id: String, color: AccountColor)] {
+        groups.flatMap(\.usages).filter { enabledProviders.contains($0.account.provider) }
+            .map { ($0.account.id, color(for: $0.account)) }
+    }
+
+    /// What the settings say under the color of an account: too close to another one, too pale for the track.
+    public func colorWarnings(for account: Account) -> [ColorWarning] {
+        AccountPalette.warnings(for: account.id, color: color(for: account), visible: visibleColors)
+    }
+
+    /// The sentence of a warning, the other account of a close pair named as in the panel.
+    public func text(for warning: ColorWarning) -> String {
+        strings.colorWarning(warning) { id in
+            accounts.first { $0.id == id }.map { title(for: $0) } ?? id
         }
     }
 
