@@ -88,6 +88,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Expected: as described in the README ("Use").
 - Automated: no.
 - Result on 2026-10-28: not verifiable in this run. It needs the graphical session of the maintainer and real accounts, which a non-regression run must not use; the bundle was built (J5) and its views drawn on invented data (J7), nothing more. Reading real providers also stays manual (the 27 October 2026 trials listed in the README and in `docs/providers.md`).
+- Result on 2026-10-28, later, with the maintainer's agreement, on his Mac (macOS 27.0.1, a 1920 pt screen, real accounts), build of version 0.2.2 installed by `scripts/install.sh`, by real mouse clicks: a click on Brimline's element opens the panel; "Hide the icons" in the panel, with Claude in front and the bar at 1512 pt, hides the icons left of the bar except the two closest to it, which move left (a « sign appears in place of the others), the line of the bar stays in place and the panel shows the note on the icons closest to the bar; "Show the hidden icons" brings every icon back; the same with Finder in front and with Settings in front. In Settings, Accounts, the "+" of "Other color…" opens the system color panel without changing the saved colors, and the panel closes with Settings. Proof: screenshots of the menu bar before and after each step, kept with the maintainer. Not covered: opening at login, the system log.
 
 ## Debt
 
