@@ -193,6 +193,12 @@ final class ColorPanel: NSObject {
         panel.makeKeyAndOrderFront(nil)
     }
 
+    /// Settings closed: the panel goes too, and a color picked later goes to no account.
+    func close() {
+        onPick = nil
+        if NSColorPanel.sharedColorPanelExists { NSColorPanel.shared.orderOut(nil) }
+    }
+
     @objc private func changed(_ sender: NSColorPanel) {
         onPick?(sender.color)
     }
