@@ -264,6 +264,54 @@ var accountsTabSettings: BrimlineSettings {
 
 let accountsTabUsages = [providerAccounts[0], providerAccounts[1], providerAccounts[2], providerAccounts[3], providerAccounts[6]]
 
+// Four Claude accounts of one person (QUOTA-72): the dots of the panel and the colors in the settings. Asso has a
+// free violet close to Principal's (in the dark appearance), Secours a free grey too pale for the light mode, to show both warnings.
+let principal = account("main@claude.ai", ".claude", org: "Example", seat: "max")
+let asso = account("asso@claude.ai", ".claude-asso", org: "Example Association", seat: "max")
+let agence = account("agency@claude.ai", ".claude-agence", org: "Example Agency", seat: "max")
+let secours = account("backup@claude.ai", ".claude-secours", org: "Example Backup", seat: "max")
+
+let fourClaude: [AccountUsage] = [
+    AccountUsage(account: principal, status: .ok, limits: [
+        UsageLimit(kind: .session, percent: 34, resetsAt: minutes(130)),
+        UsageLimit(kind: .weekly, percent: 58, resetsAt: minutes(60 * 24 * 2 + 40)),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+    AccountUsage(account: asso, status: .ok, limits: [
+        UsageLimit(kind: .session, percent: 12, resetsAt: minutes(130)),
+        UsageLimit(kind: .weekly, percent: 22, resetsAt: minutes(60 * 24 * 2 + 40)),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+    AccountUsage(account: agence, status: .ok, limits: [
+        UsageLimit(kind: .session, percent: 94, resetsAt: minutes(38)),
+        UsageLimit(kind: .weekly, percent: 61, resetsAt: minutes(60 * 24 * 2 + 40)),
+    ], fetchedAt: minutes(-2), checkedAt: minutes(-2)),
+    AccountUsage(account: secours, status: .expired, limits: [
+        UsageLimit(kind: .weekly, percent: 9, resetsAt: minutes(60 * 24 * 4)),
+    ], fetchedAt: minutes(-180), checkedAt: minutes(-2)),
+]
+
+/// The settings of the images of the colors: Claude, ChatGPT and Gemini on, the four accounts named.
+var colorsSettings: BrimlineSettings {
+    var s = BrimlineSettings()
+    s.providerHintDismissed = true
+    s.enabledProviders = [Provider.claude, .chatgpt, .gemini].map(\.rawValue)
+    s.labels = [principal.id: "Main", asso.id: "Asso", agence.id: "Agency", secours.id: "Backup"]
+    return s
+}
+
+/// The same, in French, with the names the board of lot D uses.
+var colorsSettingsFR: BrimlineSettings {
+    var s = colorsSettings
+    s.labels = [principal.id: "Principal", asso.id: "Asso", agence.id: "Agence", secours.id: "Secours"]
+    return s
+}
+
+/// With the two warnings: Asso's free violet is close to Principal's, Secours' free grey is too pale for light mode.
+func withWarnings(_ settings: BrimlineSettings) -> BrimlineSettings {
+    var s = settings
+    s.accountColors = [asso.id: .custom("9870E6"), secours.id: .custom("D9DEE3")]
+    return s
+}
+
 /// A panel with the accounts of the providers in `enabled` only, for the sheets of states.
 @MainActor
 func statePanel(_ usages: [AccountUsage], enabled: [Provider], language: Language, hint: Bool = false,
@@ -343,6 +391,22 @@ func run() throws {
                           statePanel(named: "sentence-gemini", language: .fr, expand: true),
                           statePanel([providerAccounts[0]], enabled: [.claude], language: .fr, hint: true)]),
                    size: nil, dark: dark, name: "qa-panel-provider-states-fr-\(suffix)")
+
+        // The dots of the accounts in the panel and the color line in the settings (QUOTA-72), in both languages.
+        for language in [Language.en, .fr] {
+            let fr = language == .fr ? "-fr" : ""
+            let base = language == .fr ? colorsSettingsFR : colorsSettings
+            let usages = fourClaude + [providerAccounts[2], geminiWithoutAntigravity]
+            try render(PanelFrame(content: PanelView(model: model(usages, language: language, settings: base),
+                                                     opaqueBackground: true, maxCardsHeight: 4000)),
+                       size: nil, dark: dark, name: "panel-accounts\(fr)-\(suffix)")
+            let m = model(fourClaude, language: language, settings: withWarnings(base))
+            m.settingsTab = .accounts
+            let height: CGFloat = 1280
+            try render(WindowFrame(title: m.strings.settingsTitle, content: SettingsView(model: m, height: height)),
+                       size: CGSize(width: SettingsView.size.width + 24, height: height + 31 + 24),
+                       dark: dark, name: "settings-colors\(fr)-\(suffix)")
+        }
 
         for tab in SettingsTab.allCases {
             let m = model(accountsTabUsages + [stateAccounts[2]], language: .en, settings: accountsTabSettings)
