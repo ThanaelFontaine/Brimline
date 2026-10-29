@@ -180,6 +180,11 @@ public struct PanelView: View {
             if model.menuBarIconsHidden && model.menuBarHidingPartial {
                 MenuBarNote(text: s.menuBarHidingPartial, symbol: "info.circle")
             }
+            if model.menuBarHidingWithoutAccessibility {
+                MenuBarNote(text: s.menuBarHidingWithoutAccessibility, symbol: "exclamationmark.triangle")
+                Button(s.menuBarHidingOpenAccessibility) { model.openAccessibilitySettings() }
+                    .foregroundStyle(SGTheme.accent)
+            }
         }
         .buttonStyle(.borderless)
         .font(.system(size: 12))

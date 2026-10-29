@@ -54,6 +54,11 @@ public enum MenuBarTidy {
     /// address; the settings extension it names exists on macOS 26 and 27 (Cursor opens the same one).
     public static let systemSettingsURL = URL(string: "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")!
 
+    /// The page of System Settings that lists the apps with the Accessibility permission (on macOS 27 in English,
+    /// "Device Control and Data Access"). Apple does not document this address; it opens that page on macOS 27.0.1.
+    public static let accessibilitySettingsURL =
+        URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+
     /// The System Settings app itself, for when the address above is not taken.
     public static let systemSettingsBundleIdentifier = "com.apple.systempreferences"
 

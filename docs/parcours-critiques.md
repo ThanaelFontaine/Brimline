@@ -43,9 +43,9 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 
 ### J5: the app bundle builds
 
-- Proves: `Brimline.app` is assembled (release build of the app and of the command, Info.plist, icon, helper, ad hoc signature) without being installed anywhere.
+- Proves: `Brimline.app` is assembled (release build of the app and of the command, Info.plist, icon, helper, ad hoc signature, or Brimline's own certificate when it is there) without being installed anywhere.
 - How: `scripts/build_app.sh`
-- Expected: ends with "Built .../build/Brimline.app (version 0.1.0, ad hoc signature)", exit code 0; then `codesign --verify --deep --strict build/Brimline.app` passes.
+- Expected: ends with "Built .../build/Brimline.app (version 0.1.0, Apple silicon and Intel, ad hoc signature)" ("signed by Brimline Code Signing" on the maintainer's Mac), exit code 0; then `codesign --verify --deep --strict build/Brimline.app` passes.
 - Automated: CI (step "App bundle").
 - Result on 2026-10-28: green. Exit code 0, release build 24.7 s (warm cache), `codesign --verify --deep --strict` passes, `plutil` lint passes, version 0.1.0, `LSUIElement` true (no Dock icon), bundle identifier `eu.thanaelfontaine.brimline`, `Contents/MacOS/Brimline` is an arm64 Mach-O, `Contents/Helpers/brimline --version` prints `0.1.0`. The bundle stays in `build/` (ignored by git): not installed, not opened.
 

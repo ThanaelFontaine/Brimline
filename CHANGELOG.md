@@ -6,6 +6,14 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+### Changed
+
+- **Brimline is signed with its own certificate, so the Accessibility permission can outlive an update.** The release (and `scripts/build_app.sh` on the maintainer's Mac) signs Brimline with "Brimline Code Signing", a self-signed certificate valid until 24 October 2046, instead of ad hoc. The designated requirement of every build then names the identifier `eu.thanaelfontaine.brimline` and that certificate, not the hash of one build: checked on 29 October 2026, a second build satisfies the requirement of the first (`codesign -v -R`). Whether macOS keeps the permission from one signed build to the next is checked on a real Mac before this version is released. It is still not an Apple Developer identity and not notarized: Gatekeeper behaves as before. Without the certificate (a fork, a build from the source), the build stays ad hoc, and `build_app.sh` refuses any other certificate. The release workflow takes the certificate from two secrets and refuses to build without them.
+
+### Fixed
+
+- **Brimline says when it hides without the Accessibility permission.** Before, after an update took the permission away, a click on the bar hid the icons from the remembered list with no word: an icon moved right of the bar since then stayed hidden, one moved left of it stayed shown (seen on 29 October 2026 with Claude, moved right of the bar, never hidden). Now the Brimline window and Settings, Menu Bar, say that the permission is missing, what it changes and how to give it back, with an "Open the Accessibility list" button; the first click on the bar of a launch in that state opens Settings on Menu Bar.
+
 ## [0.3.0] - 2026-10-29
 
 Brimline 0.3.0 hides the icons of the other apps with macOS's own allow-list of the menu bar on macOS 27 and later: they go one app after the other toward Brimline's bar, which becomes an arrow «, and a click on the arrow brings them back. A click on the bar now hides them too. On macOS 27 this needs the Accessibility permission, only to read where the icons are, and Brimline in `/Applications`; on macOS 26 and before, the bar still grows long to push them out of sight. The menu bar window also keeps the height of its content. With this version, the repository and the site are public. The full notes are in [docs/releases/v0.3.0.md](docs/releases/v0.3.0.md).
