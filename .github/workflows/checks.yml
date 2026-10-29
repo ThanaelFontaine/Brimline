@@ -38,7 +38,12 @@ jobs:
         run: python3 -m unittest discover -s tests -v
 
       - name: Swift version
-        run: swift --version
+        run: |
+          swift --version
+          xcode-select -p
+          ls /Applications | grep -i xcode
+          DEVELOPER_DIR=/Library/Developer/CommandLineTools swift --version || true
+          pkgutil --pkg-info=com.apple.pkg.CLTools_Executables || true
 
       - name: Build
         run: swift build
