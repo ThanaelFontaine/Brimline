@@ -4,9 +4,16 @@
 # (scripts/build_dmg.sh, which also needs Python 3.10 or later on the runner). The release workflow
 # starts only after a green run of this one on main.
 #
-# Runner: the maintainer's Mac (self-hosted) while the repository is private. Before it becomes
-# public, switch to GitHub's runners (macos-latest): a self-hosted runner must not serve a public
-# repository, since anyone can open a pull request.
+# Runner: the maintainer's Mac (self-hosted, under the maintainer's macOS account), kept when the
+# repository is public. Anyone can then open a pull request, and its code would run on that Mac.
+# The barrier is the repository setting Settings, Actions, General, "Approval for running fork pull
+# request workflows from contributors", on "Require approval for all external contributors" from
+# the day the repository is public: a run from a fork waits for a maintainer, who approves it only
+# after reading the code of the pull request. The `if` of the job below, which skips pull requests
+# from forks, is defence in depth, not a protection: a fork can change this file in its pull request.
+# With it, a pull request from a fork gets no run here, and GitHub counts a job skipped by `if` as
+# passed, even for a required check: its code must be checked from a branch of this repository
+# before merging.
 
 name: Checks
 
@@ -24,6 +31,9 @@ concurrency:
 
 jobs:
   checks:
+    # Defence in depth: skips pull requests from forks. A fork can edit this line, so the barrier is
+    # the approval setting described at the top of this file.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, macOS]
     timeout-minutes: 30
     steps:
