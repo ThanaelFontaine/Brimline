@@ -1,19 +1,14 @@
 # Checks on every push and pull request: text rules (no em or en dash, no personal data), the
 # tests of the repository scripts, then the Swift package (build, tests) and the app bundle
 # (scripts/build_app.sh, universal, with the Command Line Tools only) and its disk image
-# (scripts/build_dmg.sh, which also needs Python 3.10 or later on the runner). The release workflow
+# (scripts/build_dmg.sh, which also needs Python 3.10 or later, set up below). The release workflow
 # starts only after a green run of this one on main.
 #
-# Runner: the maintainer's Mac (self-hosted, under the maintainer's macOS account), kept when the
-# repository is public. Anyone can then open a pull request, and its code would run on that Mac.
-# The barrier is the repository setting Settings, Actions, General, "Approval for running fork pull
-# request workflows from contributors", on "Require approval for all external contributors" from
-# the day the repository is public: a run from a fork waits for a maintainer, who approves it only
-# after reading the code of the pull request. The `if` of the job below, which skips pull requests
-# from forks, is defence in depth, not a protection: a fork can change this file in its pull request.
-# With it, a pull request from a fork gets no run here, and GitHub counts a job skipped by `if` as
-# passed, even for a required check: its code must be checked from a branch of this repository
-# before merging.
+# Runner: the runners hosted by GitHub (macos-latest), never a machine of the maintainer. The
+# repository is public and anyone can open a pull request, whose code runs in this workflow: it
+# must run in a throwaway virtual machine with no personal data. The "Text rules" step below fails
+# when a file of .github/workflows selects a runner hosted by the maintainer. Pull requests from forks run here
+# like the others, with a read-only token and no secret (permissions: contents: read).
 
 name: Checks
 
@@ -31,10 +26,7 @@ concurrency:
 
 jobs:
   checks:
-    # Defence in depth: skips pull requests from forks. A fork can edit this line, so the barrier is
-    # the approval setting described at the top of this file.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, macOS]
+    runs-on: macos-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7

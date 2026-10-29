@@ -102,6 +102,31 @@ class CheckTextTest(unittest.TestCase):
         self.assertNotIn("CHANGELOG.md", out.stdout)
         self.assertIn("2 problem(s)", out.stdout)
 
+    def test_self_hosted_runner_is_refused_in_the_workflows_only(self):
+        text = "jobs:\n  a:\n    runs-on: [Self-Hosted, macOS]\n"
+        self.assertEqual(check_text.find_self_hosted(".github/workflows/checks.yml", text), [3])
+        self.assertEqual(check_text.find_self_hosted(".github/workflows/checks.yml", "runs-on: macos-latest\n"), [])
+        self.assertEqual(check_text.find_self_hosted("docs/ci.md", text), [])
+
+    def test_a_workflow_with_a_self_hosted_runner_fails_the_check(self):
+        out = run_in_repo({
+            ".github/workflows/checks.yml": "jobs:\n  a:\n    runs-on: [self-hosted, macOS]\n",
+            ".github/workflows/release.yml": "jobs:\n  a:\n    runs-on: macos-latest\n",
+        })
+        self.assertEqual(out.returncode, 1)
+        self.assertIn(".github/workflows/checks.yml: line 3: self-hosted runner", out.stdout)
+        self.assertNotIn("release.yml", out.stdout)
+        self.assertIn("1 problem(s)", out.stdout)
+
+    def test_the_workflows_of_this_repository_run_on_github_runners(self):
+        folder = Path(check_text.__file__).resolve().parent.parent / ".github" / "workflows"
+        files = sorted(folder.glob("*.yml"))
+        self.assertTrue(files)
+        for file in files:
+            text = file.read_text(encoding="utf-8")
+            self.assertEqual(check_text.find_self_hosted(f".github/workflows/{file.name}", text), [], file.name)
+            self.assertIn("runs-on: macos-latest", text, file.name)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,6 +15,8 @@
 #    An existing release that lacks a file gets both again (--clobber). A draft left by a run that
 #    stopped between creating and publishing (it has no tag yet) is completed from the checked
 #    commit, then published.
+# Runner: the runners hosted by GitHub (macos-latest), like the Checks workflow: no machine of the
+# maintainer runs this code.
 # Re-running is safe. The file names carry no version; the version is in the app's Info.plist.
 #
 # Events created with GITHUB_TOKEN (the tag, the release) do not start other workflows: the whole
@@ -38,7 +40,7 @@ concurrency:
 jobs:
   release:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
-    runs-on: [self-hosted, macOS]
+    runs-on: macos-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
