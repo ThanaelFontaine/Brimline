@@ -7,8 +7,8 @@
 # Runner: the runners hosted by GitHub (macos-latest), never a machine of the maintainer. The
 # repository is public and anyone can open a pull request, whose code runs in this workflow: it
 # must run in a throwaway virtual machine with no personal data. The "Text rules" step below fails
-# when a file of .github/workflows names a runner that GitHub does not host. Pull requests from
-# forks run here like the others, with a read-only token and no secret (permissions: contents: read).
+# on the label that marks a runner as one's own (scripts/check_text.py). Pull requests from forks
+# run here like the others, with a read-only token and no secret (permissions: contents: read).
 
 name: Checks
 
