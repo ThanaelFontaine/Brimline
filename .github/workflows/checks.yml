@@ -28,6 +28,11 @@ jobs:
   checks:
     runs-on: macos-latest
     timeout-minutes: 30
+    env:
+      # The Command Line Tools of the image, as on a developer's Mac without Xcode: the app is built
+      # with them alone (scripts/build_app.sh). With the Xcode of the image selected, swift test
+      # loads the Swift Testing macros of these tools and fails (the two Swift versions differ).
+      DEVELOPER_DIR: /Library/Developer/CommandLineTools
     steps:
       - uses: actions/checkout@v7
 
@@ -38,12 +43,7 @@ jobs:
         run: python3 -m unittest discover -s tests -v
 
       - name: Swift version
-        run: |
-          swift --version
-          xcode-select -p
-          ls /Applications | grep -i xcode
-          DEVELOPER_DIR=/Library/Developer/CommandLineTools swift --version || true
-          pkgutil --pkg-info=com.apple.pkg.CLTools_Executables || true
+        run: swift --version
 
       - name: Build
         run: swift build
