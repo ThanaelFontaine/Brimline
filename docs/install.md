@@ -21,7 +21,7 @@ The script ([readable here](https://brimline.thanaelfontaine.eu/install.sh)):
 5. links the command at `~/.local/bin/brimline` (never over a file that is not a link);
 6. opens the app.
 
-It asks for no administrator password. Options: `BRIMLINE_VERSION=0.3.0` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`; on macOS 27, Brimline then refuses to hide icons until it is in `/Applications`).
+It asks for no administrator password. Options: `BRIMLINE_VERSION=0.3.1` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`; on macOS 27, Brimline then refuses to hide icons until it is in `/Applications`).
 
 ## 2. The disk image
 
@@ -59,7 +59,7 @@ Then link your accounts: [accounts.md](accounts.md).
 ## What macOS shows
 
 - **No Dock icon.** Brimline lives in the menu bar only: look for the gauge at the top right of the screen (the upright glyph while no account has a number yet). Opening the app again (from Finder or Spotlight) while it runs opens its settings.
-- **Gatekeeper.** The app is signed ad hoc (from the next version, with Brimline's own self-signed certificate), not with an Apple Developer identity, and it is not notarized. macOS checks apps that carry the quarantine flag, which browsers set on what they download: so the disk image downloaded in a browser needs **Open Anyway** once (above). In our tests (macOS 27), the app installed by the one-line script, or built from the source, did not carry that flag (checked with `xattr`).
+- **Gatekeeper.** The release is signed with Brimline's own self-signed certificate (0.3.0 and before: ad hoc), not with an Apple Developer identity, and it is not notarized. macOS checks apps that carry the quarantine flag, which browsers set on what they download: so the disk image downloaded in a browser needs **Open Anyway** once (above). In our tests (macOS 27), the app installed by the one-line script, or built from the source, did not carry that flag (checked with `xattr`).
 - **Keychain.** Brimline reads each Claude Code sign-in with the `/usr/bin/security` tool. In our tests no prompt appeared; if macOS asks, read the prompt before allowing. See [accounts.md](accounts.md) and [SECURITY.md](../SECURITY.md).
 - **Open at login.** When you turn it on (Settings, General), Brimline writes `~/Library/LaunchAgents/eu.thanaelfontaine.brimline.plist`; macOS may then notify you that a background item was added. Turning the option off removes the file.
 - **Tried on:** Apple silicon, macOS 27. Intel Macs get the same universal app, not tried on one yet; macOS 14 is the minimum it builds for, not yet tried on a real Sonoma Mac.
@@ -69,7 +69,7 @@ Then link your accounts: [accounts.md](accounts.md).
 - Installed with the one-line script: run the same line again.
 - Installed from the disk image: download the new one and drag Brimline onto Applications again (replace it), after quitting Brimline.
 - Built from the source: `git pull`, then `scripts/build_app.sh` and `scripts/install.sh` (it stops the running copy before replacing it).
-- On macOS 27, with "Hide without removing" on: up to 0.3.0, Brimline is signed ad hoc, so the Accessibility permission covers one build. After an update, the bar hides with the remembered list (all the other apps at once, no wave) and Brimline says that the permission is missing, until it covers the new build (remove Brimline from the Accessibility list and add it again, as the maintainer did on 29 October 2026, after which macOS listed Brimline as allowed); from the first version signed with Brimline's own certificate, the permission is kept from one build to the next (checked on 29 October 2026 with two signed builds in a row, macOS asking for nothing); see [menu bar](menu-bar.md#2-hide-icons-without-removing-them).
+- On macOS 27, with "Hide without removing" on: up to 0.3.0, Brimline is signed ad hoc, so the Accessibility permission covers one build. After an update, the bar hides with the remembered list (all the other apps at once, no wave) and Brimline says that the permission is missing, until it covers the new build (remove Brimline from the Accessibility list and add it again, as the maintainer did on 29 October 2026, after which macOS listed Brimline as allowed); from 0.3.1, which is signed with Brimline's own certificate, the permission is kept from one build to the next (checked on 29 October 2026 with two signed builds in a row, macOS asking for nothing); see [menu bar](menu-bar.md#2-hide-icons-without-removing-them).
 
 ## Formerly Sightglass
 
