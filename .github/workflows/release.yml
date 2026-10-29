@@ -42,6 +42,9 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: macos-latest
     timeout-minutes: 30
+    env:
+      # The Command Line Tools of the image, as in the Checks workflow.
+      DEVELOPER_DIR: /Library/Developer/CommandLineTools
     steps:
       - uses: actions/checkout@v7
         with:
