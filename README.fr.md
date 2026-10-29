@@ -2,7 +2,7 @@
 
 [![Licence : PolyForm Shield 1.0.0](https://img.shields.io/badge/licence-PolyForm%20Shield%201.0.0-blue.svg)](LICENSE)
 [![Plateforme : macOS 14+](https://img.shields.io/badge/plateforme-macOS%2014%2B-lightgrey.svg)](#installer)
-[![État : en développement](https://img.shields.io/badge/%C3%A9tat-en%20d%C3%A9veloppement-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/github/v/release/ThanaelFontaine/Brimline?label=version)](https://github.com/ThanaelFontaine/Brimline/releases/latest)
 
 *[English version](README.md)*
 
@@ -29,7 +29,7 @@ Les mêmes chiffres sont lisibles par tes agents (une commande à sortie JSON et
   <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="Une vraie barre des menus sous macOS 27 : un clic sur le petit trait de Brimline cache les icônes l'une après l'autre vers lui, le trait devient une flèche «, puis un clic sur la flèche les fait revenir">
 </p>
 
-> **État :** privé, rien n'est annoncé : le dépôt et le site ne sont pas encore publics, donc la ligne d'installation et les liens de téléchargement ci-dessus et ci-dessous ne marchent qu'une fois publics. La version actuelle est la 0.2.2. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
+> **État :** le dépôt et le site sont publics. La version actuelle est la 0.3.0. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
 
 Le *brim* est le bord jusqu'où monte une cuve, et la *line* la limite tracée au-dessus : Brimline montre d'un coup d'œil à quelle distance du bord tu en es.
 
