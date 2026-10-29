@@ -512,6 +512,13 @@ public struct MenuBarHidingSection: View {
                 if model.menuBarIconsHidden && model.menuBarHidingPartial {
                     MenuBarNote(text: s.menuBarHidingPartial, symbol: "info.circle")
                 }
+                if model.menuBarHidingWithoutAccessibility {
+                    MenuBarNote(text: s.menuBarHidingWithoutAccessibility, symbol: "exclamationmark.triangle")
+                    HStack {
+                        Button(s.menuBarHidingOpenAccessibility) { model.openAccessibilitySettings() }
+                        Spacer()
+                    }
+                }
             }
             VStack(alignment: .leading, spacing: SGTheme.Space.xs) {
                 MenuBarNote(text: model.menuBarHidingUsesAllowList ? s.menuBarHidingNoteAllowList : s.menuBarHidingNote,

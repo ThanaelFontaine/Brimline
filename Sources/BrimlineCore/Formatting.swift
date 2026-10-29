@@ -580,6 +580,14 @@ public struct Strings: Sendable {
               "macOS a refusé de cacher les icônes. Elles restent visibles.")
         }
     }
+    /// macOS 27: the icons were hidden without the Accessibility permission, from the place read the last time.
+    public var menuBarHidingWithoutAccessibility: String {
+        t("Brimline no longer has the Accessibility permission (macOS may take it back at an update of Brimline), so it hid the icons from where they were the last time it could look: an icon moved since then is not seen. To give it back: open the list below, remove Brimline with “−”, then add it again with “+” from the Applications folder.",
+          "Brimline n'a plus l'autorisation Accessibilité (macOS peut la retirer à une mise à jour de Brimline) : il a caché les icônes d'après leur place la dernière fois qu'il a pu la lire, et une icône déplacée depuis n'est pas vue. Pour la redonner : ouvrez la liste ci-dessous, retirez Brimline avec « − », puis ajoutez-le à nouveau avec « + » depuis le dossier Applications.")
+    }
+    public var menuBarHidingOpenAccessibility: String {
+        t("Open the Accessibility list", "Ouvrir la liste Accessibilité")
+    }
     /// After a hiding that may leave the icons nearest the bar shown.
     public var menuBarHidingPartial: String {
         t("The icons closest to the bar may stay visible: macOS lets the bar push them by about half the screen only. Keep only the icons to hide left of the bar (hold Command and drag the others to its right): the bar then sits further left and pushes them all out.",

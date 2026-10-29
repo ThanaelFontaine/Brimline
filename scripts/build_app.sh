@@ -7,8 +7,20 @@
 #    the `brimline` command);
 # 2. assembles the bundle: Info.plist (version read from VERSION, menu bar app without Dock icon),
 #    icon, and the command in Contents/Helpers/;
-# 3. signs it ad hoc (codesign -s -): no Apple Developer identity, so macOS treats it as an app
-#    built on this Mac. See docs/install.md.
+# 3. signs it with Brimline's own identity when it is there, ad hoc (codesign -s -) otherwise: no
+#    Apple Developer identity in either case, so macOS treats it as an app built on this Mac. See
+#    docs/install.md.
+#
+# Brimline's identity, "Brimline Code Signing", is a self-signed certificate. Signed with it, every
+# build has the same designated requirement (its identifier and that certificate), so the
+# Accessibility permission given to one version still covers the next one. An ad hoc build is known
+# by its hash only: the permission covers that build alone. The identity is found in:
+#   BRIMLINE_SIGNING_IDENTITY and BRIMLINE_SIGNING_KEYCHAIN (the SHA-1 of the certificate and its
+#   keychain), set by the release workflow from its secrets;
+#   or, on the maintainer's Mac, ~/Library/Keychains/brimline-signing.keychain-db, unlocked with the
+#   password kept in the login keychain under the service brimline-signing-keychain.
+# Without either (a fork, a contributor), the build is ad hoc. A certificate other than the one
+# below is refused: it would take the permission away from every user at the next update.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -64,12 +76,46 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 plutil -lint "$APP/Contents/Info.plist" >/dev/null
 
-# Ad hoc signature: the helper first, then the bundle (which seals the helper).
-codesign --force -s - "$APP/Contents/Helpers/brimline"
-codesign --force --deep -s - "$APP"
+# The SHA-1 of Brimline's certificate (valid until 24 October 2046).
+BRIMLINE_CERT_SHA1="28E5BDC0D2C3E5EEFD43C9C42FEAE493167F47B4"
+IDENTITY="${BRIMLINE_SIGNING_IDENTITY:-}"
+KEYCHAIN="${BRIMLINE_SIGNING_KEYCHAIN:-}"
+LOCAL_KEYCHAIN="$HOME/Library/Keychains/brimline-signing.keychain-db"
+if [ -z "$IDENTITY" ] && [ -f "$LOCAL_KEYCHAIN" ] \
+   && KEYCHAIN_PASSWORD="$(security find-generic-password -s brimline-signing-keychain -w 2>/dev/null)"; then
+  security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$LOCAL_KEYCHAIN"
+  unset KEYCHAIN_PASSWORD
+  KEYCHAIN="$LOCAL_KEYCHAIN"
+  IDENTITY="$(security find-identity -p codesigning "$LOCAL_KEYCHAIN" | awk '/"Brimline Code Signing"/ { print $2; exit }')"
+fi
+SIGN=(-s -)
+KIND="ad hoc signature"
+if [ -n "$IDENTITY" ]; then
+  if [ "$IDENTITY" != "$BRIMLINE_CERT_SHA1" ]; then
+    echo "build_app: the signing identity $IDENTITY is not Brimline's certificate ($BRIMLINE_CERT_SHA1)" >&2
+    exit 1
+  fi
+  SIGN=(-s "$IDENTITY")
+  [ -n "$KEYCHAIN" ] && SIGN+=(--keychain "$KEYCHAIN")
+  KIND="signed by Brimline Code Signing"
+fi
+
+# The helper first, then the bundle (which seals the helper).
+codesign --force "${SIGN[@]}" "$APP/Contents/Helpers/brimline"
+codesign --force --deep "${SIGN[@]}" "$APP"
 codesign --verify --deep --strict "$APP"
+if [ -n "$IDENTITY" ]; then
+  LEAF="$(printf '%s' "$BRIMLINE_CERT_SHA1" | tr 'A-F' 'a-f')"
+  REQUIREMENT="$(codesign -d -r- "$APP" 2>/dev/null)"
+  case "$REQUIREMENT" in
+    # A self-signed certificate is its own root: macOS writes "root" or "leaf", the same certificate.
+    *'identifier "eu.thanaelfontaine.brimline" and certificate root = H"'"$LEAF"'"'* \
+    | *'identifier "eu.thanaelfontaine.brimline" and certificate leaf = H"'"$LEAF"'"'*) ;;
+    *) echo "build_app: unexpected designated requirement: $REQUIREMENT" >&2; exit 1 ;;
+  esac
+fi
 for exe in "$APP/Contents/MacOS/Brimline" "$APP/Contents/Helpers/brimline"; do
   [ "$(lipo -archs "$exe")" = "x86_64 arm64" ] || { echo "build_app: $exe is not universal ($(lipo -archs "$exe"))" >&2; exit 1; }
 done
 
-echo "Built $APP (version $VERSION, Apple silicon and Intel, ad hoc signature)"
+echo "Built $APP (version $VERSION, Apple silicon and Intel, $KIND)"

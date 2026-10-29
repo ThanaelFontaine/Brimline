@@ -22,6 +22,9 @@ public protocol MenuBarSeparating: AnyObject {
     /// permission is missing, and the place to tell a new list.
     var knownShownApps: [String] { get set }
     var onShownApps: (([String]) -> Void)? { get set }
+    /// macOS 27: the last hide went on without the Accessibility permission, with the apps found the last time: an
+    /// icon moved since then is not seen.
+    var hidesWithoutAccessibility: Bool { get }
 }
 
 /// Brimline's bar: one more `NSStatusItem` of Brimline's own, a thin vertical bar, that hides the icons placed left
@@ -56,6 +59,7 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
     public var usesAllowList: Bool { native }
     public var knownShownApps: [String] = []
     public var onShownApps: (([String]) -> Void)?
+    public private(set) var hidesWithoutAccessibility = false
     /// The allow-list in force, the plan it follows, and how many apps of the plan it hides.
     private var assertion: NSObject?
     private var plan: MenuBarHiding.NativePlan?
@@ -161,6 +165,7 @@ public final class MenuBarHider: NSObject, MenuBarSeparating {
                                                      knowsShownApps: !knownShownApps.isEmpty) {
             return .refuse(refusal)
         }
+        hidesWithoutAccessibility = !trusted
         guard let window = item.button?.window, let screen = window.screen ?? NSScreen.main, window.frame.width > 0 else {
             return .refuse(.placeUnknown)
         }

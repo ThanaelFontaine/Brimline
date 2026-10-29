@@ -7,7 +7,11 @@
 #    nothing to do (a push that keeps the same VERSION builds nothing).
 # 3. Otherwise it builds the app and its disk image (scripts/build_app.sh, scripts/build_dmg.sh)
 #    from the commit of the tag: the checked commit for a new version, the tagged one when the
-#    release already exists.
+#    release already exists. The app is signed with Brimline's own identity, read from the secrets
+#    BRIMLINE_SIGNING_P12 (the certificate and its key, base64) and BRIMLINE_SIGNING_P12_PASSWORD,
+#    in a keychain of this run that is deleted at the end: so the Accessibility permission given
+#    to one version stays for the next (see scripts/build_app.sh). Without them, nothing is
+#    released: an ad hoc build would take the permission away from every user.
 # 4. A new version: the release is created as a draft, the two files are attached, then it is
 #    published, which creates the tag on the checked commit (or uses a tag that already points
 #    there). So a release is never "latest" without its disk image: the site and the one-line
@@ -97,6 +101,33 @@ jobs:
           TAG: ${{ steps.plan.outputs.tag }}
         run: git checkout --detach "$TAG"
 
+      - name: Brimline's signing identity
+        if: ${{ steps.plan.outputs.action != 'none' }}
+        env:
+          P12: ${{ secrets.BRIMLINE_SIGNING_P12 }}
+          P12_PASSWORD: ${{ secrets.BRIMLINE_SIGNING_P12_PASSWORD }}
+        run: |
+          if [ -z "$P12" ] || [ -z "$P12_PASSWORD" ]; then
+            echo "::error::The secrets BRIMLINE_SIGNING_P12 and BRIMLINE_SIGNING_P12_PASSWORD are missing: no release without Brimline's signature."
+            exit 1
+          fi
+          KEYCHAIN="$RUNNER_TEMP/brimline-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          printf '%s' "$P12" | base64 -D > "$RUNNER_TEMP/brimline-signing.p12"
+          security import "$RUNNER_TEMP/brimline-signing.p12" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign >/dev/null
+          rm -f "$RUNNER_TEMP/brimline-signing.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          IDENTITY="$(security find-identity -p codesigning "$KEYCHAIN" | awk '/"Brimline Code Signing"/ { print $2; exit }')"
+          if [ -z "$IDENTITY" ]; then
+            echo "::error::No \"Brimline Code Signing\" identity in BRIMLINE_SIGNING_P12."
+            exit 1
+          fi
+          echo "BRIMLINE_SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "BRIMLINE_SIGNING_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+
       - name: App and disk image
         if: ${{ steps.plan.outputs.action != 'none' }}
         run: |
@@ -135,3 +166,7 @@ jobs:
         run: |
           gh release upload "$TAG" build/Brimline.dmg build/Brimline.dmg.sha256 --clobber
           echo "Brimline.dmg and its SHA-256 attached to $TAG."
+
+      - name: Delete the keychain of this run
+        if: ${{ always() }}
+        run: security delete-keychain "$RUNNER_TEMP/brimline-signing.keychain-db" 2>/dev/null || true

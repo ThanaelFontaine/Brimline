@@ -21,6 +21,7 @@ struct MenuBarHidingModelTests {
         var usesAllowList = false
         var knownShownApps: [String] = []
         var onShownApps: (([String]) -> Void)?
+        var hidesWithoutAccessibility = false
 
         func setPresent(_ present: Bool) {
             self.present.append(present)
@@ -134,6 +135,59 @@ struct MenuBarHidingModelTests {
         bar.onClick?()
         #expect(!m.menuBarIconsHidden && m.menuBarHidingRefusal == .brimlineLeftOfBar)
         #expect(opened == 1 && m.settingsTab == .menuBar)
+    }
+
+    @Test("a hide without the Accessibility permission is said, and showing the icons clears it")
+    func withoutAccessibility() {
+        let m = model(enabled: true)
+        let bar = FakeBar()
+        bar.hidesWithoutAccessibility = true
+        m.attachSeparator(bar)
+        m.hideMenuBarIcons()
+        #expect(m.menuBarIconsHidden && m.menuBarHidingWithoutAccessibility)
+        m.showMenuBarIcons()
+        #expect(!m.menuBarHidingWithoutAccessibility)
+        // With the permission back, nothing is said.
+        bar.hidesWithoutAccessibility = false
+        m.hideMenuBarIcons()
+        #expect(m.menuBarIconsHidden && !m.menuBarHidingWithoutAccessibility)
+        // A refusal is not a hide: nothing about the permission either.
+        m.showMenuBarIcons()
+        bar.hidesWithoutAccessibility = true
+        bar.answer = .refuse(.refusedByMacOS)
+        m.hideMenuBarIcons()
+        #expect(!m.menuBarHidingWithoutAccessibility)
+    }
+
+    @Test("a click that hides without the permission opens Settings on Menu Bar once per launch")
+    func clickWithoutAccessibilityOpensSettingsOnce() {
+        let m = model(enabled: true)
+        let bar = FakeBar()
+        bar.hidesWithoutAccessibility = true
+        var opened = 0
+        m.openSettingsAction = { opened += 1 }
+        m.attachSeparator(bar)
+        bar.onClick?()
+        #expect(m.menuBarIconsHidden && opened == 1 && m.settingsTab == .menuBar)
+        bar.onClick?()
+        bar.onClick?()
+        #expect(m.menuBarIconsHidden && opened == 1)
+    }
+
+    @Test("the button opens the Accessibility list of System Settings, or System Settings when macOS refuses it")
+    func openAccessibilityList() {
+        let m = model(enabled: true)
+        var urls: [URL] = []
+        var bundles: [String] = []
+        var accept = true
+        m.menuBar = MenuBarEnvironment(locate: { _ in nil }, icon: { _ in nil }, openApp: { _ in false },
+                                       openURL: { urls.append($0); return accept },
+                                       openBundle: { bundles.append($0); return true })
+        m.openAccessibilitySettings()
+        #expect(urls == [MenuBarTidy.accessibilitySettingsURL] && bundles.isEmpty)
+        accept = false
+        m.openAccessibilitySettings()
+        #expect(bundles == [MenuBarTidy.systemSettingsBundleIdentifier])
     }
 
     @Test("showing the icons (quit, reopening the app) always gives the bar its normal length")

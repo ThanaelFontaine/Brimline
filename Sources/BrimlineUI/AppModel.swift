@@ -32,6 +32,11 @@ public final class AppModel {
     public private(set) var menuBarHidingRefusal: MenuBarHiding.Refusal?
     /// The icons are hidden, but the bar is so far right that the ones nearest it may stay shown.
     public private(set) var menuBarHidingPartial = false
+    /// The icons are hidden without the Accessibility permission (lost at an update), with the apps found right of
+    /// the bar the last time: an icon moved since then is not seen. The window and the Menu Bar tab say so.
+    public private(set) var menuBarHidingWithoutAccessibility = false
+    /// Settings were opened once at a click on the bar to say it: not again until Brimline is opened again.
+    @ObservationIgnored private var toldWithoutAccessibility = false
     /// Whether Brimline's bar hides with macOS 27's allow-list: the texts of Settings follow.
     public private(set) var menuBarHidingUsesAllowList = false
 
@@ -412,6 +417,7 @@ public final class AppModel {
             menuBarIconsHidden = false
             menuBarHidingRefusal = nil
             menuBarHidingPartial = false
+            menuBarHidingWithoutAccessibility = false
         }
         if !on { separator?.show() }
         separator?.setPresent(on)
@@ -422,6 +428,7 @@ public final class AppModel {
         guard settings.menuBarHiding.enabled else { return }
         guard let separator else { return applyHiding(.refuse(.placeUnknown)) }
         applyHiding(separator.hide())
+        menuBarHidingWithoutAccessibility = menuBarIconsHidden && separator.hidesWithoutAccessibility
     }
 
     /// Shows every icon again.
@@ -430,6 +437,7 @@ public final class AppModel {
         menuBarIconsHidden = false
         menuBarHidingRefusal = nil
         menuBarHidingPartial = false
+        menuBarHidingWithoutAccessibility = false
     }
 
     public func toggleMenuBarIcons() {
@@ -437,12 +445,22 @@ public final class AppModel {
     }
 
     /// A click on the bar hides or shows the icons. A refusal opens Settings on Menu Bar, where it is written: with
-    /// the Brimline window closed, nothing else would show it.
+    /// the Brimline window closed, nothing else would show it. So does a hide without the Accessibility permission,
+    /// once per launch.
     public func clickMenuBarSeparator() {
         toggleMenuBarIcons()
-        if menuBarHidingRefusal != nil {
+        let tellPermission = menuBarHidingWithoutAccessibility && !toldWithoutAccessibility
+        if menuBarHidingRefusal != nil || tellPermission {
+            if tellPermission { toldWithoutAccessibility = true }
             settingsTab = .menuBar
             openSettings()
+        }
+    }
+
+    /// Opens System Settings on the apps with the Accessibility permission, or on its home page.
+    public func openAccessibilitySettings() {
+        if !menuBar.openURL(MenuBarTidy.accessibilitySettingsURL) {
+            _ = menuBar.openBundle(MenuBarTidy.systemSettingsBundleIdentifier)
         }
     }
 
@@ -456,6 +474,7 @@ public final class AppModel {
             menuBarIconsHidden = false
             menuBarHidingRefusal = refusal
             menuBarHidingPartial = false
+            menuBarHidingWithoutAccessibility = false
         }
     }
 
