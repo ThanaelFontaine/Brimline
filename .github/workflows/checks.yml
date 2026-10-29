@@ -1,14 +1,14 @@
 # Checks on every push and pull request: text rules (no em or en dash, no personal data), the
 # tests of the repository scripts, then the Swift package (build, tests) and the app bundle
 # (scripts/build_app.sh, universal, with the Command Line Tools only) and its disk image
-# (scripts/build_dmg.sh, which also needs Python 3.10 or later, which the runner image has). The release workflow
-# starts only after a green run of this one on main.
+# (scripts/build_dmg.sh, which also needs Python 3.10 or later, already on the runner image). The
+# release workflow starts only after a green run of this one on main.
 #
 # Runner: the runners hosted by GitHub (macos-latest), never a machine of the maintainer. The
 # repository is public and anyone can open a pull request, whose code runs in this workflow: it
 # must run in a throwaway virtual machine with no personal data. The "Text rules" step below fails
-# when a file of .github/workflows selects a runner hosted by the maintainer. Pull requests from forks run here
-# like the others, with a read-only token and no secret (permissions: contents: read).
+# when a file of .github/workflows names a runner that GitHub does not host. Pull requests from
+# forks run here like the others, with a read-only token and no secret (permissions: contents: read).
 
 name: Checks
 
