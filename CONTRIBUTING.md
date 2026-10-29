@@ -14,5 +14,6 @@ Brimline is released under the [PolyForm Shield 1.0.0](LICENSE) license. By cont
 
 - One pull request per change, with what it does and how it was tested.
 - `python3 scripts/check_text.py` must pass: no em or en dash, no personal data (home paths, personal email addresses) in tracked files.
+- The CI runs on the runners hosted by GitHub (`macos-latest`), pull requests from forks included; a workflow may not use a self-hosted runner (`check_text.py` fails on it).
 - A provider plugin only **reads** the credentials its tool already stores: it never refreshes, rewrites or moves them, and never writes a token to a log or a file.
 - Every user-visible change gets a line in the `[Unreleased]` section of [CHANGELOG.md](CHANGELOG.md).
