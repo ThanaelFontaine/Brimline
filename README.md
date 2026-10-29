@@ -10,12 +10,6 @@
 
 If you use several Claude accounts (or Claude and ChatGPT, Gemini, Grok, Cursor), the built-in indicators show one account at a time, without telling you which one. Brimline puts them side by side: the five hour session, the week, the week per model, and when each one resets.
 
-**It also tidies the menu bar:** it can hide the icons of Claude, ChatGPT, Cursor and your other apps behind a thin bar of its own. A click on the bar and they slide toward it, a click on the arrow « and they come back ([how](#use)).
-
-<p align="center">
-  <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="A real menu bar on macOS 27: a click on Brimline's thin bar hides the icons one after the other toward it, the bar becomes an arrow «, then a click on the arrow brings them back">
-</p>
-
 ```bash
 curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
 ```
@@ -28,6 +22,12 @@ curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
 </p>
 
 The same numbers are readable by your agents (a command with JSON output and a local MCP server), so an agent can pick the account that still has room.
+
+**Many AI apps, many icons?** Claude, ChatGPT, Cursor and the others each put an icon in the menu bar. Brimline also declutters it: it can hide those icons behind a thin bar of its own, and a click on the arrow « brings them back ([how](#use)).
+
+<p align="center">
+  <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="A real menu bar on macOS 27: a click on Brimline's thin bar hides the icons one after the other toward it, the bar becomes an arrow «, then a click on the arrow brings them back">
+</p>
 
 > **Status:** private, not announced: the repository and the site are not public yet, so the install line and the download links above and below only work once they are. The current version is 0.2.2. It works with Claude (through Claude Code, with several accounts) and adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
 

@@ -10,12 +10,6 @@
 
 Avec plusieurs comptes Claude (ou Claude et ChatGPT, Gemini, Grok, Cursor), les indicateurs intégrés montrent un compte à la fois, sans dire lequel. Brimline les met côte à côte : limite de session de 5 heures, limite de la semaine, limite de la semaine par modèle, et l'heure où chacune repart.
 
-**Il dégage aussi la barre des menus :** il peut cacher les icônes de Claude, ChatGPT, Cursor et de tes autres apps derrière un petit trait à lui. Un clic sur le trait et elles glissent vers lui, un clic sur la flèche « et elles reviennent ([comment](#utiliser)).
-
-<p align="center">
-  <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="Une vraie barre des menus sous macOS 27 : un clic sur le petit trait de Brimline cache les icônes l'une après l'autre vers lui, le trait devient une flèche «, puis un clic sur la flèche les fait revenir">
-</p>
-
 ```bash
 curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
 ```
@@ -28,6 +22,12 @@ curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
 </p>
 
 Les mêmes chiffres sont lisibles par tes agents (une commande à sortie JSON et un serveur MCP local) : un agent peut choisir le compte qui a encore de la marge.
+
+**Beaucoup d'apps d'IA, beaucoup d'icônes ?** Claude, ChatGPT, Cursor et les autres mettent chacun une icône dans la barre des menus. Brimline la dégage aussi : il peut cacher ces icônes derrière un petit trait à lui, et un clic sur la flèche « les fait revenir ([comment](#utiliser)).
+
+<p align="center">
+  <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="Une vraie barre des menus sous macOS 27 : un clic sur le petit trait de Brimline cache les icônes l'une après l'autre vers lui, le trait devient une flèche «, puis un clic sur la flèche les fait revenir">
+</p>
 
 > **État :** privé, rien n'est annoncé : le dépôt et le site ne sont pas encore publics, donc la ligne d'installation et les liens de téléchargement ci-dessus et ci-dessous ne marchent qu'une fois publics. La version actuelle est la 0.2.2. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
 
