@@ -12,6 +12,7 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ### Fixed
 
+- **Gemini is read again after Antigravity updated itself to 1.4.10.** Since 29 October 2026 the Gemini card said "Antigravity was updated: update Brimline." Nothing had changed in the text of `agy --print /usage` (checked the same day: the same five lines, in the same form as 1.4.8 and 1.4.9, observed on 29/10/2026 on Antigravity CLI 1.4.10): the build was only not on Brimline's list of verified builds (SHA-256 and `--version`), so Brimline launched nothing, as designed. 1.4.10 is now on the list; the reader and the strict reading are unchanged, and a text of an unknown form is still `format_changed`.
 - **Brimline says when it hides without the Accessibility permission.** Before, after an update took the permission away, a click on the bar hid the icons from the remembered list with no word: an icon moved right of the bar since then stayed hidden, one moved left of it stayed shown (seen on 29 October 2026 with Claude, moved right of the bar, never hidden). Now the Brimline window and Settings, Menu Bar, say that the permission is missing, what it changes and how to give it back, with an "Open the Accessibility list" button; the first click on the bar of a launch in that state opens Settings on Menu Bar.
 
 ## [0.3.0] - 2026-10-29
