@@ -13,7 +13,8 @@
 #
 # Brimline's identity, "Brimline Code Signing", is a self-signed certificate. Signed with it, every
 # build has the same designated requirement (its identifier and that certificate), so the
-# Accessibility permission given to one version still covers the next one. An ad hoc build is known
+# Accessibility permission given to one version should still cover the next one (to be checked on a
+# real Mac before the release). An ad hoc build is known
 # by its hash only: the permission covers that build alone. The identity is found in:
 #   BRIMLINE_SIGNING_IDENTITY and BRIMLINE_SIGNING_KEYCHAIN (the SHA-1 of the certificate and its
 #   keychain), set by the release workflow from its secrets;

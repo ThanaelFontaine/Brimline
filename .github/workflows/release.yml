@@ -10,7 +10,8 @@
 #    release already exists. The app is signed with Brimline's own identity, read from the secrets
 #    BRIMLINE_SIGNING_P12 (the certificate and its key, base64) and BRIMLINE_SIGNING_P12_PASSWORD,
 #    in a keychain of this run that is deleted at the end: so the Accessibility permission given
-#    to one version stays for the next (see scripts/build_app.sh). Without them, nothing is
+#    to one version should stay for the next (to be checked on a real Mac before the release; see
+#    scripts/build_app.sh). Without them, nothing is
 #    released: an ad hoc build would take the permission away from every user.
 # 4. A new version: the release is created as a draft, the two files are attached, then it is
 #    published, which creates the tag on the checked commit (or uses a tag that already points
