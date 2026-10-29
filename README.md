@@ -94,11 +94,11 @@ What exactly is read, where the source comes from and what each try showed: [doc
 
 - **Link your accounts.** One Claude Code folder per Claude account, chosen with `CLAUDE_CONFIG_DIR` and signed in once with `/login`; Brimline finds them by itself. Other providers: switch them on in Settings, Accounts. Step by step: [docs/accounts.md](docs/accounts.md).
 - **Read the menu bar.** The glyph lies down and becomes a gauge: one colored part per account (its tightest limit), so the whole gauge is their average. As soon as one account reaches 90 %, the limit line turns into a red "!" (a shape, not only a color). The tooltip and VoiceOver say it in words.
-
-  ![The menu bar element on a light bar: 1, 3 and 10 accounts, an alert, a last known value and no account, at 2x and 1x](docs/images/menubar-gauge-light.png)
 - **Open the window.** Cards grouped by provider, one gauge per limit with its percentage and its reset time ("resets in 2 h 10 (14:30)"). A provider that gives no readable limit says so in one sentence, never with a made-up number.
 - **Settings** (from the window, or by opening the app again): hide an account or give it a label, choose its color, switch each provider on or off, mark an account "Don't read this account", change the refresh interval (2 to 15 minutes), show the percentage next to the gauge, open at login.
-- **Tidy the menu bar** (Settings, Menu Bar): where to turn off the icons of Claude, ChatGPT and Cursor, and an optional "Hide without removing" (on macOS 27 and later it uses a private API of macOS and asks for the Accessibility permission, only to read where the icons are): [docs/menu-bar.md](docs/menu-bar.md).
+- **Hide the icons of other apps** (off by default, Settings, Menu Bar, "Hide without removing"). Brimline adds a thin bar of its own to the menu bar. Once, hold Command and drag the icons to hide (Claude, ChatGPT, Cursor...) to the left of it. Then a click on the bar, or "Hide the icons" in the window, hides them: on macOS 27, they go one after the other toward the bar, which becomes an arrow «; a click on the arrow brings them back. Quitting Brimline or turning the setting off shows every icon again. On macOS 27 it uses a private API of macOS and the Accessibility permission, only to read where the icons are, and Brimline must be in `/Applications`; on macOS 26 and before, its bar grows long to push the icons out of sight. The same tab also says where to turn off each app's own icon. Detail and limits: [docs/menu-bar.md](docs/menu-bar.md).
+
+  <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="A real menu bar on macOS 27: a click on Brimline's thin bar hides the icons one after the other toward it, the bar becomes an arrow «, then a click on the arrow brings them back">
 
 Every state is said in words, never by color alone:
 
