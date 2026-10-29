@@ -21,8 +21,9 @@
 #    stopped between creating and publishing (it has no tag yet) is completed from the checked
 #    commit, then published.
 #
-# The signing secrets live in the GitHub environment "release", which only the branch main may use
-# (the job names it with `environment: release`). Both jobs below read them, so both name it.
+# The two jobs below read the signing secrets and both name the GitHub environment "release"
+# (`environment: release`). The secrets are still repository secrets for now: moving them into that
+# environment, and restricting it to the branch main, is a setting of the repository, not of this file.
 #
 # Dry run of the signing (the job "signing-trial"): run by hand from the Actions tab (workflow_dispatch)
 # on main, it imports the same certificate, builds the signed app and checks the signature
