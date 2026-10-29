@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-29
+
+Brimline 0.3.1 signs Brimline with its own certificate, so that the Accessibility permission, which hiding the icons needs on macOS 27, can outlive an update instead of being lost at each one; it says so when the permission is missing, and Gemini is read again after Antigravity's update to 1.4.10. Going from 0.3.0 (signed ad hoc) to this version still takes the permission away once, since the two are not signed by the same identity; after that, an update keeps it (checked on 29 October 2026 with two builds signed by the certificate). The full notes are in [docs/releases/v0.3.1.md](docs/releases/v0.3.1.md).
+
 ### Changed
 
 - **Brimline is signed with its own certificate, so the Accessibility permission can outlive an update.** The release (and `scripts/build_app.sh` on the maintainer's Mac) signs Brimline with "Brimline Code Signing", a self-signed certificate valid until 24 October 2046, instead of ad hoc. The designated requirement of every build then names the identifier `eu.thanaelfontaine.brimline` and that certificate, not the hash of one build: checked on 29 October 2026, a second build satisfies the requirement of the first (`codesign -v -R`). Checked the same day on a real Mac (the maintainer's): the Accessibility permission was given once to a build signed with that certificate, a second signed build was installed over it, and the permission still covered it, with no request from macOS. It is still not an Apple Developer identity and not notarized: Gatekeeper behaves as before. Without the certificate (a fork, a build from the source), the build stays ad hoc, and `build_app.sh` refuses any other certificate. The release workflow takes the certificate from two secrets and refuses to build without them.

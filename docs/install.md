@@ -21,7 +21,7 @@ The script ([readable here](https://brimline.thanaelfontaine.eu/install.sh)):
 5. links the command at `~/.local/bin/brimline` (never over a file that is not a link);
 6. opens the app.
 
-It asks for no administrator password. Options: `BRIMLINE_VERSION=0.3.0` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`; on macOS 27, Brimline then refuses to hide icons until it is in `/Applications`).
+It asks for no administrator password. Options: `BRIMLINE_VERSION=0.3.1` installs that version, `BRIMLINE_INSTALL_DIR=/path` installs the app somewhere else (for example `curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | BRIMLINE_INSTALL_DIR=~/Applications sh`; on macOS 27, Brimline then refuses to hide icons until it is in `/Applications`).
 
 ## 2. The disk image
 
