@@ -1,4 +1,5 @@
-"""Repository text checks: no em or en dash, no personal data, no old product name in tracked text files.
+"""Repository text checks: no em or en dash, no personal data, no old product name in tracked text files,
+and no self-hosted runner in the workflows.
 
 The old name of the app (see OLD_NAME) may only appear where it is history or migration: the
 files of OLD_NAME_FILES, and the lines that say "Formerly <old name>" (or the French
@@ -6,8 +7,12 @@ files of OLD_NAME_FILES, and the lines that say "Formerly <old name>" (or the Fr
 
 The maintainer's own patterns (one regex per line, "#" comments) live outside the tracked
 files: in .check-text.local at the repository root, and in ~/.config/check-text/patterns for
-every repository of the machine (a self-hosted runner reads it too). Without them only the
-generic patterns run.
+every repository of the machine. Without them (on the runners of GitHub, for one) only the generic
+patterns run.
+
+The repository is public: its workflows run on the runners hosted by GitHub, never on a machine of
+the maintainer, whose code a pull request could run. So the word "self-hosted" may not appear in a
+file of .github/workflows (WORKFLOW_DIR).
 Usage: python3 scripts/check_text.py   (exit code 1 when something is found)
 """
 import re
@@ -47,6 +52,10 @@ OLD_NAME_FILES = {
     "tests/test_check_text.py",
 }
 
+# The workflows must run on the runners hosted by GitHub (see the top of this file).
+WORKFLOW_DIR = ".github/workflows/"
+SELF_HOSTED = re.compile("self-hosted", re.IGNORECASE)
+
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".icns", ".heic",
     ".woff", ".woff2", ".ttf", ".otf", ".eot", ".pdf", ".zip", ".dmg",
@@ -76,6 +85,13 @@ def find_old_name(path, text):
         return []
     return [i + 1 for i, line in enumerate(text.split("\n"))
             if OLD_NAME.search(line) and not OLD_NAME_LINE.search(line)]
+
+
+def find_self_hosted(path, text):
+    """Line numbers (1 based) naming a self-hosted runner, in a file of the workflows folder."""
+    if not path.startswith(WORKFLOW_DIR):
+        return []
+    return [i + 1 for i, line in enumerate(text.split("\n")) if SELF_HOSTED.search(line)]
 
 
 def local_patterns(paths):
@@ -108,6 +124,7 @@ def main():
             continue
         problems += [f"{name}: line {n}: em or en dash" for n in find_dashes(text)]
         problems += [f"{name}: line {n}: old product name" for n in find_old_name(name, text)]
+        problems += [f"{name}: line {n}: self-hosted runner" for n in find_self_hosted(name, text)]
         problems += [f"{name}: {hit}" for hit in find_personal_data(name, text, patterns)]
     for p in problems:
         print(p)
