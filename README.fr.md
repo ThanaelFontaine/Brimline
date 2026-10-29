@@ -2,7 +2,7 @@
 
 [![Licence : PolyForm Shield 1.0.0](https://img.shields.io/badge/licence-PolyForm%20Shield%201.0.0-blue.svg)](LICENSE)
 [![Plateforme : macOS 14+](https://img.shields.io/badge/plateforme-macOS%2014%2B-lightgrey.svg)](#installer)
-[![État : en développement](https://img.shields.io/badge/%C3%A9tat-en%20d%C3%A9veloppement-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/github/v/release/ThanaelFontaine/Brimline?label=version)](https://github.com/ThanaelFontaine/Brimline/releases/latest)
 
 *[English version](README.md)*
 
@@ -23,7 +23,13 @@ curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
 
 Les mêmes chiffres sont lisibles par tes agents (une commande à sortie JSON et un serveur MCP local) : un agent peut choisir le compte qui a encore de la marge.
 
-> **État :** privé, rien n'est annoncé : le dépôt et le site ne sont pas encore publics, donc la ligne d'installation et les liens de téléchargement ci-dessus et ci-dessous ne marchent qu'une fois publics. La version actuelle est la 0.2.2. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
+**Beaucoup d'apps d'IA, beaucoup d'icônes ?** Claude, ChatGPT, Cursor et les autres mettent chacun une icône dans la barre des menus. Brimline la dégage aussi : il peut cacher ces icônes derrière un petit trait à lui, et un clic sur la flèche « les fait revenir ([comment](#utiliser)).
+
+<p align="center">
+  <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="Une vraie barre des menus sous macOS 27 : un clic sur le petit trait de Brimline cache les icônes l'une après l'autre vers lui, le trait devient une flèche «, puis un clic sur la flèche les fait revenir">
+</p>
+
+> **État :** le dépôt et le site sont publics. La version actuelle est la 0.3.0. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
 
 Le *brim* est le bord jusqu'où monte une cuve, et la *line* la limite tracée au-dessus : Brimline montre d'un coup d'œil à quelle distance du bord tu en es.
 
@@ -35,6 +41,7 @@ Le *brim* est le bord jusqu'où monte une cuve, et la *line* la limite tracée a
 2. **Il lit, n'écrit jamais.** Brimline se sert de la connexion que ces outils gardent déjà et demande à chaque fournisseur ta consommation, la même requête que l'outil officiel. Il ne te connecte jamais, ne renouvelle ni ne copie aucun jeton, et n'envoie rien ailleurs.
 3. **Il résume tout dans la barre des menus.** Une jauge, une part colorée par compte, et un « ! » rouge dès qu'un compte atteint 90 %. Clique dessus pour la fenêtre : une carte par compte, une barre par limite, et l'heure où elle repart.
 4. **Tes agents peuvent demander aussi.** `brimline status --json` et un serveur MCP local (`best_account`) permettent à un agent de choisir le compte qui a encore de la marge.
+5. **Il peut cacher les icônes des autres apps.** Allume « Cacher sans retirer » (Réglages, Barre des menus, coupé par défaut) : les icônes placées à gauche du trait de Brimline se cachent et reviennent d'un clic.
 
 ## Installer
 

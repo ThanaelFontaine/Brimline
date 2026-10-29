@@ -2,7 +2,7 @@
 
 [![License: PolyForm Shield 1.0.0](https://img.shields.io/badge/license-PolyForm%20Shield%201.0.0-blue.svg)](LICENSE)
 [![Platform: macOS 14+](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey.svg)](#install)
-[![Status: in development](https://img.shields.io/badge/status-in%20development-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/github/v/release/ThanaelFontaine/Brimline?label=version)](https://github.com/ThanaelFontaine/Brimline/releases/latest)
 
 *[Version française](README.fr.md)*
 
@@ -23,7 +23,13 @@ curl -fsSL https://brimline.thanaelfontaine.eu/install.sh | sh
 
 The same numbers are readable by your agents (a command with JSON output and a local MCP server), so an agent can pick the account that still has room.
 
-> **Status:** private, not announced: the repository and the site are not public yet, so the install line and the download links above and below only work once they are. The current version is 0.2.2. It works with Claude (through Claude Code, with several accounts) and adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
+**Many AI apps, many icons?** Claude, ChatGPT, Cursor and the others each put an icon in the menu bar. Brimline also declutters it: it can hide those icons behind a thin bar of its own, and a click on the arrow « brings them back ([how](#use)).
+
+<p align="center">
+  <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="A real menu bar on macOS 27: a click on Brimline's thin bar hides the icons one after the other toward it, the bar becomes an arrow «, then a click on the arrow brings them back">
+</p>
+
+> **Status:** the repository and the site are public. The current version is 0.3.0. It works with Claude (through Claude Code, with several accounts) and adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
 
 The *brim* is the edge a tank fills up to, and the *line* is the limit drawn above it: Brimline shows how close you are to the edge, at a glance.
 
@@ -35,6 +41,7 @@ The *brim* is the edge a tank fills up to, and the *line* is the limit drawn abo
 2. **It reads, never writes.** Brimline uses the sign-in those tools already keep and asks each provider for your usage, the same request the official tool makes. It never signs you in, never renews or copies a token, and sends nothing anywhere else.
 3. **It sums it up in the menu bar.** One gauge, one colored part per account, and a red "!" as soon as one account reaches 90 %. Click it for the window: one card per account, one bar per limit, and when it resets.
 4. **Your agents can ask too.** `brimline status --json` and a local MCP server (`best_account`) let an agent pick the account that still has room.
+5. **It can hide the icons of other apps.** Turn on "Hide without removing" (Settings, Menu Bar, off by default): the icons you put left of Brimline's bar hide and come back with a click.
 
 ## Install
 
