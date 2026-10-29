@@ -9,10 +9,10 @@
 #    from the commit of the tag: the checked commit for a new version, the tagged one when the
 #    release already exists. The app is signed with Brimline's own identity, read from the secrets
 #    BRIMLINE_SIGNING_P12 (the certificate and its key, base64) and BRIMLINE_SIGNING_P12_PASSWORD,
-#    in a keychain of this run that is deleted at the end: so the Accessibility permission given
-#    to one version should stay for the next (to be checked on a real Mac before the release; see
-#    scripts/build_app.sh). Without them, nothing is
-#    released: an ad hoc build would take the permission away from every user.
+#    in a keychain of this run that is deleted at the end (scripts/import_signing_identity.sh): so
+#    the Accessibility permission given to one version stays for the next (checked on 29 October
+#    2026 on a real Mac with two signed builds in a row; see scripts/build_app.sh). Without them,
+#    nothing is released: an ad hoc build would take the permission away from every user.
 # 4. A new version: the release is created as a draft, the two files are attached, then it is
 #    published, which creates the tag on the checked commit (or uses a tag that already points
 #    there). So a release is never "latest" without its disk image: the site and the one-line
@@ -20,6 +20,16 @@
 #    An existing release that lacks a file gets both again (--clobber). A draft left by a run that
 #    stopped between creating and publishing (it has no tag yet) is completed from the checked
 #    commit, then published.
+#
+# The signing secrets live in the GitHub environment "release", which only the branch main may use
+# (the job names it with `environment: release`). Both jobs below read them, so both name it.
+#
+# Dry run of the signing (the job "signing-trial"): run by hand from the Actions tab (workflow_dispatch)
+# on main, it imports the same certificate, builds the signed app and checks the signature
+# (scripts/check_signature.sh), and creates no tag, no draft and no release. Do it before the
+# version whose release has never been signed here, and again after any change to the signing. A
+# workflow started by hand only runs once its file is on the default branch.
+#
 # Runner: the runners hosted by GitHub (macos-latest), like the Checks workflow: no machine of the
 # maintainer runs this code.
 # Re-running is safe. The file names carry no version; the version is in the app's Info.plist.
@@ -34,19 +44,22 @@ on:
     workflows: ["Checks"]
     types: [completed]
     branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: release
-  cancel-in-progress: false
+  contents: read
 
 jobs:
   release:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: macos-latest
     timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
     env:
       # The Command Line Tools of the image, as in the Checks workflow.
       DEVELOPER_DIR: /Library/Developer/CommandLineTools
@@ -96,38 +109,19 @@ jobs:
           python3 scripts/release_notes.py notes "$VERSION" > "$RUNNER_TEMP/notes.md"
           echo "action=create" >> "$GITHUB_OUTPUT"
 
-      - name: Use the tagged commit
-        if: ${{ steps.plan.outputs.action == 'attach' }}
-        env:
-          TAG: ${{ steps.plan.outputs.tag }}
-        run: git checkout --detach "$TAG"
-
+      # Before the checkout of an older tag: the script that imports the identity is the one of the checked commit.
       - name: Brimline's signing identity
         if: ${{ steps.plan.outputs.action != 'none' }}
         env:
           P12: ${{ secrets.BRIMLINE_SIGNING_P12 }}
           P12_PASSWORD: ${{ secrets.BRIMLINE_SIGNING_P12_PASSWORD }}
-        run: |
-          if [ -z "$P12" ] || [ -z "$P12_PASSWORD" ]; then
-            echo "::error::The secrets BRIMLINE_SIGNING_P12 and BRIMLINE_SIGNING_P12_PASSWORD are missing: no release without Brimline's signature."
-            exit 1
-          fi
-          KEYCHAIN="$RUNNER_TEMP/brimline-signing.keychain-db"
-          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          security set-keychain-settings "$KEYCHAIN"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          printf '%s' "$P12" | base64 -D > "$RUNNER_TEMP/brimline-signing.p12"
-          security import "$RUNNER_TEMP/brimline-signing.p12" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign >/dev/null
-          rm -f "$RUNNER_TEMP/brimline-signing.p12"
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
-          IDENTITY="$(security find-identity -p codesigning "$KEYCHAIN" | awk '/"Brimline Code Signing"/ { print $2; exit }')"
-          if [ -z "$IDENTITY" ]; then
-            echo "::error::No \"Brimline Code Signing\" identity in BRIMLINE_SIGNING_P12."
-            exit 1
-          fi
-          echo "BRIMLINE_SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
-          echo "BRIMLINE_SIGNING_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+        run: scripts/import_signing_identity.sh
+
+      - name: Use the tagged commit
+        if: ${{ steps.plan.outputs.action == 'attach' }}
+        env:
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: git checkout --detach "$TAG"
 
       - name: App and disk image
         if: ${{ steps.plan.outputs.action != 'none' }}
@@ -167,6 +161,38 @@ jobs:
         run: |
           gh release upload "$TAG" build/Brimline.dmg build/Brimline.dmg.sha256 --clobber
           echo "Brimline.dmg and its SHA-256 attached to $TAG."
+
+      - name: Delete the keychain of this run
+        if: ${{ always() }}
+        run: security delete-keychain "$RUNNER_TEMP/brimline-signing.keychain-db" 2>/dev/null || true
+
+  # The dry run of the signing: no tag, no draft, no release (contents: read, no gh command).
+  signing-trial:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: macos-latest
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: read
+    concurrency:
+      group: release-signing-trial
+      cancel-in-progress: false
+    env:
+      DEVELOPER_DIR: /Library/Developer/CommandLineTools
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Brimline's signing identity
+        env:
+          P12: ${{ secrets.BRIMLINE_SIGNING_P12 }}
+          P12_PASSWORD: ${{ secrets.BRIMLINE_SIGNING_P12_PASSWORD }}
+        run: scripts/import_signing_identity.sh
+
+      - name: Signed app
+        run: scripts/build_app.sh
+
+      - name: Check the signature
+        run: scripts/check_signature.sh build/Brimline.app
 
       - name: Delete the keychain of this run
         if: ${{ always() }}
