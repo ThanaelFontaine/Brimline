@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-30
+
+Brimline 0.3.2 changes nothing in what the app does: each release published by the CI is now announced in the maintainer's Discord channel, with the version, the commits since the previous release and the links of the release and of its disk image. The full notes are in [docs/releases/v0.3.2.md](docs/releases/v0.3.2.md).
+
 ### Added
 
 - **Each release is announced on Discord.** After the release workflow publishes a release, it posts the version, the commits since the previous release and the links of the release and of its disk image in the maintainer's Discord channel (`scripts/announce_release.py`, secret `DISCORD_RELEASES_WEBHOOK_URL`). Without the secret the step is skipped with a warning, and a failed announcement never fails the release.
