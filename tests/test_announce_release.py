@@ -3,6 +3,8 @@ import json
 import subprocess
 import sys
 import unittest
+import urllib.error
+from unittest import mock
 from contextlib import redirect_stdout
 from pathlib import Path
 
@@ -191,6 +193,40 @@ class PostTests(unittest.TestCase):
         message = announce_release.post({}, "https://example.com/hook?token=abc")
         self.assertIn("not a Discord webhook", message)
         self.assertNotIn("abc", message)
+
+    ADDRESS = "https://discord.com/api/webhooks/123/SECRETTOKEN"
+
+    def test_a_network_error_is_reported_by_its_type_and_never_holds_the_address(self):
+        error = urllib.error.URLError(f"cannot reach {self.ADDRESS}")
+        with mock.patch("urllib.request.urlopen", side_effect=error):
+            message = announce_release.post({}, self.ADDRESS)
+        self.assertIn("could not be reached", message)
+        self.assertNotIn("SECRETTOKEN", message)
+
+    def test_an_http_refusal_is_reported_by_its_code_and_never_holds_the_address(self):
+        error = urllib.error.HTTPError(self.ADDRESS, 429, "Too Many Requests", {}, None)
+        with mock.patch("urllib.request.urlopen", side_effect=error):
+            message = announce_release.post({}, self.ADDRESS)
+        self.assertIn("429", message)
+        self.assertNotIn("SECRETTOKEN", message)
+
+    def test_the_request_is_a_json_post_with_wait_and_no_name_or_avatar(self):
+        seen = {}
+
+        def fake(request, timeout):
+            seen["request"], seen["timeout"] = request, timeout
+            return mock.MagicMock()
+
+        with mock.patch("urllib.request.urlopen", side_effect=fake):
+            self.assertIsNone(announce_release.post({"embeds": []}, self.ADDRESS))
+        request = seen["request"]
+        self.assertEqual(request.get_method(), "POST")
+        self.assertTrue(request.full_url.endswith("/SECRETTOKEN?wait=true"))
+        self.assertEqual(request.get_header("Content-type"), "application/json")
+        self.assertIsNotNone(seen["timeout"])
+        sent = json.loads(request.data)
+        self.assertNotIn("username", sent)
+        self.assertNotIn("avatar_url", sent)
 
 
 if __name__ == "__main__":
