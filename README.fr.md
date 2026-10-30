@@ -29,7 +29,7 @@ Les mêmes chiffres sont lisibles par tes agents (une commande à sortie JSON et
   <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="Une vraie barre des menus sous macOS 27 : un clic sur le petit trait de Brimline cache les icônes l'une après l'autre vers lui, le trait devient une flèche «, puis un clic sur la flèche les fait revenir">
 </p>
 
-> **État :** le dépôt et le site sont publics. La version actuelle est la 0.3.1. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
+> **État :** le dépôt et le site sont publics. La version actuelle est la 0.3.2. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
 
 Le *brim* est le bord jusqu'où monte une cuve, et la *line* la limite tracée au-dessus : Brimline montre d'un coup d'œil à quelle distance du bord tu en es.
 

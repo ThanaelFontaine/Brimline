@@ -29,7 +29,7 @@ The same numbers are readable by your agents (a command with JSON output and a l
   <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="A real menu bar on macOS 27: a click on Brimline's thin bar hides the icons one after the other toward it, the bar becomes an arrow «, then a click on the arrow brings them back">
 </p>
 
-> **Status:** the repository and the site are public. The current version is 0.3.1. It works with Claude (through Claude Code, with several accounts) and adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
+> **Status:** the repository and the site are public. The current version is 0.3.2. It works with Claude (through Claude Code, with several accounts) and adds ChatGPT (through Codex), Gemini (through Antigravity), Grok and Cursor, each tried on a real account on 27 October 2026: the table [below](#providers) says on which plan and with what result. [CHANGELOG.md](CHANGELOG.md) says what exists.
 
 The *brim* is the edge a tank fills up to, and the *line* is the limit drawn above it: Brimline shows how close you are to the edge, at a glance.
 
