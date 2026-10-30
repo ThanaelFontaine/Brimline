@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+### Added
+
+- **Each release is announced on Discord.** After the release workflow publishes a release, it posts the version, the commits since the previous release and the links of the release and of its disk image in the maintainer's Discord channel (`scripts/announce_release.py`, secret `DISCORD_RELEASES_WEBHOOK_URL`). Without the secret the step is skipped with a warning, and a failed announcement never fails the release.
+
 ## [0.3.1] - 2026-10-29
 
 Brimline 0.3.1 signs Brimline with its own certificate, so that the Accessibility permission, which hiding the icons needs on macOS 27, can outlive an update instead of being lost at each one; it says so when the permission is missing, and Gemini is read again after Antigravity's update to 1.4.10. Going from 0.3.0 (signed ad hoc) to this version still takes the permission away once, since the two are not signed by the same identity; after that, an update keeps it (checked on 29 October 2026 with two builds signed by the certificate). The full notes are in [docs/releases/v0.3.1.md](docs/releases/v0.3.1.md).

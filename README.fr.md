@@ -136,6 +136,10 @@ Brimline est un projet indépendant : ni fait, ni approuvé, ni soutenu par Anth
 
 Ce que fait Brimline, pour que tu juges toi-même : il tourne sur ton propre Mac et lit la connexion que Claude Code y a déjà rangée, en lecture seule. Il ne te connecte jamais, n'écrit, ne renouvelle ni ne copie le jeton, et ne l'envoie qu'à Anthropic, pour demander tes propres chiffres d'usage, sous son propre nom (`User-Agent: Brimline/<version>`). Il n'envoie aucune requête à un modèle. Nous ne prétendons pas qu'Anthropic autorise cet usage : lis les conditions de ton abonnement et décide. La même page dit qu'Anthropic peut faire respecter ces restrictions sans préavis : le risque éventuel porte sur le compte que Brimline lit.
 
+## Versions
+
+Chaque version a sa [release GitHub](https://github.com/ThanaelFontaine/Brimline/releases), créée par la CI avec les notes de sa section du [changelog](CHANGELOG.md) et l'image disque (voir [Installer](#installer)). Une fois la release publiée, le même workflow l'annonce dans le salon Discord du mainteneur (`scripts/announce_release.py`) : la version, les commits depuis la release précédente, et les liens de la release et de `Brimline.dmg`. Il lit l'adresse du webhook Discord dans le secret de dépôt `DISCORD_RELEASES_WEBHOOK_URL`. Sans ce secret (dans un fork, par exemple) l'étape est sautée avec un avertissement, et une annonce ratée ne fait jamais échouer la release. Rien n'est annoncé pour `0.0.0` ni pour une release qui existe déjà. `python3 scripts/announce_release.py vX.Y.Z --dry-run` affiche le message sans rien envoyer.
+
 ## Documentation
 
 - [Associer vos comptes](docs/accounts.fr.md) ([in English](docs/accounts.md))

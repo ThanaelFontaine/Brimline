@@ -136,6 +136,10 @@ Brimline is an independent project: it is not made, endorsed or supported by Ant
 
 What Brimline does, so you can judge for yourself: it runs on your own Mac and reads the sign-in Claude Code already stored there, read only. It never signs you in, never writes, renews or copies the token, and sends it only to Anthropic, to ask for your own usage numbers, under its own name (`User-Agent: Brimline/<version>`). It sends no prompts and uses no model. We do not claim Anthropic allows this use: read the terms that apply to your plan and decide. The same page says Anthropic may enforce these restrictions without prior notice: the risk, if any, is on the account Brimline reads.
 
+## Releases
+
+Every version has its [GitHub release](https://github.com/ThanaelFontaine/Brimline/releases), created by the CI with the notes of its section of the [changelog](CHANGELOG.md) and the disk image (see [Install](#install)). Once a release is published, the same workflow announces it in the maintainer's Discord channel (`scripts/announce_release.py`): the version, the commits since the previous release, and the links of the release and of `Brimline.dmg`. It reads the address of the Discord webhook from the repository secret `DISCORD_RELEASES_WEBHOOK_URL`. Without that secret (in a fork, for one) the step is skipped with a warning, and a failed announcement never fails the release. Nothing is announced for `0.0.0` or for a release that already exists. `python3 scripts/announce_release.py vX.Y.Z --dry-run` prints the message without sending anything.
+
 ## Documentation
 
 - [Linking your accounts](docs/accounts.md) ([en français](docs/accounts.fr.md))

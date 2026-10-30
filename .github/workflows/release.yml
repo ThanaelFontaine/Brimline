@@ -21,6 +21,14 @@
 #    stopped between creating and publishing (it has no tag yet) is completed from the checked
 #    commit, then published.
 #
+# 5. A release this run just published (a new version, or a draft completed) is announced in the
+#    Discord channel #prod-brimline by scripts/announce_release.py: the version, the commits since the
+#    previous release, the link of the release and of the disk image. The address of the webhook is the
+#    secret DISCORD_RELEASES_WEBHOOK_URL, read by that step only. Without it the step says so with a
+#    warning and goes on; a failed announcement never fails the release (continue-on-error, and the
+#    script itself exits 0). Nothing is announced for 0.0.0, for a release that already existed, or
+#    when only a missing disk image is attached.
+#
 # The two jobs below read the signing secrets and both name the GitHub environment "release"
 # (`environment: release`). The secrets are still repository secrets for now: moving them into that
 # environment, and restricting it to the branch main, is a setting of the repository, not of this file.
@@ -162,6 +170,17 @@ jobs:
         run: |
           gh release upload "$TAG" build/Brimline.dmg build/Brimline.dmg.sha256 --clobber
           echo "Brimline.dmg and its SHA-256 attached to $TAG."
+
+      # After the release is published, never before: a draft is not announced. The tag is not moved
+      # by this step, and the script is the one of the checked commit (action create or publish).
+      - name: Announce the release on Discord
+        if: ${{ steps.plan.outputs.action == 'create' || steps.plan.outputs.action == 'publish' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+          DISCORD_RELEASES_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASES_WEBHOOK_URL }}
+        run: python3 scripts/announce_release.py "$TAG"
 
       - name: Delete the keychain of this run
         if: ${{ always() }}
