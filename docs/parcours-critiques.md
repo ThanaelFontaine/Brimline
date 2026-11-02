@@ -2,10 +2,10 @@
 
 The journeys to replay before each release to prove that Brimline (the macOS menu bar app, its `brimline` command and its MCP server) still builds, reads usage from every provider and shows it, without leaking a secret. Everything runs locally, on test doubles and invented data: never on real accounts, never in production.
 
-- Verified on: 2026-10-28
-- origin/main commit verified: `0eb12654d1fc81d178d4cc22cfadd383a6c6dcb4` (version 0.1.0)
+- Verified on: 2026-11-02
+- origin/main commit verified: `b9bd5182c08b4577d023b4fff9c66e32af5b31ed` (version 0.3.2)
 - Environment: macOS 27.0.1 on Apple silicon, Swift with the Command Line Tools only (no Xcode).
-- J1 to J5 are the steps of `.github/workflows/checks.yml`; their result of the day is the one of the full local run on origin/main of the same day (the CI run on that commit was green). J6 to J9 were run on this commit.
+- J1 to J5 are the steps of `.github/workflows/checks.yml`; they were replayed by hand on this commit (the CI run on it was green). J6 to J9 were run on this commit too. The results of 2026-10-28 stay below as history, one line per run.
 
 ## Journeys
 
@@ -16,6 +16,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Expected: exit code 0.
 - Automated: CI (step "Text rules").
 - Result on 2026-10-28: green.
+- Result on 2026-11-02: green (359 tracked files, 0 problem).
 
 ### J2: tests of the repository scripts
 
@@ -24,6 +25,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Expected: all tests pass.
 - Automated: CI (step "Script tests").
 - Result on 2026-10-28: green.
+- Result on 2026-11-02: green (76 tests).
 
 ### J3: the Swift package builds
 
@@ -32,14 +34,16 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Expected: "Build complete!".
 - Automated: CI (step "Build").
 - Result on 2026-10-28: green.
+- Result on 2026-11-02: green ("Build complete!", 59.6 s from a clean worktree).
 
 ### J4: the whole Swift test suite
 
-- Proves: the 516 tests (442 in `tests/BrimlineCoreTests`, 74 in `tests/BrimlineUITests`) (Swift Testing).
+- Proves: the 528 tests (448 in `tests/BrimlineCoreTests`, 80 in `tests/BrimlineUITests`) (Swift Testing).
 - How: `swift test`
-- Expected: the two lines "Test run with 74 tests in 12 suites passed" and "Test run with 442 tests in 43 suites passed".
+- Expected: the two lines "Test run with 80 tests in 12 suites passed" and "Test run with 448 tests in 43 suites passed".
 - Automated: CI (step "Swift tests").
 - Result on 2026-10-28: RED once, then green. In the full local run (the CI run of the same commit was green), `launchedAsPlanned` (`tests/BrimlineCoreTests/Providers/AntigravityEndToEndTests.swift`) failed once on `#expect(text.contains("--print /usage --sandbox\n"))`; it passed on the two following full runs and six times under CPU load. This journey re-ran the suite that holds it (`swift test --filter AntigravityEndToEndTests`, 9 tests) five times in a row: five greens. Flaky, not reproduced; root cause not established. What the test does: it launches a stand-in `agy` script that appends its arguments and environment to a log file, then reads that log back; the failing assertion is the one that looks for the arguments of the second launch in that file. To investigate, run the suite in a loop under CPU load and keep the log content of the first failure.
+- Result on 2026-11-02: green, 80 and 448 tests passed. The flaky suite (`swift test --filter AntigravityEndToEndTests`, 9 tests) ran three more times in a row: three greens. Still open, not reproduced.
 
 ### J5: the app bundle builds
 
@@ -49,6 +53,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Signed build: with `BRIMLINE_SIGNING_IDENTITY` and `BRIMLINE_SIGNING_KEYCHAIN` set (the release workflow sets them), `scripts/check_signature.sh build/Brimline.app` checks the signature, the identifier, the authority, the designated requirement, and that a second build, with another code hash, satisfies the requirement of the first. Run on 2026-10-29 on the maintainer's Mac: passes on a build signed by Brimline Code Signing, refuses an ad hoc build.
 - Automated: CI (step "App bundle"); the signed build, by the dry run of the release workflow ("Release", run by hand on main, no tag and no release).
 - Result on 2026-10-28: green. Exit code 0, release build 24.7 s (warm cache), `codesign --verify --deep --strict` passes, `plutil` lint passes, version 0.1.0, `LSUIElement` true (no Dock icon), bundle identifier `eu.thanaelfontaine.brimline`, `Contents/MacOS/Brimline` is an arm64 Mach-O, `Contents/Helpers/brimline --version` prints `0.1.0`. The bundle stays in `build/` (ignored by git): not installed, not opened.
+- Result on 2026-11-02: green. `scripts/build_app.sh` ends with "Built .../build/Brimline.app (version 0.3.2, Apple silicon and Intel, signed by Brimline Code Signing)", `codesign --verify --deep --strict` passes, `plutil -lint` passes, bundle identifier `eu.thanaelfontaine.brimline`, version 0.3.2, `LSUIElement` true, `Contents/Helpers/brimline --version` prints `0.3.2`, no mention of the old name in `Info.plist`, the icon is the piste A (tube under a bar).
 
 ### J6: reading the usage of each provider, on test doubles
 
@@ -57,6 +62,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Expected: all pass.
 - Automated: yes (part of J4).
 - Result on 2026-10-28: green, 218 tests in 14 suites. Not covered: a read of a real provider (needs a real account and a real request, see J10).
+- Result on 2026-11-02: green, 220 tests in 14 suites.
 
 ### J7: menu bar element and panel
 
@@ -65,6 +71,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Expected: tests pass; the renderer ends with exit code 0 and writes the same 68 files as `docs/images/`.
 - Automated: tests yes (part of J4); the renderer is manual (it is not in CI and nothing compares its output).
 - Result on 2026-10-28: green for the tests (74 and 78 tests). Renderer: exit code 0, 68 files written, 50 byte-identical to `docs/images/`; 18 differ (the long panel sheets (2), the full accounts settings sheets (2) and 14 settings tab images). Looked at: `qa-panel-many-light.png` differs only by the scroll bar, drawn in the committed image and absent in the new one (a system setting of the machine, not a change of the app). The settings images differ only in a 30 by 30 px square at the bottom right corner (largest channel difference 52); the content is unchanged. Treat a diff outside such a square as a real change. Not verified: the real app drawing itself in a real menu bar (see J10).
+- Result on 2026-11-02: green for the tests (80 and 82 tests). Renderer: exit code 0, 68 files written, all 68 byte-identical to `docs/images/`.
 
 ### J8: no secret in logs, cache, settings or answers
 
@@ -73,6 +80,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Expected: tests pass; the grep finds nothing.
 - Automated: tests yes (part of J4); the grep is manual.
 - Result on 2026-10-28: green (70 tests in 11 suites; grep empty). Not verified: the system log of a real session (see J10).
+- Result on 2026-11-02: green (70 tests in 11 suites; grep empty).
 
 ### J9: the `brimline` command and the MCP server
 
@@ -81,6 +89,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Expected: tests pass; the version printed is the content of `VERSION`.
 - Automated: tests yes; the `--version` check is manual.
 - Result on 2026-10-28: green. Not verified: running the built command on data. The command takes the home folder from the system account, not from `$HOME`, so it cannot be pointed at an empty fake home: any run reads the real caches and sign-ins of the person who runs it. It is therefore not replayed here; the same code paths run in the suites above on temporary homes.
+- Result on 2026-11-02: green. Same suites as J6 and J8 pass. The built command answers `initialize` over `brimline mcp` with `serverInfo.name` = `brimline`, title `Brimline`, version 0.3.2 (the request carries no account data).
 
 ### J10: the real app, in a real session, on a real account
 
