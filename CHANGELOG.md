@@ -8,7 +8,7 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ### Changed
 
-- **The disk image is built with Pillow 13.0.0** (was 12.0.0), which fixes the security advisories published against Pillow 12 and 12.3. Pillow only draws the image background from Brimline's own drawing code at build time, it never opens a file from a third party, so nothing changed for users. Pillow 13 needs Python 3.11 or later: `scripts/build_dmg.sh` now asks for 3.11 instead of 3.10. The app does not change.
+- **The disk image is built with Pillow 13.0.0** (was 12.0.0), which fixes the security advisories published against Pillow 12.x. Pillow only draws the image background from Brimline's own drawing code at build time, it never opens a file from a third party, so nothing changes for users. Pillow 13 needs Python 3.11 or later: `scripts/build_dmg.sh` now asks for 3.11 instead of 3.10.
 
 ## [0.3.2] - 2026-10-30
 
