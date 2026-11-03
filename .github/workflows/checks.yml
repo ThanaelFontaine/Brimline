@@ -1,6 +1,6 @@
 # Checks on every push and pull request: text rules (no em or en dash, no personal data), the
 # tests of the repository scripts, then the Swift package (build, tests) and the app bundle
-# (scripts/build_app.sh, universal, with the Command Line Tools only) and its disk image
+# (scripts/build_app.sh, universal) and its disk image
 # (scripts/build_dmg.sh, which also needs Python 3.11 or later, already on the runner image). The
 # release workflow starts only after a green run of this one on main.
 #
@@ -29,10 +29,13 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     env:
-      # The Command Line Tools of the image, as on a developer's Mac without Xcode: the app is built
-      # with them alone (scripts/build_app.sh). With the Xcode of the image selected, swift test
-      # loads the Swift Testing macros of these tools and fails (the two Swift versions differ).
-      DEVELOPER_DIR: /Library/Developer/CommandLineTools
+      # The Xcode 26.6 of the image, named in full so that a change of the image's default Xcode
+      # changes nothing here. The Command Line Tools of the recent images (26.6, Swift 6.3.3) no
+      # longer bring the Testing module (swift test: "no such module 'Testing'") nor xcbuild (the
+      # universal build of scripts/build_app.sh), both needed here; checked on the image
+      # macos-26-arm64 20261026.0455 (THA-2764, QUOTA-107). The app itself still builds with the
+      # Command Line Tools alone on a developer's Mac (docs/install.md).
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app
     steps:
       - uses: actions/checkout@v7
 
