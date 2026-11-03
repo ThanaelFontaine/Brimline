@@ -70,8 +70,9 @@ jobs:
       group: release
       cancel-in-progress: false
     env:
-      # The Command Line Tools of the image, as in the Checks workflow.
-      DEVELOPER_DIR: /Library/Developer/CommandLineTools
+      # The Xcode of the image named in the Checks workflow (the recent Command Line Tools have
+      # no xcbuild, which the universal build needs: QUOTA-107).
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app
     steps:
       - uses: actions/checkout@v7
         with:
@@ -198,7 +199,7 @@ jobs:
       group: release-signing-trial
       cancel-in-progress: false
     env:
-      DEVELOPER_DIR: /Library/Developer/CommandLineTools
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app
     steps:
       - uses: actions/checkout@v7
 
