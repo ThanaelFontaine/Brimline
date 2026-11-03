@@ -2,7 +2,7 @@
 # Builds the disk image of Brimline from an app already built by scripts/build_app.sh:
 # a "Brimline" volume showing Brimline.app next to an Applications shortcut, on a background
 # that says to drag one onto the other. Used by the release workflow, and usable on any Mac with
-# Python 3.10 or later.
+# Python 3.11 or later.
 #
 #   scripts/build_dmg.sh [APP] [OUT_DIR]
 #     APP      the bundle to package (default: build/Brimline.app)
@@ -12,7 +12,7 @@
 # carries no version, so that https://github.com/ThanaelFontaine/Brimline/releases/latest/download/Brimline.dmg
 # always gives the latest one; the version is inside (the app's Info.plist).
 #
-# Needs Python 3.10 or later (dmgbuild and Pillow require it): the python3 of the Command Line
+# Needs Python 3.11 or later (Pillow 13 requires it): the python3 of the Command Line
 # Tools is 3.9, so install a newer one (python.org or Homebrew), or point PYTHON at it. The Python
 # tools (exact versions and hashes in packaging/requirements-dmg.txt) are installed in
 # .build/dmg-venv with pip --require-hashes, never system wide. Installs nothing else: the image
@@ -46,8 +46,8 @@ if [ "$PLIST_VERSION" != "$VERSION" ]; then
 fi
 
 PYTHON="${PYTHON:-python3}"
-if ! "$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
-  echo "build_dmg: needs Python 3.10 or later, found: $("$PYTHON" --version 2>/dev/null || echo none)." >&2
+if ! "$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' 2>/dev/null; then
+  echo "build_dmg: needs Python 3.11 or later, found: $("$PYTHON" --version 2>/dev/null || echo none)." >&2
   echo "build_dmg: install one (python.org or Homebrew), or set PYTHON=/path/to/python3." >&2
   exit 1
 fi
