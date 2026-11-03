@@ -56,3 +56,25 @@ jobs:
 
       - name: Disk image
         run: scripts/build_dmg.sh
+
+  probe:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        dev: [/Library/Developer/CommandLineTools, /Applications/Xcode_26.6.app, /Applications/Xcode_26.5.app]
+    env:
+      DEVELOPER_DIR: ${{ matrix.dev }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Diagnose
+        run: |
+          swift --version
+          ls /Library/Developer/CommandLineTools/Library/Developer/Frameworks 2>&1 || true
+          find /Library/Developer/CommandLineTools -iname "*Testing*" -maxdepth 6 2>/dev/null | head -20
+          ls /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins 2>&1 || true
+      - name: Swift tests
+        run: swift test
+      - name: Universal release build
+        run: swift build -c release --arch arm64 --arch x86_64 --product brimline
