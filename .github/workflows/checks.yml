@@ -1,7 +1,7 @@
 # Checks on every push and pull request: text rules (no em or en dash, no personal data), the
 # tests of the repository scripts, then the Swift package (build, tests) and the app bundle
 # (scripts/build_app.sh, universal) and its disk image
-# (scripts/build_dmg.sh, which also needs Python 3.10 or later, already on the runner image). The
+# (scripts/build_dmg.sh, which also needs Python 3.11 or later, already on the runner image). The
 # release workflow starts only after a green run of this one on main.
 #
 # Runner: the runners hosted by GitHub (macos-latest), never a machine of the maintainer. The
