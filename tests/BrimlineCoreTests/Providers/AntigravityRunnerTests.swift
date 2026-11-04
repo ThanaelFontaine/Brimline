@@ -238,6 +238,14 @@ func bounded<T: Sendable>(seconds: Double = 30, _ body: @escaping () async throw
     }
 }
 
+/// The number of the last process a launcher started (read through `afterSpawn`).
+private final class LastPid: @unchecked Sendable {
+    private let lock = NSLock()
+    private var pid: pid_t = 0
+    func set(_ value: pid_t) { lock.withLock { pid = value } }
+    var value: pid_t { lock.withLock { pid } }
+}
+
 private final class Seen: @unchecked Sendable {
     private let lock = NSLock()
     private var state: String?
@@ -597,18 +605,28 @@ struct AntigravityRunnerTests {
         try FileManager.default.copyItem(at: built.url, to: copy)
         let home = try TemporaryHome()
         try home.write("mode", "sleep")
-        let runner = ProcessAntigravityRunner(requirement: SecurityFrameworkCodeChecker.google)
+        let last = LastPid()
+        var runner = ProcessAntigravityRunner(requirement: SecurityFrameworkCodeChecker.google)
+        runner.afterSpawn = { last.set($0) }
         // One bound for the twenty launches: a launcher that hangs fails the test once, not twenty times.
-        let rejections = try await bounded(seconds: 60) { [runner] in
-            var count = 0
+        // After each rejection, the process it started must be gone: `kill(pid, 0)` still succeeds on a zombie
+        // (a zombie shows in `ps` as `<defunct>`, without its path), so it tells a waited-for process from one that
+        // was only killed.
+        let outcome = try await bounded(seconds: 60) { [runner] in
+            var rejections = 0
+            var remaining: [pid_t] = []
             for _ in 0..<20 {
                 do { _ = try await runner.run(binary: copy, arguments: [], home: home.url) }
-                catch AntigravityRunFailure.codeRejected(let status) where status == errSecCSReqFailed { count += 1 }
+                catch AntigravityRunFailure.codeRejected(let status) where status == errSecCSReqFailed {
+                    rejections += 1
+                    if kill(last.value, 0) == 0 { remaining.append(last.value) }
+                }
                 catch { break }
             }
-            return count
+            return (rejections, remaining)
         }
-        #expect(rejections == 20)
+        #expect(outcome.0 == 20)
+        #expect(outcome.1.isEmpty, "processes still there (zombies) after a rejection: \(outcome.1)")
         #expect(!ran(home))
         let ps = Process()
         ps.executableURL = URL(fileURLWithPath: "/bin/ps")
@@ -618,7 +636,7 @@ struct AntigravityRunnerTests {
         try ps.run()
         let listing = text(pipe.fileHandleForReading.readDataToEndOfFile())
         ps.waitUntilExit()
-        // A zombie of a launched copy shows in `ps` with its path; a rejected one must not.
+        // No live process of the copy is left either (a zombie shows without its path: see above).
         #expect(!listing.contains(copy.path))
     }
 

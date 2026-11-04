@@ -38,8 +38,8 @@ public protocol AntigravityRunning: Sendable {
 ///   instruction yet. Brimline takes the audit token of that process, asks Security.framework for its code
 ///   (`SecCodeCopyGuestWithAttributes`, by the token, never by the pid alone) and checks it against
 ///   `requirement` (`SecCodeCheckValidityWithErrors`). What is checked is the code the kernel holds for that
-///   process (its `cdhash`), not the file at the path: a file replaced between the static check and the launch
-///   is another program, and it is rejected. Only then `SIGCONT`; otherwise `SIGKILL` and nothing ran;
+///   process (its `cdhash`), which must also be the file at the path: a file replaced between the static check and
+///   the launch is another program, and it is rejected. Only then `SIGCONT`; otherwise `SIGKILL` and nothing ran;
 /// - the working folder is new and empty, inside Brimline's own temporary folder (owner only), and
 ///   removed afterwards, so the program has nothing of the user's to look at;
 /// - the environment is `HOME`, `PATH=/usr/bin:/bin` and `LANG=en_US.UTF-8` and nothing else (no
@@ -263,7 +263,10 @@ public struct ProcessAntigravityRunner: AntigravityRunning {
         var requirement: SecRequirement?
         let created = SecRequirementCreateWithString(text as CFString, [], &requirement)
         guard created == errSecSuccess, let requirement else { return .codeRejected(created) }
-        let status = SecCodeCheckValidityWithErrors(code, [], requirement, nil)
+        // `kSecCSNoNetworkAccess` (1 << 29, CSCommon.h; the name is not imported into Swift), as in the static
+        // check: without it a process that is not a platform one may reach the network. Not the flags of the static
+        // check as they are: `kSecCSCheckAllArchitectures` is not accepted by `SecCodeCheckValidityWithErrors`.
+        let status = SecCodeCheckValidityWithErrors(code, SecCSFlags(rawValue: 1 << 29), requirement, nil)
         return status == errSecSuccess ? nil : .codeRejected(status)
     }
 
