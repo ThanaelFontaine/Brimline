@@ -66,7 +66,7 @@ final class FakeChecker: AntigravityCodeChecking, @unchecked Sendable {
 }
 
 /// Gemini read through Antigravity, on the shape of the real text of `/usage` (Antigravity CLI 1.4.8, 27/10/2026,
-/// 1.4.9, 28/10/2026, and 1.4.10, 29/10/2026: the same text).
+/// 1.4.9, 28/10/2026, 1.4.10, 29/10/2026, and 1.4.11, 04/11/2026: the same text).
 @Suite("Gemini: read through Antigravity, trusted by Google's signature")
 struct AntigravityTests {
     let now = date("2026-10-27T10:00:00Z")
@@ -151,7 +151,7 @@ struct AntigravityTests {
         #expect(GeminiReader().discover(home: home.url, settings: on).isEmpty)
     }
 
-    // MARK: a verified build
+    // MARK: a build signed by Google
 
     @Test("A build signed by Google: one launch, --print /usage --sandbox and nothing else (no --version); each line is a limit, the percentage remaining becomes the share used")
     func reads() async throws {

@@ -36,7 +36,7 @@ extension AntigravityCodeChecking {
 /// Brimline keeps no list of builds: Antigravity updates itself, and a build of Google's, signed as
 /// above, is the program the user already runs.
 ///
-/// Deliberately not in the requirement: `notarized` (not in Apple's requirement language), and the
+/// Deliberately not in the requirement: `notarized` (not documented in Apple's requirement language), and the
 /// online revocation check (`kSecCSEnforceRevocationChecks` asks the network; `kSecCSNoNetworkAccess` is set).
 public struct SecurityFrameworkCodeChecker: AntigravityCodeChecking {
     /// Google's requirement, exactly. Read from `agy` 1.4.11 (`codesign -d -r-`, 04/11/2026): the Apple

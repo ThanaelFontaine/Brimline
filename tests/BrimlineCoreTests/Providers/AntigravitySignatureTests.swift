@@ -34,7 +34,7 @@ struct AntigravitySignatureTests {
         #expect(SecurityFrameworkCodeChecker.google.contains("EQHXZ8M8AV"))
         // Team AND identifier: never the team alone.
         #expect(SecurityFrameworkCodeChecker.google.hasPrefix("identifier \"cli\" and "))
-        // Not in it: `notarized` (not in Apple's language), the online revocation check.
+        // Not in it: `notarized` (not documented in Apple's language), the online revocation check.
         #expect(!SecurityFrameworkCodeChecker.google.contains("notarized"))
         for text in [SecurityFrameworkCodeChecker.google, SecurityFrameworkCodeChecker.googleAnyIdentifier] {
             var requirement: SecRequirement?
@@ -75,7 +75,7 @@ struct AntigravitySignatureTests {
         #expect(!google.isOtherIdentifier(at: copy))
     }
 
-    @Test("A path with nothing, or a folder of nothing signed, is not accepted")
+    @Test("A path with nothing is not accepted")
     func missing() {
         #expect(google.checkStatic(at: URL(fileURLWithPath: "/nonexistent/agy")) == .unreadable)
     }
