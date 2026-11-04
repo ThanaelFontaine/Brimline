@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-04
+
+Brimline 0.3.3 stops the Gemini card from saying "Antigravity was updated: update Brimline." each time Antigravity updates itself: Brimline now trusts Google's signature on `agy`, not a list of builds, so a new build of Antigravity is read with nothing to add to Brimline. The Gemini card says "Google changed the /usage report" only when the report really changed. The full notes are in [docs/releases/v0.3.3.md](docs/releases/v0.3.3.md).
+
 ### Changed
 
 - **`format_changed` only means that Google changed the report.** The card says "Google changed the /usage report: update Brimline." / "Google a changé le rapport /usage : mettez Brimline à jour." (it said Antigravity was updated). A program that does not carry Google's signature is no longer reported that way: it is `unavailable`, with the reason `signature_not_recognized` (in the app, `brimline status` and the JSON for agents) and the sentence "Brimline does not recognize Google's signature on agy (~/.local/bin/agy), so it does not launch it." / "Brimline ne reconnaît pas la signature de Google sur agy (~/.local/bin/agy) : il ne le lance pas."
