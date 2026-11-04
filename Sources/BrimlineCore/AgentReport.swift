@@ -64,7 +64,8 @@ public struct AgentAccount: Codable, Sendable, Equatable {
     public var folder: String?
     public var hidden: Bool
     public var status: String
-    /// Why the account has no readable limit, when `status` is `not_readable`.
+    /// Why the account has no readable limit, when `status` is `not_readable`; or why Brimline refused to read it
+    /// (`signature_not_recognized`, with `status` `unavailable`).
     public var reason: String?
     public var message: String?
     public var fetchedAt: String?
@@ -117,7 +118,7 @@ public struct AgentAccount: Codable, Sendable, Equatable {
         folder = AgentPath.folder(of: account)
         hidden = settings.isHidden(account.id)
         status = usage.status.rawValue
-        reason = usage.status == .notReadable ? usage.reason?.rawValue : nil
+        reason = usage.status == .notReadable || usage.status == .unavailable ? usage.reason?.rawValue : nil
         message = Strings(.en).message(for: usage)
         fetchedAt = usage.fetchedAt.map(ISODate.format)
         observedAt = usage.observedAt.map(ISODate.format)

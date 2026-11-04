@@ -178,7 +178,8 @@ public struct AccountUsage: Codable, Sendable, Identifiable {
     public var retryAfter: Date?
     /// Short technical detail of the last failure (an HTTP code, never a token).
     public var detail: String?
-    /// Why the account cannot be read, when `status` is `notReadable`.
+    /// Why the account cannot be read (`notReadable`), or why Brimline refused to read it (`unavailable` with
+    /// `signatureNotRecognized`). Nil otherwise.
     public var reason: NotReadableReason?
     /// Fingerprint of the keys of the last answer (SHA-256, no value in it): a change of it is a
     /// change of the provider's format.

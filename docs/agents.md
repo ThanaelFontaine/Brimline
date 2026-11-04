@@ -108,7 +108,7 @@ Fields:
 | `percent` | Share used, 0 to 100, as the provider last reported it |
 | `current_percent` | The share that applies now: 0 once `resets_at` has passed |
 | `status` | `ok`, `expired` (token expired, numbers are the last known ones), `reconnect` (sign-in refused), `unavailable`, `signed_out`, `pending`, `not_readable` (the provider gives no limit Brimline can read for this account), `format_changed` (the provider's answer is not one Brimline recognizes: the numbers are the last known ones) |
-| `reason` | Why the account is `not_readable`: `api_key`, `keychain_or_signed_out`, `consumer_plan`, `protected_sign_in` or `no_cli`; `null` otherwise |
+| `reason` | Why the account is `not_readable`: `api_key`, `keychain_or_signed_out`, `consumer_plan`, `protected_sign_in` or `no_cli`; or, with `status` `unavailable`, why Brimline refused to read it: `signature_not_recognized` (Gemini: `agy` does not carry Google's signature); `null` otherwise |
 | `stale` | `true` when the numbers are older than two refresh intervals, or the last read failed |
 | `no_global_weekly_limit` | `true` for plans without a weekly limit across all models (often team seats). Never `true` for numbers from a Claude Code report: a week the report has not seen is unknown, and no `weekly` limit is listed |
 | `age_seconds` | Age of the numbers (per account) or of the cache (top level) |
@@ -250,7 +250,7 @@ The answers, shortened to what decides (the numbers are an example; each one car
 
 The agent compares: Claude has 58 % of its week left and ChatGPT 29 %, so the long task goes to Claude; ChatGPT's week resets in about 4 days, Claude's in about 2. A ChatGPT account read through Codex has no address (`email` is `null`): it is told apart by its `source`, here `~/.codex`. A test (`AgentsDocExampleTests`) builds exactly this cache and checks every number above, so the page cannot drift from the server.
 
-If a provider gives no limit Brimline can read, the account is listed by `list_accounts` and `best_account` never ranks it. Gemini without Antigravity has `status: not_readable` and `reason: consumer_plan`. A free Grok account has `status: ok`, an empty `limits` and the sentence "xAI returns no credit limit for this account." in `message`.
+If a provider gives no limit Brimline can read, the account is listed by `list_accounts` and `best_account` never ranks it. Gemini without Antigravity has `status: not_readable` and `reason: consumer_plan`; an `agy` that does not carry Google's signature is not launched and has `status: unavailable` and `reason: signature_not_recognized`. A free Grok account has `status: ok`, an empty `limits` and the sentence "xAI returns no credit limit for this account." in `message`.
 
 ### Example
 

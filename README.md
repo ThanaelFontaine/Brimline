@@ -91,7 +91,7 @@ Each new provider was tried on **27 October 2026** on the maker's own account, *
 |---|---|---|---|---|
 | Claude | Claude Code sign-in (Keychain); for an account it cannot read, the [Claude Code reports](docs/accounts.md#claude-code-reports-an-account-brimline-cannot-read-directly) | Not documented (the reports: status line documented) | Real accounts, since v0.1.0 | Read and checked |
 | ChatGPT | Codex (`~/.codex/auth.json`) | Not documented (Codex's public code) | ChatGPT Free: the month, 0 % | Read and checked on that plan; comparison with OpenAI's usage page pending |
-| Gemini | Antigravity CLI (`agy --print /usage`) | Command documented, text format not | A Google account (`agy` does not say the plan): five limits, none used | Read and checked, except that the percentage was seen at 100 % remaining only, and the reference is `agy`'s own text |
+| Gemini | Antigravity CLI (`agy --print /usage`) | Command documented, text format not | A Google account (`agy` does not say the plan): five limits, none used | Read and checked, except that the percentage was seen at 100 % remaining only, and the reference is `agy`'s own text. Brimline launches only an `agy` signed by Google, at `~/.local/bin/agy`: one installed elsewhere (Homebrew, a link) is not launched |
 | Grok | Grok CLI (`~/.grok/auth.json`) | Not documented (the CLI's public code) | A free account: **xAI returns no credit limit, so no percentage is shown** | Read and checked for that sentence only; xAI has no page to compare with |
 | Cursor | Cursor's app sign-in (its state database) | Not documented (CodexBar's public code) | Cursor Free: the month, Auto and API, 0 % | Read and checked on that plan; comparison with the cursor.com usage page pending |
 

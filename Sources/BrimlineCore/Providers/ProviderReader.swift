@@ -9,6 +9,9 @@ public enum NotReadableReason: String, Codable, Sendable, CaseIterable {
     case consumerPlan = "consumer_plan"
     case protectedSignIn = "protected_sign_in"
     case noCLI = "no_cli"
+    /// Gemini only: the program at `~/.local/bin/agy` does not carry Google's signature, so it is not launched.
+    /// It comes with an `unavailable` reading (`ProviderReading.refused`), not with `not_readable`.
+    case signatureNotRecognized = "signature_not_recognized"
 }
 
 /// What one reading of one account gave. The service turns it into an `AccountUsage`: it keeps the
@@ -30,6 +33,9 @@ public enum ProviderReading: Sendable {
     /// The read failed. `.unavailable` backs off and retries; any other status waits for the user.
     /// `retryAfter` is a wait asked by the provider, in seconds, applied when longer than the backoff.
     case failure(status: AccountStatus, detail: String?, retryAfter: TimeInterval?)
+    /// Brimline refused to read, and says why: like `failure(.unavailable)` (growing delay, last numbers kept), with
+    /// the `reason` that picks the sentence of the card, `brimline status` and the JSON for agents.
+    case refused(reason: NotReadableReason, detail: String?)
 }
 
 /// One provider's way to find its accounts on the Mac and read their limits.
