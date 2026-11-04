@@ -217,9 +217,15 @@ public struct Strings: Sendable {
     public var geminiExpiredMessage: String {
         t("Open Antigravity to refresh the sign-in.", "Ouvrez Antigravity pour rafraîchir la connexion.")
     }
-    /// An Antigravity that Brimline has not verified (a new version, another build): nothing is launched.
+    /// The text of `/usage` is not the one Brimline reads: Google changed its report. (Not an update of
+    /// Antigravity: a build signed by Google that prints the same text is read as before.)
     public var geminiFormatChangedMessage: String {
-        t("Antigravity was updated: update Brimline.", "Antigravity a été mis à jour : mettez Brimline à jour.")
+        t("Google changed the /usage report: update Brimline.", "Google a changé le rapport /usage : mettez Brimline à jour.")
+    }
+    /// The program at `~/.local/bin/agy` does not carry Google's signature: it is not launched.
+    public var geminiSignatureNotRecognizedMessage: String {
+        t("Brimline does not recognize Google's signature on agy (~/.local/bin/agy), so it does not launch it.",
+          "Brimline ne reconnaît pas la signature de Google sur agy (~/.local/bin/agy) : il ne le lance pas.")
     }
     /// Codex is signed in with an API key: there is no subscription limit.
     public var chatgptAPIKeyMessage: String {
@@ -316,6 +322,7 @@ public struct Strings: Sendable {
         if usage.status == .ok, let note = usage.note { return noteMessage(note) }
         switch (usage.account.provider, usage.status, usage.reason) {
         case (.gemini, .notReadable, .consumerPlan?): return geminiNotReadableMessage
+        case (.gemini, .unavailable, .signatureNotRecognized?): return geminiSignatureNotRecognizedMessage
         case (.gemini, .expired, _): return geminiExpiredMessage
         case (.gemini, .formatChanged, _): return geminiFormatChangedMessage
         case (.chatgpt, .notReadable, .apiKey?): return chatgptAPIKeyMessage

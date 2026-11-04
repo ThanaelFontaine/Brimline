@@ -177,7 +177,7 @@ public struct MCPServer: Sendable {
                     "status": u.status.rawValue,
                 ]
                 entry["folder"] = AgentPath.folder(of: u.account) ?? NSNull()
-                entry["reason"] = u.status == .notReadable ? (u.reason?.rawValue ?? NSNull()) : NSNull()
+                entry["reason"] = (u.status == .notReadable || u.status == .unavailable) ? (u.reason?.rawValue ?? NSNull()) : NSNull()
                 entry["email"] = u.account.email ?? NSNull()
                 entry["organization"] = u.account.organization ?? NSNull()
                 entry["label"] = settings.label(for: u.account.id) ?? NSNull()

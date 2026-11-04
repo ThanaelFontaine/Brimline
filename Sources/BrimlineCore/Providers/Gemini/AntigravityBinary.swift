@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 
 /// The `agy` program Brimline is willing to launch: one exact path, checked on the open file.
@@ -6,7 +5,8 @@ import Foundation
 /// The path is `~/.local/bin/agy` and nothing else (`PATH` is never searched). The file is opened
 /// without following a link (a link is refused), then checked on the open descriptor: a regular
 /// file, owned by the user running Brimline, executable by its owner, not writable by the group or
-/// others. Its SHA-256 is computed from that same descriptor, so what is checked is what is hashed.
+/// others. Whether it is Google's program is not decided here: `AntigravityCodeChecking` checks its
+/// signature. This type only answers "may Brimline even look at this file".
 public enum AntigravityBinary {
     /// Where the installer of Antigravity puts `agy`, from the user's home folder.
     public static let relativePath = ".local/bin/agy"
@@ -29,9 +29,18 @@ public enum AntigravityBinary {
         return lstat(url.path, &info) == 0
     }
 
-    /// The SHA-256 (lowercase hex) of the binary, after the checks above. `owner` is the user id the
-    /// file must belong to (the user's own).
-    public static func inspect(at url: URL, owner: uid_t = getuid()) throws(Failure) -> String {
+    /// What identifies the file on disk. Two reads that differ mean `agy` was replaced in between (an update).
+    public struct Identity: Equatable, Sendable {
+        public var device: Int32
+        public var inode: UInt64
+        public var size: Int64
+        public var modifiedSeconds: Int
+        public var modifiedNanoseconds: Int
+    }
+
+    /// The identity of the file, after the checks above. `owner` is the user id the file must belong to
+    /// (the user's own).
+    public static func inspect(at url: URL, owner: uid_t = getuid()) throws(Failure) -> Identity {
         let descriptor = open(url.path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK)
         if descriptor < 0 {
             switch errno {
@@ -47,17 +56,7 @@ public enum AntigravityBinary {
         guard (info.st_mode & S_IFMT) == S_IFREG, info.st_uid == owner,
               (info.st_mode & S_IXUSR) != 0, (info.st_mode & (S_IWGRP | S_IWOTH)) == 0 else { throw .refused }
 
-        var hasher = SHA256()
-        var chunk = [UInt8](repeating: 0, count: 1024 * 1024)
-        while true {
-            let count = chunk.withUnsafeMutableBytes { Darwin.read(descriptor, $0.baseAddress, $0.count) }
-            if count < 0 {
-                if errno == EINTR { continue }
-                throw .unreadable
-            }
-            if count == 0 { break }
-            hasher.update(data: chunk[0..<count])
-        }
-        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+        return Identity(device: info.st_dev, inode: info.st_ino, size: info.st_size,
+                        modifiedSeconds: info.st_mtimespec.tv_sec, modifiedNanoseconds: info.st_mtimespec.tv_nsec)
     }
 }

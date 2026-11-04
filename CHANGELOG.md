@@ -8,7 +8,13 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ### Changed
 
+- **`format_changed` only means that Google changed the report.** The card says "Google changed the /usage report: update Brimline." / "Google a changé le rapport /usage : mettez Brimline à jour." (it said Antigravity was updated). A program that does not carry Google's signature is no longer reported that way: it is `unavailable`, with the reason `signature_not_recognized` (in the app, `brimline status` and the JSON for agents) and the sentence "Brimline does not recognize Google's signature on agy (~/.local/bin/agy), so it does not launch it." / "Brimline ne reconnaît pas la signature de Google sur agy (~/.local/bin/agy) : il ne le lance pas."
+- **`agy --version` is no longer launched**: nothing depends on its text any more, so Brimline starts `agy` once per read instead of twice. An `agy` installed elsewhere than `~/.local/bin/agy` (Homebrew, a link) is still not launched. What is not checked is written in `SECURITY.md`: the signature is checked just before the launch (closing that window is the next lot), `notarized` and online revocation are not part of the rule, and what `agy` launches itself is not checked.
 - **The disk image is built with Pillow 13.0.0** (was 12.0.0), which fixes the security advisories published against Pillow 12.x. Pillow only draws the image background from Brimline's own drawing code at build time, it never opens a file from a third party, so nothing changes for users. Pillow 13 needs Python 3.11 or later: `scripts/build_dmg.sh` now asks for 3.11 instead of 3.10.
+
+### Fixed
+
+- **Gemini no longer says "Antigravity was updated" at each update of Antigravity.** Antigravity updates itself (1.4.8, 1.4.9, 1.4.10 and 1.4.11 in a few days) and Brimline kept a list of the builds it had checked, so each new build turned the Gemini card into "Antigravity was updated: update Brimline." although the text of `agy --print /usage` had not changed (checked on 4 November 2026 on 1.4.11: the same five lines). Brimline now trusts a rule, not a list: the program at `~/.local/bin/agy` must carry the Developer ID signature of Google (team `EQHXZ8M8AV` and identifier `cli`), checked by macOS before each launch. A build signed by Google is read as the one before, with nothing to add to Brimline; a program that is not signed by Google is not launched. If `agy` is being replaced while it is checked, Brimline looks once more after 2 seconds, in the same read.
 
 ## [0.3.2] - 2026-10-30
 

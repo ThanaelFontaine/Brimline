@@ -445,6 +445,8 @@ struct AccountCard: View {
             }
             return nil
         case .unavailable:
+            // A refused signature has its own sentence (never launched, nothing to retry by itself).
+            if usage.reason == .signatureNotRecognized, let sentence = strings.message(for: usage) { return sentence }
             var parts: [String] = []
             if let reason = strings.reason(usage.detail) { parts.append(reason) }
             if let retry = usage.retryAfter, retry > model.now { parts.append(strings.retryAt(model.time.clock(retry))) }

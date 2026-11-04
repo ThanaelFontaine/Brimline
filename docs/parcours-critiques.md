@@ -53,7 +53,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 ### J6: reading the usage of each provider, on test doubles
 
 - Proves: for Claude, ChatGPT (Codex), Gemini (Antigravity), Grok and Cursor, the reader turns a sign-in file or a command output into limits (or into an honest "expired", "unavailable", "format changed", "no limit returned"), refuses unreadable or oversized files, and calls only its own closed list of URLs. Nothing here touches a real account: the sign-ins are fixtures, HTTP is a fake, and Gemini runs against a stand-in script.
-- How: `swift test --filter "ChatGPTTests|CursorTests|CursorUsageTests|CursorHardeningTests|GrokTests|GeminiTests|AntigravityTests|AntigravityRunnerTests|AntigravityEndToEndTests|AntigravityControlCharacterTests|UsageTests|ReaderServiceTests|ClaudeReportTests|ClaudeReportCommandTests"`
+- How: `swift test --filter "ChatGPTTests|CursorTests|CursorUsageTests|CursorHardeningTests|GrokTests|GeminiTests|AntigravityTests|AntigravityRunnerTests|AntigravityEndToEndTests|AntigravitySignatureTests|AntigravityControlCharacterTests|UsageTests|ReaderServiceTests|ClaudeReportTests|ClaudeReportCommandTests"`
 - Expected: all pass.
 - Automated: yes (part of J4).
 - Result on 2026-10-28: green, 218 tests in 14 suites. Not covered: a read of a real provider (needs a real account and a real request, see J10).

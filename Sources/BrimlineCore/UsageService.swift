@@ -95,6 +95,10 @@ public struct UsageService: Sendable {
             var result = failed(usage, status: .notReadable, detail: nil, now: now, backoff: false)
             result.reason = reason
             return result
+        case .refused(let reason, let detail):
+            var result = failed(usage, status: .unavailable, detail: detail, now: now, backoff: true)
+            result.reason = reason
+            return result
         case .failure(let status, let detail, let wait):
             var result = failed(usage, status: status, detail: detail, now: now, backoff: Self.backsOff(status))
             if let wait {

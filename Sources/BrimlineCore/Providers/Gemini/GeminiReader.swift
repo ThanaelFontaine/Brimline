@@ -11,18 +11,23 @@ import Foundation
 /// - only when Gemini is on (the service checks consent before any reader runs);
 /// - only the exact path `~/.local/bin/agy` (`AntigravityBinary`: no `PATH`, no link, a file of the
 ///   user's, not writable by others);
-/// - only a build listed in `AntigravityTrust` (SHA-256 of the binary and the text of `--version`): any
-///   other build says `format_changed` and launches nothing;
+/// - only a program that carries Google's Developer ID signature (team `EQHXZ8M8AV`, identifier `cli`),
+///   checked by Security.framework just before the launch (`SecurityFrameworkCodeChecker`). There is no
+///   list of builds: Antigravity updates itself, and a build signed by Google is read like the one before.
+///   Any other program is `unavailable` ("signature not recognized") and is never launched. `--version` is
+///   not launched: nothing depends on its text;
 /// - fixed arguments, a new empty working folder, a reduced environment, 20 seconds, 64 KiB
 ///   (`ProcessAntigravityRunner`), one run at a time and one read every 15 minutes at
 ///   most (`minimumReadInterval`, applied by the service);
-/// - the report is read strictly (`AntigravityUsageParser`): anything else is `format_changed`.
+/// - the report is read strictly (`AntigravityUsageParser`): `format_changed` is the answer to a text
+///   Brimline does not recognize, and to nothing else.
 ///
 /// Without `agy` at that path the card says the sentence (`not_readable`), as before. `~/.gemini` is
 /// only looked for (one `stat`), nothing inside it is ever opened or listed.
 public struct GeminiReader: ProviderReader {
     public var runner: any AntigravityRunning
-    public var trust: AntigravityTrust
+    /// Checks Google's signature before the launch. Tests give one that needs no certificate.
+    public var checker: any AntigravityCodeChecking
     /// The user id `agy` must belong to; the user's own (tests change it).
     public var binaryOwner: uid_t
     /// One launch at a time per reader (the app has one: its timer and a manual refresh can overlap).
@@ -31,15 +36,22 @@ public struct GeminiReader: ProviderReader {
     /// At most one read every 15 minutes: `/usage` asks Google's backend each time.
     public static let readInterval: TimeInterval = 15 * 60
 
-    /// Arguments of the two launches. Fixed: never an option that skips permissions.
-    static let versionArguments = ["--version"]
+    /// How long to wait before looking a second time, when `agy` was being replaced during the check.
+    public static let updateRetryDelay: TimeInterval = 2
+
+    /// Arguments of the launch. Fixed: never an option that skips permissions.
     static let usageArguments = ["--print", "/usage", "--sandbox"]
 
-    public init(runner: any AntigravityRunning = ProcessAntigravityRunner(), trust: AntigravityTrust = .verified,
-                binaryOwner: uid_t = getuid()) {
+    /// Seconds to wait before the one new try (tests give 0).
+    public var retryDelay: TimeInterval
+
+    public init(runner: any AntigravityRunning = ProcessAntigravityRunner(),
+                checker: any AntigravityCodeChecking = SecurityFrameworkCodeChecker(),
+                binaryOwner: uid_t = getuid(), retryDelay: TimeInterval = GeminiReader.updateRetryDelay) {
         self.runner = runner
-        self.trust = trust
+        self.checker = checker
         self.binaryOwner = binaryOwner
+        self.retryDelay = retryDelay
     }
 
     public var provider: Provider { .gemini }
@@ -63,31 +75,24 @@ public struct GeminiReader: ProviderReader {
         let binary = AntigravityBinary.url(home: home)
 
         guard AntigravityBinary.isPresent(at: binary) else { return .notReadable(reason: .consumerPlan) }
-        // No verified build: nothing is launched, and nothing is hashed.
-        guard !trust.isEmpty else { return Self.updated("no verified Antigravity build") }
 
-        let digest: String
-        do throws(AntigravityBinary.Failure) {
-            digest = try AntigravityBinary.inspect(at: binary, owner: binaryOwner)
-        } catch {
-            switch error {
-            case .notFound: return .notReadable(reason: .consumerPlan)
-            case .refused: return .failure(status: .unavailable, detail: "agy refused", retryAfter: nil)
-            case .unreadable: return .failure(status: .unavailable, detail: "agy unreadable", retryAfter: nil)
-            }
+        // The file, then its signature. If `agy` was replaced while this ran (it updates itself in place:
+        // a half written file, or another file than the one first checked), look once more after a pause.
+        var verdict = await examine(binary)
+        if case .retry = verdict {
+            if retryDelay > 0 { try? await Task.sleep(nanoseconds: UInt64(retryDelay * 1_000_000_000)) }
+            verdict = await examine(binary)
         }
-        guard let entry = trust.entry(sha256: digest) else { return Self.updated("Antigravity build not verified") }
+        switch verdict {
+        case .go: break
+        case .retry: return Self.refused("agy signature not recognized")
+        case .answer(let reading): return reading
+        }
 
         guard launching.acquire() else {
             return .failure(status: .unavailable, detail: "already running", retryAfter: nil)
         }
         defer { launching.release() }
-
-        let version: AntigravityRun
-        do { version = try await runner.run(binary: binary, arguments: Self.versionArguments, home: home) }
-        catch { return Self.failure(error) }
-        guard version.exitCode == 0,
-              Self.text(version.stdout) == entry.versionOutput else { return Self.updated("Antigravity version not verified") }
 
         let usage: AntigravityRun
         do { usage = try await runner.run(binary: binary, arguments: Self.usageArguments, home: home) }
@@ -100,11 +105,51 @@ public struct GeminiReader: ProviderReader {
         do {
             return .limits(try AntigravityUsageParser.parse(usage.stdout), shape: "")
         } catch {
-            return Self.updated("unknown report")
+            return Self.reportChanged("unknown report")
         }
     }
 
-    private static func updated(_ detail: String) -> ProviderReading {
+    private enum Examination {
+        /// The file is as it must be and Google signed it: launch.
+        case go
+        /// Looks like an update in progress: once more, then refuse.
+        case retry
+        /// Done: this is the reading to give.
+        case answer(ProviderReading)
+    }
+
+    /// The checks on the file, then the signature, with a look at the file after the signature check.
+    private func examine(_ binary: URL) async -> Examination {
+        let before: AntigravityBinary.Identity
+        do throws(AntigravityBinary.Failure) {
+            before = try AntigravityBinary.inspect(at: binary, owner: binaryOwner)
+        } catch {
+            switch error {
+            case .notFound: return .answer(.notReadable(reason: .consumerPlan))
+            case .refused: return .answer(.failure(status: .unavailable, detail: "agy refused", retryAfter: nil))
+            case .unreadable: return .answer(.failure(status: .unavailable, detail: "agy unreadable", retryAfter: nil))
+            }
+        }
+        let signature = checker.checkStatic(at: binary)
+        let after = try? AntigravityBinary.inspect(at: binary, owner: binaryOwner)
+        if signature == .changedDuringCheck || after != before { return .retry }
+        switch signature {
+        case .accepted: return .go
+        case .unsigned, .requirementFailed:
+            let other = signature == .requirementFailed && checker.isOtherIdentifier(at: binary)
+            return .answer(Self.refused(other ? "agy signature: other identifier" : "agy signature not recognized"))
+        case .unreadable: return .answer(Self.refused("agy signature unreadable"))
+        case .changedDuringCheck: return .retry
+        }
+    }
+
+    /// Brimline does not launch this program: `unavailable`, never `format_changed` (the text was not read).
+    private static func refused(_ detail: String) -> ProviderReading {
+        .refused(reason: .signatureNotRecognized, detail: detail)
+    }
+
+    /// The text of the report is not the one Brimline reads.
+    private static func reportChanged(_ detail: String) -> ProviderReading {
         .failure(status: .formatChanged, detail: detail, retryAfter: nil)
     }
 
@@ -112,6 +157,7 @@ public struct GeminiReader: ProviderReader {
         switch error {
         case .couldNotLaunch: return .failure(status: .unavailable, detail: "agy could not start", retryAfter: nil)
         case .timedOut: return .failure(status: .unavailable, detail: "agy timed out", retryAfter: nil)
+        // More than 64 KiB is a text Brimline refuses to read: the only other way to `format_changed`.
         case .outputTooLong: return .failure(status: .formatChanged, detail: "agy output too long", retryAfter: nil)
         }
     }

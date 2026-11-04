@@ -206,6 +206,21 @@ struct AccountCardTests {
         #expect(card(usage, in: off).noteSymbol == "pause.circle")
     }
 
+    @Test("A refused Antigravity signature shows its own sentence in the card, in both languages, never the technical detail")
+    func signatureRefusedSentence() {
+        let gemini = account(.gemini, ".local/bin/agy")
+        let usage = AccountUsage(account: gemini, status: .unavailable, checkedAt: now, retryAfter: now.addingTimeInterval(900),
+                                 detail: "agy signature not recognized", reason: .signatureNotRecognized)
+        #expect(card(usage, in: model([usage])).stateNote
+                == "Brimline does not recognize Google's signature on agy (~/.local/bin/agy), so it does not launch it.")
+        #expect(card(usage, in: model([usage], language: .fr)).stateNote
+                == "Brimline ne reconnaît pas la signature de Google sur agy (~/.local/bin/agy) : il ne le lance pas.")
+        // Another unavailable state keeps its short form with the reason and the next try.
+        let offline = AccountUsage(account: gemini, status: .unavailable, checkedAt: now, retryAfter: now.addingTimeInterval(900),
+                                   detail: "offline")
+        #expect(card(offline, in: model([offline])).stateNote?.hasPrefix("Unavailable") == true)
+    }
+
     @Test("The shared pool is said under the title, the missing number in the card")
     func grokNotes() {
         let grok = account(.grok, ".grok/auth.json")
