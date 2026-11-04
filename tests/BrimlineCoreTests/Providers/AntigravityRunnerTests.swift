@@ -207,6 +207,45 @@ enum Standin {
     enum Folder { nonisolated(unsafe) static var path = "" }
 }
 
+/// Runs `work` and gives up after `seconds` with `BoundedTimeout`, even if `work` never comes back (a launcher
+/// stuck in `waitpid` on a process that nothing killed): the test then fails at once instead of hanging the run.
+/// `.timeLimit` alone only records the failure, the run still waits for the body.
+struct BoundedTimeout: Error, CustomStringConvertible { var description: String { "no answer in time" } }
+
+private final class Once: @unchecked Sendable {
+    private let lock = NSLock()
+    private var done = false
+    func first() -> Bool { lock.withLock { defer { done = true }; return !done } }
+}
+
+func bounded<T: Sendable>(seconds: Double = 30, _ body: @escaping () async throws -> T) async throws -> T {
+    // The closures capture test fixtures that are not `Sendable`; they are only read, by one task.
+    nonisolated(unsafe) let work = body
+    let once = Once()
+    return try await withCheckedThrowingContinuation { continuation in
+        Task {
+            do {
+                let value = try await work()
+                if once.first() { continuation.resume(returning: value) }
+            } catch {
+                if once.first() { continuation.resume(throwing: error) }
+            }
+        }
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            if once.first() { continuation.resume(throwing: BoundedTimeout()) }
+        }
+    }
+}
+
+private final class Seen: @unchecked Sendable {
+    private let lock = NSLock()
+    private var state: String?
+    private var ran: Bool?
+    func set(state: String?, ran: Bool) { lock.withLock { self.state = state; self.ran = ran } }
+    var value: (String?, Bool?) { lock.withLock { (state, ran) } }
+}
+
 /// The real launcher on a program that stands in for `agy`: started suspended, its code checked on the process,
 /// then let go; a program that is not the one required never runs.
 @Suite("The launcher of agy: suspended, checked on the process, fixed folder and environment, bounded, stopped",
@@ -444,18 +483,51 @@ struct AntigravityRunnerTests {
         #expect(runner.requirement == SecurityFrameworkCodeChecker.google)
     }
 
+    /// What `ps` says of a process (its state letters), or nil when it cannot be read.
+    static func state(of pid: pid_t) -> String? {
+        let ps = Process()
+        ps.executableURL = URL(fileURLWithPath: "/bin/ps")
+        ps.arguments = ["-o", "stat=", "-p", String(pid)]
+        let pipe = Pipe()
+        ps.standardOutput = pipe
+        do { try ps.run() } catch { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        ps.waitUntilExit()
+        return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    @Test("The program is held suspended while its code is checked: stopped (T) and not a single instruction run",
+          .timeLimit(.minutes(1)))
+    func heldSuspendedWhileChecked() async throws {
+        let built = try Standin.require()
+        for requirement in [built.requirement, SecurityFrameworkCodeChecker.google] {
+            let home = try TemporaryHome()
+            try home.write("mode", "collect")
+            let seen = Seen()
+            var runner = ProcessAntigravityRunner(requirement: requirement)
+            let ranFile = home.url.appendingPathComponent("ran").path
+            runner.afterSpawn = { pid in
+                seen.set(state: Self.state(of: pid), ran: FileManager.default.fileExists(atPath: ranFile))
+            }
+            _ = try await bounded { [runner] in try? await runner.run(binary: built.url, arguments: [], home: home.url) }
+            let (state, ranBefore) = seen.value
+            #expect(state?.contains("T") == true, "state of the process before the check: \(state ?? "unreadable")")
+            #expect(ranBefore == false)
+        }
+    }
+
     // MARK: A program that is not the one required never runs
 
-    @Test("The same program against Google's requirement is rejected before it runs a single instruction")
+    @Test("The same program against Google's requirement is rejected before it runs a single instruction", .timeLimit(.minutes(1)))
     func notGoogle() async throws {
         let (home, runner, binary) = try prepare("collect", requirement: SecurityFrameworkCodeChecker.google)
         await #expect(throws: AntigravityRunFailure.codeRejected(errSecCSReqFailed)) {
-            _ = try await runner.run(binary: binary, arguments: [], home: home.url)
+            _ = try await bounded { [runner] in try await runner.run(binary: binary, arguments: [], home: home.url) }
         }
         #expect(!ran(home))
     }
 
-    @Test("The default launcher (Google's requirement) rejects an ad hoc signed program that even carries the identifier cli")
+    @Test("The default launcher (Google's requirement) rejects an ad hoc signed program that even carries the identifier cli", .timeLimit(.minutes(1)))
     func adHocCli() async throws {
         let built = try Standin.require()
         let folder = built.url.deletingLastPathComponent().appendingPathComponent("cli-\(UUID().uuidString)")
@@ -467,12 +539,12 @@ struct AntigravityRunnerTests {
         let home = try TemporaryHome()
         try home.write("mode", "collect")
         await #expect(throws: AntigravityRunFailure.codeRejected(errSecCSReqFailed)) {
-            _ = try await ProcessAntigravityRunner().run(binary: copy, arguments: [], home: home.url)
+            _ = try await bounded { try await ProcessAntigravityRunner().run(binary: copy, arguments: [], home: home.url) }
         }
         #expect(!ran(home))
     }
 
-    @Test("Another build at the path (replaced after the check) is rejected and never runs")
+    @Test("Another build at the path (replaced after the check) is rejected and never runs", .timeLimit(.minutes(1)))
     func replacedBeforeLaunch() async throws {
         let built = try Standin.require()
         let folder = built.url.deletingLastPathComponent().appendingPathComponent("swap-\(UUID().uuidString)")
@@ -496,12 +568,12 @@ struct AntigravityRunnerTests {
         let other = try Standin.sign(path, identifier: "com.brimline.standin.other")
         #expect(other != wanted)
         await #expect(throws: AntigravityRunFailure.codeRejected(errSecCSReqFailed)) {
-            _ = try await ProcessAntigravityRunner(requirement: requirement).run(binary: path, arguments: [], home: home.url)
+            _ = try await bounded { try await ProcessAntigravityRunner(requirement: requirement).run(binary: path, arguments: [], home: home.url) }
         }
         #expect(!ran(home))
     }
 
-    @Test("A shell script is rejected: the code of the process is /bin/sh, not the script")
+    @Test("A shell script is rejected: the code of the process is /bin/sh, not the script", .timeLimit(.minutes(1)))
     func scriptRejected() async throws {
         let built = try Standin.require()
         let home = try TemporaryHome()
@@ -509,12 +581,12 @@ struct AntigravityRunnerTests {
         let script = home.url.appendingPathComponent("fake-agy")
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
         await #expect(throws: AntigravityRunFailure.codeRejected(errSecCSReqFailed)) {
-            _ = try await ProcessAntigravityRunner(requirement: built.requirement).run(binary: script, arguments: [], home: home.url)
+            _ = try await bounded { try await ProcessAntigravityRunner(requirement: built.requirement).run(binary: script, arguments: [], home: home.url) }
         }
         #expect(!ran(home))
     }
 
-    @Test("A rejected program is gone: killed and waited for, no process and no zombie of it is left")
+    @Test("A rejected program is gone: killed and waited for, no process and no zombie of it is left", .timeLimit(.minutes(1)))
     func rejectedIsGone() async throws {
         // A copy at a path of its own, so that no other test's stand-in can show up in the list of processes.
         let built = try Standin.require()
@@ -526,11 +598,17 @@ struct AntigravityRunnerTests {
         let home = try TemporaryHome()
         try home.write("mode", "sleep")
         let runner = ProcessAntigravityRunner(requirement: SecurityFrameworkCodeChecker.google)
-        for _ in 0..<20 {
-            await #expect(throws: AntigravityRunFailure.codeRejected(errSecCSReqFailed)) {
-                _ = try await runner.run(binary: copy, arguments: [], home: home.url)
+        // One bound for the twenty launches: a launcher that hangs fails the test once, not twenty times.
+        let rejections = try await bounded(seconds: 60) { [runner] in
+            var count = 0
+            for _ in 0..<20 {
+                do { _ = try await runner.run(binary: copy, arguments: [], home: home.url) }
+                catch AntigravityRunFailure.codeRejected(let status) where status == errSecCSReqFailed { count += 1 }
+                catch { break }
             }
+            return count
         }
+        #expect(rejections == 20)
         #expect(!ran(home))
         let ps = Process()
         ps.executableURL = URL(fileURLWithPath: "/bin/ps")
@@ -544,11 +622,11 @@ struct AntigravityRunnerTests {
         #expect(!listing.contains(copy.path))
     }
 
-    @Test("A requirement the system cannot read is a rejection too, never a launch")
+    @Test("A requirement the system cannot read is a rejection too, never a launch", .timeLimit(.minutes(1)))
     func brokenRequirement() async throws {
         let (home, runner, binary) = try prepare("collect", requirement: "this is not a requirement")
         await #expect(throws: AntigravityRunFailure.self) {
-            _ = try await runner.run(binary: binary, arguments: [], home: home.url)
+            _ = try await bounded { [runner] in try await runner.run(binary: binary, arguments: [], home: home.url) }
         }
         #expect(!ran(home))
     }

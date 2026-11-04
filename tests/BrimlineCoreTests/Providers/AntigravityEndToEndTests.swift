@@ -80,7 +80,7 @@ struct AntigravityEndToEndTests {
         }
     }
 
-    @Test("A program replaced between two reads is not launched the second time, even if the static check let it pass")
+    @Test("A program replaced between two reads is not launched the second time, even if the static check let it pass", .timeLimit(.minutes(1)))
     func replacedBetweenReads() async throws {
         let built = try Standin.require()
         let (home, checker, account, reader) = try home(mode: "print", stdout: Self.report)
@@ -95,7 +95,7 @@ struct AntigravityEndToEndTests {
         try FileManager.default.removeItem(at: path)
         try FileManager.default.copyItem(at: built.url, to: path)
         _ = try Standin.sign(path, identifier: "com.brimline.standin.other")
-        let second = await reader.read(account: account, now: now.addingTimeInterval(1_000))
+        let second = try await bounded { [reader] in await reader.read(account: account, now: self.now.addingTimeInterval(1_000)) }
         guard case .refused(.signatureNotRecognized, let detail) = second else {
             Issue.record("expected the refusal, got \(second)")
             return

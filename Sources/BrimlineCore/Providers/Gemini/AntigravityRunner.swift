@@ -59,6 +59,9 @@ public struct ProcessAntigravityRunner: AntigravityRunning {
     public var maxOutputBytes: Int
     /// The signature requirement the suspended process must satisfy: Google's (tests give another).
     public var requirement: String
+    /// Test seam: called with the pid right after the program is spawned and before its code is checked, that is
+    /// while it must still be suspended. `nil` in production.
+    var afterSpawn: (@Sendable (pid_t) -> Void)?
 
     public init(timeout: TimeInterval = Self.defaultTimeout, maxOutputBytes: Int = Self.defaultMaxOutputBytes,
                 requirement: String = SecurityFrameworkCodeChecker.google) {
@@ -69,11 +72,12 @@ public struct ProcessAntigravityRunner: AntigravityRunning {
 
     public func run(binary: URL, arguments: [String], home: URL) async throws(AntigravityRunFailure) -> AntigravityRun {
         let timeout = self.timeout, limit = maxOutputBytes, requirement = self.requirement
+        let afterSpawn = self.afterSpawn
         let result: Result<AntigravityRun, AntigravityRunFailure> = await withCheckedContinuation { continuation in
             Self.onOwnThread {
                 continuation.resume(returning: Self.runBlocking(binary: binary, arguments: arguments, home: home,
                                                                 timeout: timeout, limit: limit,
-                                                                requirement: requirement))
+                                                                requirement: requirement, afterSpawn: afterSpawn))
             }
         }
         return try result.get()
@@ -94,7 +98,8 @@ public struct ProcessAntigravityRunner: AntigravityRunning {
     }
 
     private static func runBlocking(binary: URL, arguments: [String], home: URL, timeout: TimeInterval,
-                                    limit: Int, requirement: String) -> Result<AntigravityRun, AntigravityRunFailure> {
+                                    limit: Int, requirement: String,
+                                    afterSpawn: (@Sendable (pid_t) -> Void)?) -> Result<AntigravityRun, AntigravityRunFailure> {
         let workFolder = FileManager.default.temporaryDirectory
             .appendingPathComponent("Brimline", isDirectory: true)
             .appendingPathComponent("agy-\(UUID().uuidString)", isDirectory: true)
@@ -124,6 +129,7 @@ public struct ProcessAntigravityRunner: AntigravityRunning {
         guard let pid = spawned else { return .failure(.couldNotLaunch) }
 
         // The program exists, suspended: nothing of it has run. Its code is checked before it is let go.
+        afterSpawn?(pid)
         if let rejection = verify(pid: pid, requirement: requirement) {
             kill(-pid, SIGKILL)
             kill(pid, SIGKILL)
