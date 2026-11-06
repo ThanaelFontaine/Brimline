@@ -80,7 +80,12 @@ public struct SecurityFrameworkCodeChecker: AntigravityCodeChecking {
         var requirement: SecRequirement?
         guard SecRequirementCreateWithString(text as CFString, [], &requirement) == errSecSuccess,
               let requirement else { return .unreadable }
-        let status = SecStaticCodeCheckValidityWithErrors(code, flags, requirement, nil)
+        return classify(SecStaticCodeCheckValidityWithErrors(code, flags, requirement, nil))
+    }
+
+    /// What a status of Security.framework means for the reader (the static check, and the check on the
+    /// launched process, which `AntigravityRunFailure.codeRejected` carries).
+    public static func classify(_ status: OSStatus) -> AntigravitySignatureCheck {
         switch status {
         case errSecSuccess: return .accepted
         case errSecCSUnsigned: return .unsigned

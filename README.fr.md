@@ -29,7 +29,7 @@ Les mêmes chiffres sont lisibles par tes agents (une commande à sortie JSON et
   <img src="docs/images/menubar-hiding-wave.gif" width="490" alt="Une vraie barre des menus sous macOS 27 : un clic sur le petit trait de Brimline cache les icônes l'une après l'autre vers lui, le trait devient une flèche «, puis un clic sur la flèche les fait revenir">
 </p>
 
-> **État :** le dépôt et le site sont publics. La version actuelle est la 0.3.2. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
+> **État :** le dépôt et le site sont publics. La version actuelle est la 0.3.3. Elle fonctionne avec Claude (par Claude Code, avec plusieurs comptes) et ajoute ChatGPT (par Codex), Gemini (par Antigravity), Grok et Cursor, chacun essayé sur un vrai compte le 27 octobre 2026 : le tableau [plus bas](#fournisseurs) dit sur quel forfait et avec quel résultat. Le [CHANGELOG](CHANGELOG.md) dit ce qui existe.
 
 Le *brim* est le bord jusqu'où monte une cuve, et la *line* la limite tracée au-dessus : Brimline montre d'un coup d'œil à quelle distance du bord tu en es.
 
@@ -91,7 +91,7 @@ Chaque nouveau fournisseur a été essayé le **27 octobre 2026** sur le compte 
 |---|---|---|---|---|
 | Claude | Connexion de Claude Code (Trousseau) ; pour un compte qu'il ne peut pas lire, les [relevés de Claude Code](docs/accounts.fr.md#relevés-de-claude-code--un-compte-que-brimline-ne-lit-pas-directement) | Non documentée (les relevés : ligne d'état documentée) | Vrais comptes, depuis la v0.1.0 | Lu et vérifié |
 | ChatGPT | Codex (`~/.codex/auth.json`) | Non documentée (code public de Codex) | ChatGPT gratuit : le mois, 0 % | Lu et vérifié sur ce forfait ; comparaison avec la page d'usage d'OpenAI en attente |
-| Gemini | Antigravity CLI (`agy --print /usage`) | Commande documentée, format du texte non | Un compte Google (`agy` ne dit pas le forfait) : cinq limites, aucune entamée | Lu et vérifié, sauf que le pourcentage n'a été vu qu'à 100 % restant, et que la référence est le texte d'`agy` lui-même. Brimline ne lance qu'un `agy` signé par Google, à `~/.local/bin/agy` : un `agy` installé ailleurs (Homebrew, un lien) n'est pas lancé |
+| Gemini | Antigravity CLI (`agy --print /usage`) | Commande documentée, format du texte non | Un compte Google (`agy` ne dit pas le forfait) : cinq limites, aucune entamée | Lu et vérifié, sauf que le pourcentage n'a été vu qu'à 100 % restant, et que la référence est le texte d'`agy` lui-même. Brimline ne lance qu'un `agy` signé par Google, à `~/.local/bin/agy`, et revérifie cette signature sur le processus avant qu'il s'exécute : un `agy` installé ailleurs (Homebrew, un lien) n'est pas lancé |
 | Grok | CLI Grok (`~/.grok/auth.json`) | Non documentée (code public du CLI) | Un compte gratuit : **xAI ne renvoie aucune limite, donc aucun pourcentage n'est affiché** | Lu et vérifié pour cette seule phrase ; xAI n'a pas de page de comparaison |
 | Cursor | Connexion de l'app Cursor (sa base d'état) | Non documentée (code public de CodexBar) | Cursor Free : le mois, Auto et API, 0 % | Lu et vérifié sur ce forfait ; comparaison avec la page d'usage de cursor.com en attente |
 

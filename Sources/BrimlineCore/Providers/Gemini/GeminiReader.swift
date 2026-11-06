@@ -12,12 +12,14 @@ import Foundation
 /// - only the exact path `~/.local/bin/agy` (`AntigravityBinary`: no `PATH`, no link, a file of the
 ///   user's, not writable by others);
 /// - only a program that carries Google's Developer ID signature (team `EQHXZ8M8AV`, identifier `cli`),
-///   checked by Security.framework just before the launch (`SecurityFrameworkCodeChecker`). There is no
-///   list of builds: Antigravity updates itself, and a build signed by Google is read like the one before.
-///   Any other program is `unavailable` ("signature not recognized") and is never launched. `--version` is
-///   not launched: nothing depends on its text;
+///   checked by Security.framework before the launch (`SecurityFrameworkCodeChecker`), and again on the
+///   process itself: the launcher starts `agy` suspended and checks the code the kernel holds for it before
+///   it lets it run a single instruction (`ProcessAntigravityRunner`), so a file replaced after the first
+///   check is never run. There is no list of builds: Antigravity updates itself, and a build signed by Google
+///   is read like the one before. Any other program is `unavailable` ("signature not recognized") and is never
+///   run. `--version` is not launched: nothing depends on its text;
 /// - fixed arguments, a new empty working folder, a reduced environment, 20 seconds, 64 KiB
-///   (`ProcessAntigravityRunner`), one run at a time and one read every 15 minutes at
+///   (`ProcessAntigravityRunner`, one process group, no process left behind), one run at a time and one read every 15 minutes at
 ///   most (`minimumReadInterval`, applied by the service);
 /// - the report is read strictly (`AntigravityUsageParser`): `format_changed` is the answer to a text
 ///   Brimline does not recognize, and to nothing else.
@@ -76,37 +78,58 @@ public struct GeminiReader: ProviderReader {
 
         guard AntigravityBinary.isPresent(at: binary) else { return .notReadable(reason: .consumerPlan) }
 
-        // The file, then its signature. If `agy` was replaced while this ran (it updates itself in place:
-        // a half written file, or another file than the one first checked), look once more after a pause.
-        var verdict = await examine(binary)
-        if case .retry = verdict {
-            if retryDelay > 0 { try? await Task.sleep(nanoseconds: UInt64(retryDelay * 1_000_000_000)) }
-            verdict = await examine(binary)
-        }
-        switch verdict {
-        case .go: break
-        case .retry: return Self.refused("agy signature not recognized")
-        case .answer(let reading): return reading
-        }
+        // The file, then its signature, then the launch (suspended: the launcher checks the code of the process
+        // itself before it lets it run). If `agy` was replaced while this ran (it updates itself in place: a half
+        // written file, or another file than the one first checked), look once more after a pause, in the same read.
+        var retriedLaunch = false
+        while true {
+            var verdict = await examine(binary)
+            if case .retry = verdict {
+                await pause()
+                verdict = await examine(binary)
+            }
+            switch verdict {
+            case .go: break
+            case .retry: return Self.refused("agy signature not recognized")
+            case .answer(let reading): return reading
+            }
 
-        guard launching.acquire() else {
-            return .failure(status: .unavailable, detail: "already running", retryAfter: nil)
-        }
-        defer { launching.release() }
+            guard launching.acquire() else {
+                return .failure(status: .unavailable, detail: "already running", retryAfter: nil)
+            }
+            defer { launching.release() }
 
-        let usage: AntigravityRun
-        do { usage = try await runner.run(binary: binary, arguments: Self.usageArguments, home: home) }
-        catch { return Self.failure(error) }
+            let usage: AntigravityRun
+            do { usage = try await runner.run(binary: binary, arguments: Self.usageArguments, home: home) }
+            catch {
+                // The process held suspended was not Google's: it was killed before it ran. A code that looks
+                // changed is an update in place: one new try. Nothing else is `format_changed`.
+                if case .codeRejected(let status) = error {
+                    if SecurityFrameworkCodeChecker.classify(status) == .changedDuringCheck, !retriedLaunch {
+                        retriedLaunch = true
+                        await pause()
+                        continue
+                    }
+                    return Self.refused(SecurityFrameworkCodeChecker.classify(status) == .unreadable
+                                        ? "agy signature unreadable" : "agy signature not recognized")
+                }
+                return Self.failure(error)
+            }
 
-        if usage.exitCode != 0 || Self.text(usage.stderr).localizedCaseInsensitiveContains("authentication required") {
-            // Google's program asks for a new sign-in: it renews it itself when it is opened.
-            return .expired
+            if usage.exitCode != 0 || Self.text(usage.stderr).localizedCaseInsensitiveContains("authentication required") {
+                // Google's program asks for a new sign-in: it renews it itself when it is opened.
+                return .expired
+            }
+            do {
+                return .limits(try AntigravityUsageParser.parse(usage.stdout), shape: "")
+            } catch {
+                return Self.reportChanged("unknown report")
+            }
         }
-        do {
-            return .limits(try AntigravityUsageParser.parse(usage.stdout), shape: "")
-        } catch {
-            return Self.reportChanged("unknown report")
-        }
+    }
+
+    private func pause() async {
+        if retryDelay > 0 { try? await Task.sleep(nanoseconds: UInt64(retryDelay * 1_000_000_000)) }
     }
 
     private enum Examination {
@@ -159,6 +182,8 @@ public struct GeminiReader: ProviderReader {
         case .timedOut: return .failure(status: .unavailable, detail: "agy timed out", retryAfter: nil)
         // More than 64 KiB is a text Brimline refuses to read: the only other way to `format_changed`.
         case .outputTooLong: return .failure(status: .formatChanged, detail: "agy output too long", retryAfter: nil)
+        // Not Google's code: refused like the static check (the launcher catches it before this switch).
+        case .codeRejected: return refused("agy signature not recognized")
         }
     }
 

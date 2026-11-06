@@ -1,4 +1,5 @@
 import Foundation
+import Security
 import Testing
 @testable import BrimlineCore
 
@@ -29,6 +30,24 @@ final class FakeAntigravity: AntigravityRunning, @unchecked Sendable {
         }
         if delay > 0 { try? await Task.sleep(nanoseconds: delay * 1_000_000) }
         guard let answer else { throw .couldNotLaunch }
+        return try answer.get()
+    }
+}
+
+/// A launcher that answers each launch in turn (the last answer repeats) and records the launches: for what
+/// the launcher can say only on the second try (a process rejected after the static check).
+final class SequencedAntigravity: AntigravityRunning, @unchecked Sendable {
+    private let lock = NSLock()
+    private var answers: [Result<AntigravityRun, AntigravityRunFailure>]
+    private(set) var launches = 0
+
+    init(_ answers: Result<AntigravityRun, AntigravityRunFailure>...) { self.answers = answers }
+
+    func run(binary: URL, arguments: [String], home: URL) async throws(AntigravityRunFailure) -> AntigravityRun {
+        let answer = lock.withLock {
+            launches += 1
+            return answers.count > 1 ? answers.removeFirst() : answers[0]
+        }
         return try answer.get()
     }
 }
@@ -296,6 +315,64 @@ struct AntigravityTests {
         #expect(fake.launches.isEmpty)
     }
 
+    @Test("The suspended process is not Google's (code rejected): refused, never format_changed, in every output, and the one launch only")
+    func codeRejectedAfterStaticCheck() async throws {
+        let (_, checker, account) = try installed()
+        for status: OSStatus in [errSecCSReqFailed, errSecCSUnsigned] {
+            let fake = SequencedAntigravity(.failure(.codeRejected(status)))
+            let reading = await GeminiReader(runner: fake, checker: checker, retryDelay: 0).read(account: account, now: now)
+            guard case .refused(.signatureNotRecognized, let detail) = reading else {
+                Issue.record("expected the refusal for \(status), got \(reading)")
+                continue
+            }
+            #expect(detail == "agy signature not recognized")
+            #expect(fake.launches == 1)
+        }
+        // A status the system gives for something else than a verdict is still a refusal, with its own detail.
+        let other = SequencedAntigravity(.failure(.codeRejected(-1)))
+        guard case .refused(.signatureNotRecognized, let detail) = await GeminiReader(runner: other, checker: checker, retryDelay: 0)
+            .read(account: account, now: now) else {
+            Issue.record("expected the refusal")
+            return
+        }
+        #expect(detail == "agy signature unreadable")
+        // The card, `brimline status` and the JSON carry it, and none says format_changed.
+        let service = UsageService(readers: [GeminiReader(runner: SequencedAntigravity(.failure(.codeRejected(errSecCSReqFailed))),
+                                                          checker: checker, binaryOwner: getuid(), retryDelay: 0)])
+        let usage = await service.refresh(account: account, settings: on, previous: nil, now: now, force: true)
+        #expect(usage.status == .unavailable && usage.reason == .signatureNotRecognized)
+        #expect(Strings(.en).message(for: usage) == "Brimline does not recognize Google's signature on agy (~/.local/bin/agy), so it does not launch it.")
+        #expect(Strings(.fr).message(for: usage) == "Brimline ne reconnaît pas la signature de Google sur agy (~/.local/bin/agy) : il ne le lance pas.")
+        #expect(AgentAccount(usage, settings: on, now: now, home: URL(fileURLWithPath: "/nonexistent")).reason == "signature_not_recognized")
+    }
+
+    @Test("The suspended process looks changed (an update in place): one new try after a pause, then it is read")
+    func codeChangedThenAccepted() async throws {
+        let (_, checker, account) = try installed()
+        let fake = SequencedAntigravity(.failure(.codeRejected(errSecCSStaticCodeChanged)),
+                                        ok(try text("antigravity-usage-normal")))
+        guard case .limits(let limits, _) = await GeminiReader(runner: fake, checker: checker, retryDelay: 0)
+            .read(account: account, now: now) else {
+            Issue.record("expected limits")
+            return
+        }
+        #expect(limits.count == 5)
+        #expect(fake.launches == 2)
+        #expect(checker.checks == 2)
+    }
+
+    @Test("The suspended process looks changed twice: refused after the one new try, never a third launch")
+    func codeChangedTwice() async throws {
+        let (_, checker, account) = try installed()
+        let fake = SequencedAntigravity(.failure(.codeRejected(errSecCSSignatureFailed)))
+        let reading = await GeminiReader(runner: fake, checker: checker, retryDelay: 0).read(account: account, now: now)
+        guard case .refused(.signatureNotRecognized, _) = reading else {
+            Issue.record("expected the refusal, got \(reading)")
+            return
+        }
+        #expect(fake.launches == 2)
+    }
+
     @Test("A file replaced after the file checks and before the end of the signature check (new size or date): checked again, then launched once")
     func fileReplacedDuringCheck() async throws {
         let (home, _, account) = try installed()
@@ -332,9 +409,10 @@ struct AntigravityTests {
         #expect(files.count >= 3)
         for file in files {
             let source = try String(contentsOf: folder.appendingPathComponent(file), encoding: .utf8)
-            // The only mention is the guard of `FakeChecker`, which refuses the real path.
+            // The only mentions: the guard of `FakeChecker`, which refuses the real path, and the one test of the
+            // launcher that only runs with `BRIMLINE_REAL_AGY=1` (never in CI).
             let mentions = source.components(separatedBy: "homeDirectoryFor" + "CurrentUser").count - 1
-            #expect(mentions == (file == "AntigravityTests.swift" ? 1 : 0), "\(file)")
+            #expect(mentions == (file == "AntigravityTests.swift" || file == "AntigravityRunnerTests.swift" ? 1 : 0), "\(file)")
             #expect(!source.contains("NSHome" + "Directory()") || file == "AntigravityTests.swift", "\(file)")
         }
     }
