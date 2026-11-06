@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-11-06
+
+Brimline 0.3.4 closes the window left open in 0.3.3 around `agy`: the signature of Google is now checked on the running process, before it runs a single instruction, not only on the file. Nothing changes in what the app shows. The full notes are in [docs/releases/v0.3.4.md](docs/releases/v0.3.4.md).
+
 ### Security
 
 - **`agy` is checked again on the running process, before it runs a single instruction.** Brimline used to check Google's signature on the file and then start `agy` by its path, so a file replaced in between would have been started. It now starts `agy` suspended (`posix_spawn`), asks macOS for the code of that very process (by its audit token) and checks the same Google requirement on it; only then does it let it run, and any other program is killed before it ran and the card says "Brimline does not recognize Google's signature on agy (~/.local/bin/agy), so it does not launch it." (never "Google changed the /usage report"). The launcher also puts `agy` in a process group of its own and stops the whole group when the run ends, so that no process and no zombie is left behind; the programs `agy` starts itself are still not checked (written in `SECURITY.md`).
