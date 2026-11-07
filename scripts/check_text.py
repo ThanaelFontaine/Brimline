@@ -1,5 +1,5 @@
 """Repository text checks: no em or en dash, no personal data, no old product name in tracked text files,
-and no self-hosted runner in the workflows.
+no self-hosted runner and no unpinned action in the workflows.
 
 The old name of the app (see OLD_NAME) may only appear where it is history or migration: the
 files of OLD_NAME_FILES, and the lines that say "Formerly <old name>" (or the French
@@ -12,7 +12,9 @@ patterns run.
 
 The repository is public: its workflows run on the runners hosted by GitHub, never on a machine of
 the maintainer, whose code a pull request could run. So the word "self-hosted" may not appear in a
-file of .github/workflows (WORKFLOW_DIR).
+file of .github/workflows (WORKFLOW_DIR), and every "runs-on:" names one label of a runner hosted by
+GitHub (ubuntu-*, macos-*, windows-*). Every "uses:" of an action is pinned by a full commit SHA of
+40 characters (a tag can be moved); a local action ("./...") is allowed.
 Usage: python3 scripts/check_text.py   (exit code 1 when something is found)
 """
 import re
@@ -55,6 +57,10 @@ OLD_NAME_FILES = {
 # The workflows must run on the runners hosted by GitHub (see the top of this file).
 WORKFLOW_DIR = ".github/workflows/"
 SELF_HOSTED = re.compile("self-hosted", re.IGNORECASE)
+HOSTED_LABEL = re.compile(r"^(ubuntu|macos|windows)-[a-z0-9.-]+$")
+RUNS_ON = re.compile(r"^\s*(?:-\s+)?runs-on:(.*)$")
+USES = re.compile(r"^\s*(?:-\s+)?uses:\s*(\S+)")
+FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".icns", ".heic",
@@ -94,6 +100,38 @@ def find_self_hosted(path, text):
     return [i + 1 for i, line in enumerate(text.split("\n")) if SELF_HOSTED.search(line)]
 
 
+def find_unhosted_runners(path, text):
+    """Line numbers (1 based) of a "runs-on:" that is not one label of a runner hosted by GitHub."""
+    if not path.startswith(WORKFLOW_DIR):
+        return []
+    hits = []
+    for i, line in enumerate(text.split("\n")):
+        match = RUNS_ON.match(line.split(" #")[0])
+        if match:
+            value = match.group(1).strip().strip("'\"")
+            if not HOSTED_LABEL.match(value):
+                hits.append(i + 1)
+    return hits
+
+
+def find_unpinned_actions(path, text):
+    """Line numbers (1 based) of a "uses:" of an action that is not pinned by a full commit SHA."""
+    if not path.startswith(WORKFLOW_DIR):
+        return []
+    hits = []
+    for i, line in enumerate(text.split("\n")):
+        match = USES.match(line)
+        if not match:
+            continue
+        target = match.group(1).strip("'\"")
+        if target.startswith("./"):
+            continue
+        reference = target.rsplit("@", 1)[1] if "@" in target else ""
+        if not FULL_SHA.match(reference):
+            hits.append(i + 1)
+    return hits
+
+
 def local_patterns(paths):
     """Patterns read from the files that exist among paths."""
     patterns = []
@@ -125,6 +163,8 @@ def main():
         problems += [f"{name}: line {n}: em or en dash" for n in find_dashes(text)]
         problems += [f"{name}: line {n}: old product name" for n in find_old_name(name, text)]
         problems += [f"{name}: line {n}: self-hosted runner" for n in find_self_hosted(name, text)]
+        problems += [f"{name}: line {n}: runner not hosted by GitHub" for n in find_unhosted_runners(name, text)]
+        problems += [f"{name}: line {n}: action not pinned by a full commit SHA" for n in find_unpinned_actions(name, text)]
         problems += [f"{name}: {hit}" for hit in find_personal_data(name, text, patterns)]
     for p in problems:
         print(p)
