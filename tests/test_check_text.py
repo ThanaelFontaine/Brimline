@@ -131,6 +131,59 @@ class CheckTextTest(unittest.TestCase):
         self.assertEqual(check_text.find_unpinned_actions(".github/workflows/checks.yml", text), [2, 5])
         self.assertEqual(check_text.find_unpinned_actions("docs/ci.md", text), [])
 
+    def test_runner_forms_that_cannot_be_checked_are_refused(self):
+        refused = {
+            "made-up label": "    runs-on: macos-mini\n",
+            "expression": "    runs-on: ${{ matrix.os }}\n",
+            "block of two items": "    runs-on:\n      - macos-latest\n      - ARM64\n",
+            "runner group": "    runs-on:\n      group: home\n",
+            "space before the colon": "    runs-on : macos-latest\n",
+            "quoted key": '    "runs-on": macOS\n',
+            "quoted key, list": '    "runs-on": [macOS, ARM64]\n',
+            "flow style": '  a: {"runs-on": "macOS", steps: [{run: x}]}\n',
+            "JSON": '{"jobs": {"a": {"runs-on": "macOS", "steps": []}}}\n',
+            "escaped key": '    "runs\\u002don": macOS\n',
+            "explicit key": "    ? runs-on\n    : macOS\n",
+        }
+        for name, body in refused.items():
+            with self.subTest(name):
+                self.assertNotEqual(check_text.find_unhosted_runners(".github/workflows/x.yml", "jobs:\n  a:\n" + body), [], name)
+        accepted = "jobs:\n  a:\n    runs-on: [macos-latest]\n  b:\n    runs-on:\n      - 'ubuntu-latest'\n"
+        self.assertEqual(check_text.find_unhosted_runners(".github/workflows/x.yml", accepted), [])
+
+    def test_self_hosted_in_a_comment_after_a_valid_label(self):
+        text = "jobs:\n  a:\n    runs-on: macos-latest # not self-hosted\n"
+        self.assertEqual(check_text.find_unhosted_runners(".github/workflows/x.yml", text), [])
+        self.assertEqual(check_text.find_self_hosted(".github/workflows/x.yml", text), [3])
+
+    def test_self_hosted_written_with_an_escape_is_found(self):
+        text = 'jobs:\n  a:\n    env:\n      X: "self-host\\x65d"\n'
+        self.assertEqual(check_text.find_self_hosted(".github/workflows/x.yml", text), [4])
+
+    def test_action_forms_that_cannot_be_checked_are_refused(self):
+        sha = "3d3c42e5aac5ba805825da76410c181273ba90b1"
+        refused = {
+            "branch": "      - uses: actions/checkout@main\n",
+            "upper case SHA": f"      - uses: actions/checkout@{sha.upper()}\n",
+            "docker image with a tag": "      - uses: docker://alpine:3.20\n",
+            "docker image with a digest": "      - uses: docker://alpine@sha256:" + "a" * 64 + "\n",
+            "reusable workflow of another repository": f"    uses: other/repo/.github/workflows/x.yml@{sha}\n",
+            "flow style list": "    steps: [{uses: actions/checkout@v4}]\n",
+            "flow style item": "      - {uses: actions/checkout@v4}\n",
+            "quoted key": '      - "uses": actions/checkout@v4\n',
+        }
+        for name, body in refused.items():
+            with self.subTest(name):
+                self.assertNotEqual(check_text.find_unpinned_actions(".github/workflows/x.yml", "jobs:\n  a:\n" + body), [], name)
+
+    def test_container_and_service_images_must_be_pinned_by_a_digest(self):
+        digest = "@sha256:" + "a" * 64
+        text = ("jobs:\n  a:\n    container: node:22\n    services:\n      db:\n        image: postgres:17\n"
+                f"  b:\n    container: node:22{digest}\n    services:\n      db:\n        image: postgres:17{digest}\n"
+                "    steps:\n      - run: echo \"disk image: built\"\n")
+        self.assertEqual(check_text.find_unpinned_images(".github/workflows/x.yml", text), [3, 6])
+        self.assertEqual(check_text.find_unpinned_images("docs/ci.md", text), [])
+
     def test_a_workflow_with_an_unpinned_action_fails_the_check(self):
         out = run_in_repo({
             ".github/workflows/checks.yml": "jobs:\n  a:\n    runs-on: macos-latest\n    steps:\n      - uses: actions/checkout@v7\n",
@@ -148,6 +201,7 @@ class CheckTextTest(unittest.TestCase):
             self.assertEqual(check_text.find_self_hosted(f".github/workflows/{file.name}", text), [], file.name)
             self.assertEqual(check_text.find_unhosted_runners(f".github/workflows/{file.name}", text), [], file.name)
             self.assertEqual(check_text.find_unpinned_actions(f".github/workflows/{file.name}", text), [], file.name)
+            self.assertEqual(check_text.find_unpinned_images(f".github/workflows/{file.name}", text), [], file.name)
             self.assertIn("runs-on: macos-latest", text, file.name)
 
 

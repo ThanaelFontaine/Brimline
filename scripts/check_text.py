@@ -1,5 +1,5 @@
-"""Repository text checks: no em or en dash, no personal data, no old product name in tracked text files,
-no self-hosted runner and no unpinned action in the workflows.
+r"""Repository text checks: no em or en dash, no personal data, no old product name in tracked text files,
+no self-hosted runner, no unpinned action and no unpinned image in the workflows.
 
 The old name of the app (see OLD_NAME) may only appear where it is history or migration: the
 files of OLD_NAME_FILES, and the lines that say "Formerly <old name>" (or the French
@@ -11,10 +11,17 @@ every repository of the machine. Without them (on the runners of GitHub, for one
 patterns run.
 
 The repository is public: its workflows run on the runners hosted by GitHub, never on a machine of
-the maintainer, whose code a pull request could run. So the word "self-hosted" may not appear in a
-file of .github/workflows (WORKFLOW_DIR), and every "runs-on:" names one label of a runner hosted by
-GitHub (ubuntu-*, macos-*, windows-*). Every "uses:" of an action is pinned by a full commit SHA of
-40 characters (a tag can be moved); a local action ("./...") is allowed.
+the maintainer, whose code a pull request could run. In a file of .github/workflows (WORKFLOW_DIR):
+- the word "self-hosted" may not appear (YAML escapes such as \x65 are decoded first);
+- every "runs-on:" names one label from the closed list HOSTED_LABELS (standard runners hosted by
+  GitHub), as a plain value or a one item list;
+- every "uses:" of an action is pinned by a full commit SHA of 40 lowercase hex characters (a tag
+  can be moved); a local action ("./...") is allowed; "docker://" images and reusable workflows of
+  another repository are refused;
+- every image of "container:" or "services:" is pinned by a "@sha256:" digest;
+- a line that holds one of the keys runs-on, uses, image or container in any other form (quoted
+  key, flow style "{...}", JSON, escape, explicit "? " key, space before the colon) is refused:
+  what cannot be checked line by line fails.
 Usage: python3 scripts/check_text.py   (exit code 1 when something is found)
 """
 import re
@@ -57,10 +64,27 @@ OLD_NAME_FILES = {
 # The workflows must run on the runners hosted by GitHub (see the top of this file).
 WORKFLOW_DIR = ".github/workflows/"
 SELF_HOSTED = re.compile("self-hosted", re.IGNORECASE)
-HOSTED_LABEL = re.compile(r"^(ubuntu|macos|windows)-[a-z0-9.-]+$")
-RUNS_ON = re.compile(r"^\s*(?:-\s+)?runs-on:(.*)$")
-USES = re.compile(r"^\s*(?:-\s+)?uses:\s*(\S+)")
-FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
+# The labels of the standard runners hosted by GitHub: a closed list, copied from the tables of
+# the official documentation (docs.github.com, Actions, "GitHub-hosted runners", read on
+# 2026-11-08). A made-up label (macos-mini...) is refused; a new GitHub image is added here
+# after reading that page.
+HOSTED_LABELS = {
+    "ubuntu-slim", "ubuntu-latest", "ubuntu-26.04", "ubuntu-24.04", "ubuntu-22.04",
+    "ubuntu-26.04-arm", "ubuntu-24.04-arm", "ubuntu-22.04-arm",
+    "windows-latest", "windows-2025", "windows-2025-vs2026", "windows-2022",
+    "windows-11-arm", "windows-11-vs2026-arm",
+    "macos-latest", "macos-26", "macos-15", "macos-26-intel", "macos-15-intel", "xcode-27",
+}
+# A key of interest, however it is written (quoted, followed by spaces before the colon...).
+WORKFLOW_KEY = re.compile(r"(?<![A-Za-z0-9_-])(runs-on|uses|image|container)[\"']?\s*:")
+KEY_START = re.compile(r"^\s*(?:-\s+)?[\"']?(image|container)[\"']?\s*:")
+RUNS_ON = re.compile(r"^(\s*)(?:-\s+)?runs-on:(?:\s+(.*))?$")
+USES = re.compile(r"^\s*(?:-\s+)?uses:\s+(\S+)$")
+IMAGE = re.compile(r"^\s*(?:-\s+)?image:\s+(\S+)$")
+CONTAINER = re.compile(r"^\s*container:(?:\s+(\S+))?$")
+ACTION = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_./-]+)?@([0-9a-f]{40})$")
+DIGEST = re.compile(r"@sha256:[0-9a-f]{64}$")
+ESCAPE = re.compile(r"\\x([0-9A-Fa-f]{2})|\\u([0-9A-Fa-f]{4})|\\U([0-9A-Fa-f]{8})")
 
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".icns", ".heic",
@@ -93,42 +117,136 @@ def find_old_name(path, text):
             if OLD_NAME.search(line) and not OLD_NAME_LINE.search(line)]
 
 
+def decode_escapes(line):
+    """The line with the YAML escapes \\xNN, \\uNNNN and \\UNNNNNNNN decoded."""
+    def one(match):
+        try:
+            return chr(int(match.group(1) or match.group(2) or match.group(3), 16))
+        except ValueError:
+            return match.group(0)
+    return ESCAPE.sub(one, line)
+
+
+def strip_comment(line):
+    """The line without its trailing comment ("#" at the start or after a blank, outside quotes)."""
+    quote = None
+    for i, c in enumerate(line):
+        if quote:
+            if c == quote:
+                quote = None
+        elif c in "'\"":
+            quote = c
+        elif c == "#" and (i == 0 or line[i - 1] in " \t"):
+            return line[:i].rstrip()
+    return line.rstrip()
+
+
+def unquote(value):
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        return value[1:-1]
+    return value
+
+
+def hosted_label(value):
+    """True when value is one label of HOSTED_LABELS, plain, quoted or in a one item list."""
+    if value.startswith("["):
+        match = re.fullmatch(r"\[([^\[\]{},]*)\]", value)
+        if not match:
+            return False
+        value = match.group(1)
+    return unquote(value) in HOSTED_LABELS
+
+
+def workflow_lines(path, text, keys):
+    """(line number, line without comment, next lines) for each line holding one of keys."""
+    if not path.startswith(WORKFLOW_DIR):
+        return
+    lines = text.split("\n")
+    for i, raw in enumerate(lines):
+        line = strip_comment(raw)
+        found = set()
+        for candidate in (line, decode_escapes(line)):
+            for m in WORKFLOW_KEY.finditer(candidate):
+                # "image" and "container" also occur in prose ("disk image: ..."): they count
+                # as keys at the start of a line, or on a line in flow style.
+                if m.group(1) in ("runs-on", "uses") or "{" in candidate or KEY_START.match(candidate):
+                    found.add(m.group(1))
+        if line.lstrip().startswith("?") and "runs-on" in keys:
+            found.add("runs-on")
+        if found & set(keys):
+            yield i + 1, line, lines[i + 1:]
+
+
+def unverifiable(line):
+    """A form this check cannot read line by line: flow style, escape, explicit key."""
+    return "{" in line or "\\" in line or line.lstrip().startswith("?")
+
+
 def find_self_hosted(path, text):
     """Line numbers (1 based) naming a self-hosted runner, in a file of the workflows folder."""
     if not path.startswith(WORKFLOW_DIR):
         return []
-    return [i + 1 for i, line in enumerate(text.split("\n")) if SELF_HOSTED.search(line)]
+    return [i + 1 for i, line in enumerate(text.split("\n")) if SELF_HOSTED.search(decode_escapes(line))]
 
 
 def find_unhosted_runners(path, text):
-    """Line numbers (1 based) of a "runs-on:" that is not one label of a runner hosted by GitHub."""
-    if not path.startswith(WORKFLOW_DIR):
-        return []
+    """Line numbers (1 based) of a "runs-on" that is not one label of HOSTED_LABELS, or not readable."""
     hits = []
-    for i, line in enumerate(text.split("\n")):
-        match = RUNS_ON.match(line.split(" #")[0])
-        if match:
-            value = match.group(1).strip().strip("'\"")
-            if not HOSTED_LABEL.match(value):
-                hits.append(i + 1)
+    for number, line, rest in workflow_lines(path, text, ["runs-on"]):
+        match = None if unverifiable(line) else RUNS_ON.match(line)
+        if not match:
+            hits.append(number)
+            continue
+        indent, value = match.group(1), (match.group(2) or "").strip()
+        if not value:
+            # Block form: exactly one "- label" item, indented deeper.
+            items = []
+            for following in rest:
+                following = strip_comment(following)
+                if following.strip() and len(following) - len(following.lstrip()) <= len(indent):
+                    break
+                if following.strip():
+                    items.append(following.strip())
+            value = items[0][2:].strip() if len(items) == 1 and items[0].startswith("- ") else ""
+        if not hosted_label(value):
+            hits.append(number)
     return hits
 
 
 def find_unpinned_actions(path, text):
-    """Line numbers (1 based) of a "uses:" of an action that is not pinned by a full commit SHA."""
-    if not path.startswith(WORKFLOW_DIR):
-        return []
+    """Line numbers (1 based) of a "uses" that is not a local action or an action pinned by a full commit SHA."""
     hits = []
-    for i, line in enumerate(text.split("\n")):
-        match = USES.match(line)
-        if not match:
-            continue
-        target = match.group(1).strip("'\"")
+    for number, line, _ in workflow_lines(path, text, ["uses"]):
+        match = None if unverifiable(line) else USES.match(line)
+        target = unquote(match.group(1)) if match else ""
         if target.startswith("./"):
             continue
-        reference = target.rsplit("@", 1)[1] if "@" in target else ""
-        if not FULL_SHA.match(reference):
-            hits.append(i + 1)
+        if not match or "/.github/workflows/" in target or not ACTION.match(target):
+            hits.append(number)
+    return hits
+
+
+def find_unpinned_images(path, text):
+    """Line numbers (1 based) of a "container" or "image" that is not pinned by a sha256 digest, or not readable."""
+    hits = []
+    for number, line, _ in workflow_lines(path, text, ["image", "container"]):
+        if unverifiable(line):
+            hits.append(number)
+            continue
+        image = IMAGE.match(line)
+        container = CONTAINER.match(line)
+        if image:
+            value = unquote(image.group(1))
+        elif container:
+            if not container.group(1):
+                continue
+            value = unquote(container.group(1))
+        else:
+            hits.append(number)
+            continue
+        if not DIGEST.search(value):
+            hits.append(number)
     return hits
 
 
@@ -165,6 +283,7 @@ def main():
         problems += [f"{name}: line {n}: self-hosted runner" for n in find_self_hosted(name, text)]
         problems += [f"{name}: line {n}: runner not hosted by GitHub" for n in find_unhosted_runners(name, text)]
         problems += [f"{name}: line {n}: action not pinned by a full commit SHA" for n in find_unpinned_actions(name, text)]
+        problems += [f"{name}: line {n}: image not pinned by a sha256 digest" for n in find_unpinned_images(name, text)]
         problems += [f"{name}: {hit}" for hit in find_personal_data(name, text, patterns)]
     for p in problems:
         print(p)
