@@ -113,6 +113,7 @@ IMAGE = re.compile(r"^\s*(?:-\s+)?image:\s+(\S+)$")
 CONTAINER = re.compile(r"^(\s*)container:(?:\s+(\S+))?$")
 CONTAINER_MAPPING = re.compile(r"^\s*container:\s+\{\s*image:\s+([^\s{},]+)\s*\}$")
 ACTION = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_./-]+)?@([0-9a-f]{40})$")
+ACTION_KEYS = {"name", "description", "author", "inputs", "outputs", "runs", "branding"}
 LOCAL_WORKFLOW = re.compile(r"^\./\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml$")
 DIGEST = re.compile(r"@sha256:[0-9a-f]{64}$")
 ESCAPE = re.compile(r"\\x([0-9A-Fa-f]{2})|\\u([0-9A-Fa-f]{4})|\\U([0-9A-Fa-f]{8})")
@@ -489,6 +490,11 @@ def find_action_structure_problems(text):
     problems = []
     if any(SELF_HOSTED.search(s) for s in strings(doc)):
         problems.append("(file): self-hosted runner")
+    if isinstance(doc, dict):
+        for key in doc:
+            if key not in ACTION_KEYS:
+                problems.append(f"{key}: top-level key not allowed in an action file "
+                                "(only name, description, author, inputs, outputs, runs, branding)")
     runs = doc.get("runs") if isinstance(doc, dict) else None
     if not isinstance(runs, dict):
         return problems + ["runs: missing or not a mapping (the action is not a mapping, or has no runs)"]
@@ -508,18 +514,20 @@ def parse_yaml(text):
         return None, f"YAML refused by the structure check: {first}"
 
 
-def local_action_targets(text):
-    """The "./<path>" targets of the steps of a workflow (jobs.*.steps) or of a composite action (runs.steps)."""
+def local_action_targets(text, kind="workflow"):
+    """The "./<path>" targets of the steps of a workflow (jobs.*.steps) or of a composite action (runs.steps).
+    The kind is given by the caller, never guessed from the keys: the runner ignores `jobs` in an action file."""
     if yaml is None:
         return []
     doc, error = parse_yaml(text)
     if error or not isinstance(doc, dict):
         return []
     lists = []
-    if isinstance(doc.get("jobs"), dict):
+    if kind == "action":
+        if isinstance(doc.get("runs"), dict):
+            lists = [doc["runs"].get("steps")]
+    elif isinstance(doc.get("jobs"), dict):
         lists = [job.get("steps") for job in doc["jobs"].values() if isinstance(job, dict)]
-    elif isinstance(doc.get("runs"), dict):
-        lists = [doc["runs"].get("steps")]
     return [step["uses"] for steps in lists if isinstance(steps, list) for step in steps
             if isinstance(step, dict) and isinstance(step.get("uses"), str) and step["uses"].startswith("./")]
 
@@ -538,15 +546,16 @@ def local_action_files(target, files):
     return found, None
 
 
-def find_local_action_problems(path, text, files, read, checked=None):
+def find_local_action_problems(path, text, files, read, checked=None, kind="workflow"):
     """Check C: every local action ("uses: ./<path>") of a file of the workflows folder must exist as a tracked
     action.yml or action.yaml, and that file passes the checks of the workflows (A and B), its own local
-    actions included. Returns (file, "problem") pairs; `checked` keeps an action file from being read twice."""
+    actions included. `kind` is "workflow" for a workflow, "action" for an action file. Returns (file, "problem")
+    pairs; `checked` keeps an action file from being read twice."""
     if not path.startswith(WORKFLOW_DIR):
         return []
     checked = set() if checked is None else checked
     problems = []
-    for target in local_action_targets(text):
+    for target in local_action_targets(text, kind):
         found, reason = local_action_files(target, files)
         if reason:
             problems.append((path, reason))
@@ -562,7 +571,7 @@ def find_local_action_problems(path, text, files, read, checked=None):
                 continue
             problems += [(name, hit) for hit in text_problems(content)]
             problems += [(name, hit) for hit in find_action_structure_problems(content)]
-            problems += find_local_action_problems(WORKFLOW_DIR, content, files, read, checked)
+            problems += find_local_action_problems(WORKFLOW_DIR, content, files, read, checked, "action")
     return problems
 
 

@@ -415,6 +415,37 @@ class LocalActionTest(unittest.TestCase):
         self.assertEqual(len(problems), 1)
         self.assertIn("PyYAML missing", problems[0])
 
+    def test_a_jobs_key_in_an_action_file_does_not_hide_its_local_actions(self):
+        hidden = "name: setup\njobs: {}\n" + COMPOSITE.split("name: setup\n", 1)[1] + "    - uses: ./.github/actions/evil\n"
+        evil = COMPOSITE.replace(f"actions/checkout@{SHA}", "someone/evil@main").replace("name: setup", "name: evil")
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: hidden, ".github/actions/evil/action.yml": evil})
+        self.assertEqual(out.returncode, 1, out.stdout)
+        self.assertIn(".github/actions/evil/action.yml: runs.steps[0].uses: action not pinned by a full commit SHA", out.stdout)
+        self.assertIn(f"{ACTION_FILE}: jobs: top-level key not allowed in an action file", out.stdout)
+
+    def test_a_jobs_key_with_steps_in_an_action_file_does_not_hide_a_missing_target(self):
+        text = "name: setup\njobs:\n  a:\n    steps: []\n" + COMPOSITE.split("name: setup\n", 1)[1] + "    - uses: ./.github/actions/absente\n"
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: text})
+        self.assertEqual(out.returncode, 1, out.stdout)
+        self.assertIn("uses ./.github/actions/absente: no action.yml or action.yaml tracked", out.stdout)
+
+    def test_the_kind_of_the_file_decides_which_steps_are_read(self):
+        both = ("on: push\njobs:\n  a:\n    runs-on: macos-latest\n    steps:\n      - uses: ./.github/actions/one\n"
+                "runs:\n  steps:\n    - uses: ./.github/actions/two\n")
+        self.assertEqual(check_text.local_action_targets(both), ["./.github/actions/one"])
+        self.assertEqual(check_text.local_action_targets(both, "action"), ["./.github/actions/two"])
+
+    def test_a_top_level_key_outside_the_action_schema_fails(self):
+        for key in ("jobs: {}", "on: push", "steps: []", "extra: 1"):
+            with self.subTest(key):
+                problems = check_text.find_action_structure_problems("name: x\n" + key + "\n" + COMPOSITE.split("name: x\n")[-1].replace("name: setup\n", ""))
+                self.assertTrue(any("top-level key not allowed" in p for p in problems), problems)
+
+    def test_the_allowed_top_level_keys_of_an_action_pass(self):
+        text = ("name: x\ndescription: d\nauthor: a\ninputs: {}\noutputs: {}\nbranding: {icon: box}\n"
+                + COMPOSITE.split("name: setup\n", 1)[1])
+        self.assertEqual(check_text.find_action_structure_problems(text), [])
+
     def test_only_the_workflows_are_followed(self):
         self.assertEqual(check_text.find_local_action_problems("docs/ci.md", LOCAL_WF, set(), lambda n: ""), [])
 
