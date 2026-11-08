@@ -39,9 +39,15 @@ B. A structure check: the file is parsed by PyYAML (version pinned by hashes in
    "@sha256:" digest, and no string of the file holds "self-hosted". A parse error, an
    unexpected type or a missing PyYAML fail the check (fail closed).
 
+C. A check of the local actions: every "uses: ./<path>" of a workflow (and of the action files it
+   reaches) must point to a folder holding a tracked action.yml or action.yaml. That file goes through
+   A and B (every remote "uses" pinned by a full commit SHA, no unreadable form) and must be a
+   composite action. A target that is missing, unreadable or outside the repository fails the run.
+
 Usage: python3 scripts/check_text.py   (exit code 1 when something is found; PyYAML needed:
 pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt)
 """
+import posixpath
 import re
 import subprocess
 import sys
@@ -259,6 +265,11 @@ def find_workflow_text_problems(path, text):
     """Check A: one "line N: problem" entry per problem of a file of the workflows folder."""
     if not path.startswith(WORKFLOW_DIR):
         return []
+    return text_problems(text)
+
+
+def text_problems(text):
+    """Check A on a workflow text (also used on the action files a workflow reaches)."""
     problems = []
     lines = text.split("\n")
     block = None  # (column of the parent, indent of the content or None) inside a block scalar
@@ -407,11 +418,9 @@ def find_workflow_structure_problems(path, text):
     if yaml is None:
         return ["PyYAML missing, the workflow cannot be parsed (fail closed): "
                 "pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt"]
-    try:
-        doc = yaml.load(text, Loader=StrictLoader)
-    except (yaml.YAMLError, ValueError, TypeError, RecursionError) as error:
-        first = str(error).strip().splitlines()[0] if str(error).strip() else type(error).__name__
-        return [f"YAML refused by the structure check: {first}"]
+    doc, error = parse_yaml(text)
+    if error:
+        return [error]
     problems = []
     if any(SELF_HOSTED.search(s) for s in strings(doc)):
         problems.append("(file): self-hosted runner")
@@ -450,17 +459,110 @@ def find_workflow_structure_problems(path, text):
                     if reason:
                         problems.append(f"{place}.services.{service_id}: {reason}")
         if "steps" in job:
-            steps = job["steps"]
-            if not isinstance(steps, list):
-                problems.append(f"{place}.steps: not a list")
+            problems += steps_problems(place, job["steps"])
+    return problems
+
+
+def steps_problems(place, steps):
+    """One "<place>.steps[n]...: problem" entry per problem of a list of steps."""
+    if not isinstance(steps, list):
+        return [f"{place}.steps: not a list"]
+    problems = []
+    for rank, step in enumerate(steps):
+        if not isinstance(step, dict):
+            problems.append(f"{place}.steps[{rank}]: the step is not a mapping")
+        elif "uses" in step:
+            reason = action_problem(step["uses"])
+            if reason:
+                problems.append(f"{place}.steps[{rank}].uses: {reason}")
+    return problems
+
+
+def find_action_structure_problems(text):
+    """Check B on the file of a local action: only a composite action is accepted, its steps follow the rules of the workflows."""
+    if yaml is None:
+        return ["PyYAML missing, the action cannot be parsed (fail closed): "
+                "pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt"]
+    doc, error = parse_yaml(text)
+    if error:
+        return [error]
+    problems = []
+    if any(SELF_HOSTED.search(s) for s in strings(doc)):
+        problems.append("(file): self-hosted runner")
+    runs = doc.get("runs") if isinstance(doc, dict) else None
+    if not isinstance(runs, dict):
+        return problems + ["runs: missing or not a mapping (the action is not a mapping, or has no runs)"]
+    if runs.get("using") != "composite":
+        return problems + ["runs.using: only a composite action can be checked (not a JavaScript or Docker action)"]
+    if "steps" not in runs:
+        return problems + ["runs.steps: missing"]
+    return problems + steps_problems("runs", runs["steps"])
+
+
+def parse_yaml(text):
+    """(document, None) or (None, the message of the refusal) with the strict loader."""
+    try:
+        return yaml.load(text, Loader=StrictLoader), None
+    except (yaml.YAMLError, ValueError, TypeError, RecursionError) as error:
+        first = str(error).strip().splitlines()[0] if str(error).strip() else type(error).__name__
+        return None, f"YAML refused by the structure check: {first}"
+
+
+def local_action_targets(text):
+    """The "./<path>" targets of the steps of a workflow (jobs.*.steps) or of a composite action (runs.steps)."""
+    if yaml is None:
+        return []
+    doc, error = parse_yaml(text)
+    if error or not isinstance(doc, dict):
+        return []
+    lists = []
+    if isinstance(doc.get("jobs"), dict):
+        lists = [job.get("steps") for job in doc["jobs"].values() if isinstance(job, dict)]
+    elif isinstance(doc.get("runs"), dict):
+        lists = [doc["runs"].get("steps")]
+    return [step["uses"] for steps in lists if isinstance(steps, list) for step in steps
+            if isinstance(step, dict) and isinstance(step.get("uses"), str) and step["uses"].startswith("./")]
+
+
+def local_action_files(target, files):
+    """(the tracked action.yml / action.yaml files of a "./<path>" target, the problem or None)."""
+    if "${{" in target or "\\" in target:
+        return [], f"uses {target}: local action path not checkable (expression or backslash)"
+    folder = posixpath.normpath(target[2:] or ".")
+    if folder == ".." or folder.startswith("../") or folder.startswith("/"):
+        return [], f"uses {target}: local action outside the repository"
+    found = [name for name in (posixpath.join(folder, "action.yml"), posixpath.join(folder, "action.yaml"))
+             if name in files]
+    if not found:
+        return [], f"uses {target}: no action.yml or action.yaml tracked in {folder}"
+    return found, None
+
+
+def find_local_action_problems(path, text, files, read, checked=None):
+    """Check C: every local action ("uses: ./<path>") of a file of the workflows folder must exist as a tracked
+    action.yml or action.yaml, and that file passes the checks of the workflows (A and B), its own local
+    actions included. Returns (file, "problem") pairs; `checked` keeps an action file from being read twice."""
+    if not path.startswith(WORKFLOW_DIR):
+        return []
+    checked = set() if checked is None else checked
+    problems = []
+    for target in local_action_targets(text):
+        found, reason = local_action_files(target, files)
+        if reason:
+            problems.append((path, reason))
+            continue
+        for name in found:
+            if name in checked:
                 continue
-            for rank, step in enumerate(steps):
-                if not isinstance(step, dict):
-                    problems.append(f"{place}.steps[{rank}]: the step is not a mapping")
-                elif "uses" in step:
-                    reason = action_problem(step["uses"])
-                    if reason:
-                        problems.append(f"{place}.steps[{rank}].uses: {reason}")
+            checked.add(name)
+            try:
+                content = read(name)
+            except (OSError, UnicodeDecodeError) as error:
+                problems.append((name, f"action file unreadable ({type(error).__name__})"))
+                continue
+            problems += [(name, hit) for hit in text_problems(content)]
+            problems += [(name, hit) for hit in find_action_structure_problems(content)]
+            problems += find_local_action_problems(WORKFLOW_DIR, content, files, read, checked)
     return problems
 
 
@@ -481,6 +583,8 @@ def main():
     listing = subprocess.run(["git", "ls-files", "-z"], cwd=root, capture_output=True, text=True, check=True).stdout
     files = [name for name in listing.split("\0") if name]
     patterns = GENERIC_PATTERNS + local_patterns([root / ".check-text.local", Path.home() / ".config/check-text/patterns"])
+    tracked = set(files)
+    checked = set()
     problems = []
     for name in files:
         path = root / name
@@ -496,6 +600,8 @@ def main():
         problems += [f"{name}: line {n}: old product name" for n in find_old_name(name, text)]
         problems += [f"{name}: {hit}" for hit in find_workflow_text_problems(name, text)]
         problems += [f"{name}: {hit}" for hit in find_workflow_structure_problems(name, text)]
+        problems += [f"{file}: {hit}" for file, hit in find_local_action_problems(
+            name, text, tracked, lambda n: (root / n).read_text(encoding="utf-8"), checked)]
         problems += [f"{name}: {hit}" for hit in find_personal_data(name, text, patterns)]
     for p in problems:
         print(p)

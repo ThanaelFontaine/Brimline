@@ -1,6 +1,6 @@
 The `antigravity-usage-*.txt` files are test data for `agy --print /usage`.
 
-`antigravity-usage-normal.txt` has the form of the real text, seen on Antigravity CLI 1.4.8 on the Mac mini on
+`antigravity-usage-normal.txt` has the form of the real text, seen on Antigravity CLI 1.4.8 on a Mac on
 27/10/2026 (`agy --print /usage --sandbox`, a free Google account): no header line, four columns separated by tabs
 (group, name of the limit, percentage remaining, reset time in ISO 8601), two windows (`Five Hour`, `Weekly`), a group
 of other vendors' models (`Claude and GPT models`) and a limit of one model (`Gemini 4 Argon Weekly Limit`). The

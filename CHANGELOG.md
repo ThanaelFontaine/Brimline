@@ -148,7 +148,7 @@ First version, private: the repository and the site are not public yet. The full
 ### What does not work yet
 
 - ChatGPT, Gemini and Grok are not supported: only Claude accounts are read.
-- Only the Mac mini has been used: the MacBook Pro and macOS 14 (Sonoma) are not tried yet.
+- Only one Mac has been used: the MacBook Pro and macOS 14 (Sonoma) are not tried yet.
 - The usage endpoint is not documented by Anthropic: it may change or stop answering without notice, and Sightglass says so in words when it does.
 
 ### Added
