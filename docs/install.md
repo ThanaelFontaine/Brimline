@@ -104,6 +104,7 @@ swift build                     # debug build
 swift test                      # tests (Swift Testing)
 swift run brimline status       # the command, from the sources
 swift run brimline-snapshots    # renders docs/images/ from fictitious data
+pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt   # once: PyYAML for the workflow checks
 python3 scripts/check_text.py   # text rules
 ```
 

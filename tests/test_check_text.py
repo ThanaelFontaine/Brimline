@@ -349,5 +349,106 @@ class WorkflowCheckTest(unittest.TestCase):
             self.assertIn("runs-on: macos-latest", text, file.name)
 
 
+ACTION_FILE = ".github/actions/setup/action.yml"
+LOCAL_WF = ("on: push\njobs:\n  a:\n    runs-on: macos-latest\n    steps:\n"
+            "      - uses: ./.github/actions/setup\n")
+COMPOSITE = ("name: setup\nruns:\n  using: composite\n  steps:\n"
+             f"    - uses: actions/checkout@{SHA}\n    - run: id\n      shell: bash\n")
+
+
+class LocalActionTest(unittest.TestCase):
+    def test_a_conforming_local_action_passes(self):
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: COMPOSITE})
+        self.assertEqual(out.returncode, 0, out.stdout)
+
+    def test_a_local_action_with_an_unpinned_action_fails(self):
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: COMPOSITE.replace(f"@{SHA}", "@v7")})
+        self.assertEqual(out.returncode, 1)
+        self.assertIn(f"{ACTION_FILE}: line 5: action not pinned by a full commit SHA", out.stdout)
+        self.assertIn(f"{ACTION_FILE}: runs.steps[0].uses: action not pinned by a full commit SHA", out.stdout)
+
+    def test_a_missing_target_fails(self):
+        out = run_in_repo({WF: LOCAL_WF})
+        self.assertEqual(out.returncode, 1)
+        self.assertIn(f"{WF}: uses ./.github/actions/setup: no action.yml or action.yaml tracked in .github/actions/setup",
+                      out.stdout)
+
+    def test_an_action_yaml_target_is_found(self):
+        out = run_in_repo({WF: LOCAL_WF, ".github/actions/setup/action.yaml": COMPOSITE})
+        self.assertEqual(out.returncode, 0, out.stdout)
+
+    def test_an_unreadable_target_fails(self):
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: "runs: {\n"})
+        self.assertEqual(out.returncode, 1)
+        self.assertIn(f"{ACTION_FILE}: ", out.stdout)
+
+    def test_a_target_that_is_not_a_composite_action_fails(self):
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: "runs:\n  using: node20\n  main: index.js\n"})
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("runs.using: only a composite action can be checked", out.stdout)
+
+    def test_a_nested_local_action_is_followed(self):
+        nested = COMPOSITE + "    - uses: ./.github/actions/inner\n"
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: nested})
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("uses ./.github/actions/inner: no action.yml or action.yaml tracked", out.stdout)
+
+    def test_two_actions_that_call_each_other_do_not_loop(self):
+        a = COMPOSITE + "    - uses: ./.github/actions/other\n"
+        b = COMPOSITE + "    - uses: ./.github/actions/setup\n"
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: a, ".github/actions/other/action.yml": b})
+        self.assertEqual(out.returncode, 0, out.stdout)
+
+    def test_a_target_outside_the_repository_or_built_by_an_expression_fails(self):
+        for target in ("./../outside", "./${{ matrix.path }}"):
+            with self.subTest(target):
+                text = LOCAL_WF.replace("./.github/actions/setup", target)
+                self.assertNotEqual(check_text.find_local_action_problems(WF, text, set(), lambda n: ""), [])
+
+    def test_the_action_check_fails_closed_without_pyyaml(self):
+        saved = check_text.yaml
+        check_text.yaml = None
+        try:
+            problems = check_text.find_action_structure_problems(COMPOSITE)
+        finally:
+            check_text.yaml = saved
+        self.assertEqual(len(problems), 1)
+        self.assertIn("PyYAML missing", problems[0])
+
+    def test_a_jobs_key_in_an_action_file_does_not_hide_its_local_actions(self):
+        hidden = "name: setup\njobs: {}\n" + COMPOSITE.split("name: setup\n", 1)[1] + "    - uses: ./.github/actions/evil\n"
+        evil = COMPOSITE.replace(f"actions/checkout@{SHA}", "someone/evil@main").replace("name: setup", "name: evil")
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: hidden, ".github/actions/evil/action.yml": evil})
+        self.assertEqual(out.returncode, 1, out.stdout)
+        self.assertIn(".github/actions/evil/action.yml: runs.steps[0].uses: action not pinned by a full commit SHA", out.stdout)
+        self.assertIn(f"{ACTION_FILE}: jobs: top-level key not allowed in an action file", out.stdout)
+
+    def test_a_jobs_key_with_steps_in_an_action_file_does_not_hide_a_missing_target(self):
+        text = "name: setup\njobs:\n  a:\n    steps: []\n" + COMPOSITE.split("name: setup\n", 1)[1] + "    - uses: ./.github/actions/absente\n"
+        out = run_in_repo({WF: LOCAL_WF, ACTION_FILE: text})
+        self.assertEqual(out.returncode, 1, out.stdout)
+        self.assertIn("uses ./.github/actions/absente: no action.yml or action.yaml tracked", out.stdout)
+
+    def test_the_kind_of_the_file_decides_which_steps_are_read(self):
+        both = ("on: push\njobs:\n  a:\n    runs-on: macos-latest\n    steps:\n      - uses: ./.github/actions/one\n"
+                "runs:\n  steps:\n    - uses: ./.github/actions/two\n")
+        self.assertEqual(check_text.local_action_targets(both), ["./.github/actions/one"])
+        self.assertEqual(check_text.local_action_targets(both, "action"), ["./.github/actions/two"])
+
+    def test_a_top_level_key_outside_the_action_schema_fails(self):
+        for key in ("jobs: {}", "on: push", "steps: []", "extra: 1"):
+            with self.subTest(key):
+                problems = check_text.find_action_structure_problems("name: x\n" + key + "\n" + COMPOSITE.split("name: x\n")[-1].replace("name: setup\n", ""))
+                self.assertTrue(any("top-level key not allowed" in p for p in problems), problems)
+
+    def test_the_allowed_top_level_keys_of_an_action_pass(self):
+        text = ("name: x\ndescription: d\nauthor: a\ninputs: {}\noutputs: {}\nbranding: {icon: box}\n"
+                + COMPOSITE.split("name: setup\n", 1)[1])
+        self.assertEqual(check_text.find_action_structure_problems(text), [])
+
+    def test_only_the_workflows_are_followed(self):
+        self.assertEqual(check_text.find_local_action_problems("docs/ci.md", LOCAL_WF, set(), lambda n: ""), [])
+
+
 if __name__ == "__main__":
     unittest.main()

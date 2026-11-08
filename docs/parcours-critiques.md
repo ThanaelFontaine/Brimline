@@ -12,7 +12,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 ### J1: text rules
 
 - Proves: no em or en dash, no personal data (home paths, personal addresses) and no old product name in tracked text files.
-- How: `python3 scripts/check_text.py`
+- How: `pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt` (once, PyYAML is required), then `python3 scripts/check_text.py`
 - Expected: exit code 0.
 - Automated: CI (step "Text rules").
 - Result on 2026-10-28: green.
@@ -22,7 +22,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 ### J2: tests of the repository scripts
 
 - Proves: the text checker, the design tokens and the menu bar design contract (`tests/test_*.py`).
-- How: `python3 -m unittest discover -s tests -v`
+- How: `pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt` (once, PyYAML is required), then `python3 -m unittest discover -s tests -v`
 - Expected: all tests pass.
 - Automated: CI (step "Script tests").
 - Result on 2026-10-28: green.
@@ -134,4 +134,4 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 2. Replay it for real before writing "green". Use fixtures, fake HTTP or temporary homes only: never a real account, a real token or the maintainer's session (the one exception is a manual journey run read only on the maintainer's own Mac, as J10 and J11).
 3. A journey that cannot be checked locally is written "not verifiable" with the reason.
 4. If it is an automatic check, say where it runs (CI step or test name); if it is not in `.github/workflows/checks.yml`, say why.
-5. Update the date and the commit at the top. Keep the file free of anything private; `python3 scripts/check_text.py` must pass.
+5. Update the date and the commit at the top. Keep the file free of anything private; `pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt` once, then `python3 scripts/check_text.py` must pass.
