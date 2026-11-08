@@ -1,5 +1,5 @@
-"""Repository text checks: no em or en dash, no personal data, no old product name in tracked text files,
-and no self-hosted runner in the workflows.
+r"""Repository text checks: no em or en dash, no personal data, no old product name in tracked text files,
+and, in the workflows, GitHub-hosted runners only, pinned actions and pinned images.
 
 The old name of the app (see OLD_NAME) may only appear where it is history or migration: the
 files of OLD_NAME_FILES, and the lines that say "Formerly <old name>" (or the French
@@ -11,14 +11,46 @@ every repository of the machine. Without them (on the runners of GitHub, for one
 patterns run.
 
 The repository is public: its workflows run on the runners hosted by GitHub, never on a machine of
-the maintainer, whose code a pull request could run. So the word "self-hosted" may not appear in a
-file of .github/workflows (WORKFLOW_DIR).
-Usage: python3 scripts/check_text.py   (exit code 1 when something is found)
+the maintainer, whose code a pull request could run. Every file of .github/workflows (WORKFLOW_DIR)
+goes through two checks, and each one alone fails the run:
+
+A. A text check, line by line, with the YAML escapes \x, \u and \U decoded. It refuses every YAML
+   form it cannot follow:
+   - a line ending with "\", a quoted string still open at the end of the line, a flow mapping or
+     sequence ("{", "[") not closed on the same line, an unclosed "${{" expression;
+   - an explicit key "?", an anchor "&", an alias "*" or a tag "!" where a value starts, a
+     document marker ("---", "...") or a "%" directive;
+   - the word "self-hosted" anywhere, comments included;
+   - one of the words runs-on, uses, image, container (any case) in a comment, or on a line that
+     is not exactly one of the known forms: "runs-on: <label>" (plain value, one item list, or a
+     block of one "- <label>" item), "uses: <target>", "image: <image>", "container: <image>",
+     "container: {image: <image>}", or "container:" followed by a mapping;
+   - a label outside the closed list HOSTED_LABELS (standard runners hosted by GitHub), an action
+     not pinned by a full commit SHA of 40 lowercase hex characters (a local action "./..." is
+     allowed; "docker://" images and reusable workflows of another repository are refused), an
+     image of "container:" or "services:" without a "@sha256:" digest.
+   The content of a block scalar ("run: |") is only searched for "self-hosted".
+
+B. A structure check: the file is parsed by PyYAML (version pinned by hashes in
+   scripts/requirements-check.txt), with duplicate keys and "<<" merge keys refused. Every job
+   is checked: "runs-on" is one label of HOSTED_LABELS (a string, or a one item list), the "uses"
+   of a job is a local workflow "./.github/workflows/...", every "steps[].uses" follows the rules
+   of A, "container" (a string or a mapping with "image") and "services.*.image" carry a
+   "@sha256:" digest, and no string of the file holds "self-hosted". A parse error, an
+   unexpected type or a missing PyYAML fail the check (fail closed).
+
+Usage: python3 scripts/check_text.py   (exit code 1 when something is found; PyYAML needed:
+pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt)
 """
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+try:
+    import yaml
+except ImportError:  # fail closed: check B reports it for every workflow
+    yaml = None
 
 EM_DASH = chr(0x2014)
 EN_DASH = chr(0x2013)
@@ -55,6 +87,36 @@ OLD_NAME_FILES = {
 # The workflows must run on the runners hosted by GitHub (see the top of this file).
 WORKFLOW_DIR = ".github/workflows/"
 SELF_HOSTED = re.compile("self-hosted", re.IGNORECASE)
+# The labels of the standard runners hosted by GitHub: a closed list, copied from the tables of
+# the official documentation (docs.github.com, Actions, "GitHub-hosted runners", read on
+# 2026-11-08). A made-up label (macos-mini...) is refused; a new GitHub image is added here
+# after reading that page.
+HOSTED_LABELS = {
+    "ubuntu-slim", "ubuntu-latest", "ubuntu-26.04", "ubuntu-24.04", "ubuntu-22.04",
+    "ubuntu-26.04-arm", "ubuntu-24.04-arm", "ubuntu-22.04-arm",
+    "windows-latest", "windows-2025", "windows-2025-vs2026", "windows-2022",
+    "windows-11-arm", "windows-11-vs2026-arm",
+    "macos-latest", "macos-26", "macos-15", "macos-26-intel", "macos-15-intel", "xcode-27",
+}
+_LEFT, _RIGHT = r"(?<![A-Za-z0-9_-])", r"(?![A-Za-z0-9_-])"
+KEYWORD = re.compile(_LEFT + r"(runs-on|uses|image|container)" + _RIGHT, re.IGNORECASE)
+KEYWORD_OR_SELF_HOSTED = re.compile(_LEFT + r"(runs-on|uses|image|container|self-hosted)" + _RIGHT, re.IGNORECASE)
+RUNS_ON = re.compile(r"^(\s*)(?:-\s+)?runs-on:(?:\s+(.*))?$")
+USES = re.compile(r"^\s*(?:-\s+)?uses:\s+(\S+)$")
+IMAGE = re.compile(r"^\s*(?:-\s+)?image:\s+(\S+)$")
+CONTAINER = re.compile(r"^(\s*)container:(?:\s+(\S+))?$")
+CONTAINER_MAPPING = re.compile(r"^\s*container:\s+\{\s*image:\s+([^\s{},]+)\s*\}$")
+ACTION = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_./-]+)?@([0-9a-f]{40})$")
+LOCAL_WORKFLOW = re.compile(r"^\./\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml$")
+DIGEST = re.compile(r"@sha256:[0-9a-f]{64}$")
+ESCAPE = re.compile(r"\\x([0-9A-Fa-f]{2})|\\u([0-9A-Fa-f]{4})|\\U([0-9A-Fa-f]{8})")
+# Start of a block scalar: "key: |", "- key: >-", "- |" (a plain key, nothing else).
+BLOCK = re.compile(r"^( *)((?:- +)*)([A-Za-z0-9_.-]+: +)?[|>][+-]?$")
+# A YAML indicator (? & * !) where a value starts: start of line, after "- ", ": ", "? ", or
+# after "[", "{", ",".
+INDICATOR = re.compile(r"(?:^\s*(?:-\s+)*|:\s+|\?\s+|[\[{,]\s*)[?&*!]")
+MAPPING_KEY = re.compile(r"^\s+[A-Za-z0-9_-]+:(\s|$)")
+NOT_CHECKABLE = "workflow form not checkable"
 
 BINARY_EXTENSIONS = {
     ".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".icns", ".heic",
@@ -87,11 +149,319 @@ def find_old_name(path, text):
             if OLD_NAME.search(line) and not OLD_NAME_LINE.search(line)]
 
 
-def find_self_hosted(path, text):
-    """Line numbers (1 based) naming a self-hosted runner, in a file of the workflows folder."""
+def decode_escapes(line):
+    """The line with the YAML escapes \\xNN, \\uNNNN and \\UNNNNNNNN decoded."""
+    def one(match):
+        try:
+            return chr(int(match.group(1) or match.group(2) or match.group(3), 16))
+        except ValueError:
+            return match.group(0)
+    return ESCAPE.sub(one, line)
+
+
+def value_start(before):
+    """True when a quote right after `before` opens a YAML string (and is not a character of a plain value)."""
+    p = before.rstrip()
+    return p == "" or p[-1] in "[{,:" or re.search(r"(?:^|\s)[-?]$", p) is not None
+
+
+def scan(line):
+    r"""Reads one line the way YAML would, without parsing it.
+
+    Returns (code, comment, mask, open_reason): code is the line without its comment, mask is the
+    code with the content of quoted strings and of ${{ }} expressions blanked, open_reason says
+    what is left open at the end of the line (a string, an expression, a flow collection), or is
+    None. In a double quoted string the character after "\" is skipped.
+    """
+    mask, i, n, depth, open_reason = [], 0, len(line), 0, None
+    while i < n:
+        c = line[i]
+        if c == "#" and (i == 0 or line[i - 1] in " \t"):
+            break
+        if line.startswith("${{", i):
+            end = line.find("}}", i + 3)
+            if end < 0:
+                open_reason = "${{ expression not closed on the line"
+                mask.append(" " * (n - i))
+                i = n
+                break
+            mask.append("$" + " " * (end + 1 - i))
+            i = end + 2
+            continue
+        if c in "'\"" and value_start("".join(mask)):
+            j = i + 1
+            while j < n:
+                if c == '"' and line[j] == "\\":
+                    j += 2
+                    continue
+                if line[j] == c:
+                    if c == "'" and j + 1 < n and line[j + 1] == "'":
+                        j += 2
+                        continue
+                    break
+                j += 1
+            if j >= n:
+                open_reason = "quoted string not closed on the line"
+                mask.append(c + " " * (n - i - 1))
+                i = n
+                break
+            mask.append(c + " " * (j - i - 1) + c)
+            i = j + 1
+            continue
+        if c in "[{":
+            depth += 1
+        elif c in "]}":
+            depth -= 1
+            if depth < 0:
+                open_reason = open_reason or "closing bracket without an opening one"
+        mask.append(c)
+        i += 1
+    if depth > 0 and not open_reason:
+        open_reason = "flow mapping or sequence not closed on the line"
+    return line[:i].rstrip(), line[i:], "".join(mask).rstrip(), open_reason
+
+
+def unquote(value):
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        return value[1:-1]
+    return value
+
+
+def hosted_label(value):
+    """True when value is one label of HOSTED_LABELS, plain, quoted or in a one item list."""
+    if value.startswith("["):
+        match = re.fullmatch(r"\[([^\[\]{},]*)\]", value)
+        if not match:
+            return False
+        value = match.group(1)
+    return unquote(value) in HOSTED_LABELS
+
+
+def action_problem(target):
+    """None when the target of a "uses" is a local action or an action pinned by a full commit SHA, else the problem."""
+    if isinstance(target, str) and target.startswith("./"):
+        return None
+    if isinstance(target, str) and "/.github/workflows/" in target:
+        return "reusable workflow of another repository"
+    if isinstance(target, str) and ACTION.match(target):
+        return None
+    return "action not pinned by a full commit SHA"
+
+
+def image_problem(image):
+    if isinstance(image, str) and DIGEST.search(image):
+        return None
+    return "image not pinned by a sha256 digest"
+
+
+def find_workflow_text_problems(path, text):
+    """Check A: one "line N: problem" entry per problem of a file of the workflows folder."""
     if not path.startswith(WORKFLOW_DIR):
         return []
-    return [i + 1 for i, line in enumerate(text.split("\n")) if SELF_HOSTED.search(line)]
+    problems = []
+    lines = text.split("\n")
+    block = None  # (column of the parent, indent of the content or None) inside a block scalar
+    i = 0
+    while i < len(lines):
+        raw = lines[i]
+        number = i + 1
+        i += 1
+
+        def problem(reason, number=number):
+            problems.append(f"line {number}: {reason}")
+
+        if SELF_HOSTED.search(decode_escapes(raw)):
+            problem("self-hosted runner")
+        if block is not None:
+            if not raw.strip():
+                continue
+            indent = len(raw) - len(raw.lstrip(" "))
+            parent, content = block
+            if content is None and indent > parent:
+                block = (parent, indent)
+                continue
+            if content is not None and indent >= content:
+                continue
+            block = None
+        if not raw.strip():
+            continue
+
+        code, comment, mask, open_reason = scan(raw)
+        if open_reason:
+            problem(f"{NOT_CHECKABLE} ({open_reason})")
+        if KEYWORD_OR_SELF_HOSTED.search(decode_escapes(comment)):
+            problem(f"{NOT_CHECKABLE} (runs-on, uses, image, container or self-hosted in a comment)")
+        if raw.rstrip().endswith("\\"):
+            problem(f"{NOT_CHECKABLE} (line ending with a backslash)")
+        if re.match(r"(---|\.\.\.|%)", raw):
+            problem(f"{NOT_CHECKABLE} (YAML document marker or directive)")
+        if INDICATOR.search(mask):
+            problem(f"{NOT_CHECKABLE} (explicit key, anchor, alias or tag: ?, &, *, !)")
+        match = BLOCK.match(code)
+        if match:
+            # Column of the parent: the key's, or the last "-" when there is no key.
+            dashes = match.group(2) if match.group(3) else match.group(2).rstrip()[:-1]
+            block = (len(match.group(1)) + len(dashes), None)
+
+        if not KEYWORD.search(code) and not KEYWORD.search(decode_escapes(code)):
+            continue
+        match = CONTAINER_MAPPING.match(code)
+        if match:
+            reason = image_problem(unquote(match.group(1)))
+            if reason:
+                problem(reason)
+            continue
+        if "{" in code or "\\" in code:
+            problem(f"{NOT_CHECKABLE} (flow style, JSON or escape)")
+            continue
+        match = RUNS_ON.match(code)
+        if match:
+            indent, value = match.group(1), (match.group(2) or "").strip()
+            if not value:
+                # Block form: exactly one "- label" item, indented deeper.
+                items = []
+                while i < len(lines):
+                    following = scan(lines[i])[0]
+                    if following.strip() and len(following) - len(following.lstrip()) <= len(indent):
+                        break
+                    if following.strip():
+                        items.append(following.strip())
+                    i += 1
+                value = items[0][2:].strip() if len(items) == 1 and items[0].startswith("- ") else ""
+            if not hosted_label(value):
+                problem("runner not hosted by GitHub")
+            continue
+        match = USES.match(code)
+        if match:
+            reason = action_problem(unquote(match.group(1)))
+            if reason:
+                problem(reason)
+            continue
+        match = IMAGE.match(code)
+        if match:
+            reason = image_problem(unquote(match.group(1)))
+            if reason:
+                problem(reason)
+            continue
+        match = CONTAINER.match(code)
+        if match:
+            if match.group(2):
+                reason = image_problem(unquote(match.group(2)))
+                if reason:
+                    problem(reason)
+            else:
+                # "container:" with no value: the next line must open a mapping, indented deeper.
+                following = next((l for l in lines[i:] if l.strip()), "")
+                if len(following) - len(following.lstrip(" ")) <= len(match.group(1)) or not MAPPING_KEY.match(following):
+                    problem("image not pinned by a sha256 digest (container: with no image and no mapping)")
+            continue
+        problem(f"{NOT_CHECKABLE} (runs-on, uses, image or container in another form)")
+    return problems
+
+
+if yaml is not None:
+    class StrictLoader(yaml.SafeLoader):
+        """A SafeLoader that refuses duplicate keys and "<<" merge keys."""
+
+    def _mapping(loader, node, deep=False):
+        seen = set()
+        for key, _ in node.value:
+            if key.tag == "tag:yaml.org,2002:merge":
+                raise yaml.constructor.ConstructorError(None, None, "merge key << refused", key.start_mark)
+            value = loader.construct_object(key, deep=True)
+            try:
+                duplicate = value in seen
+                seen.add(value)
+            except TypeError:
+                raise yaml.constructor.ConstructorError(None, None, "key that is not a scalar refused", key.start_mark)
+            if duplicate:
+                raise yaml.constructor.ConstructorError(None, None, f"duplicate key {value!r}", key.start_mark)
+        return loader.construct_mapping(node, deep=deep)
+
+    StrictLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _mapping)
+
+
+def strings(obj, seen=None):
+    """Every string (key or value) of a loaded YAML document."""
+    seen = set() if seen is None else seen
+    if id(obj) in seen:
+        return
+    if isinstance(obj, str):
+        yield obj
+    elif isinstance(obj, dict):
+        seen.add(id(obj))
+        for key, value in obj.items():
+            yield from strings(key, seen)
+            yield from strings(value, seen)
+    elif isinstance(obj, list):
+        seen.add(id(obj))
+        for value in obj:
+            yield from strings(value, seen)
+
+
+def find_workflow_structure_problems(path, text):
+    """Check B: one "<place>: problem" entry per problem of a file of the workflows folder, parsed by PyYAML."""
+    if not path.startswith(WORKFLOW_DIR):
+        return []
+    if yaml is None:
+        return ["PyYAML missing, the workflow cannot be parsed (fail closed): "
+                "pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt"]
+    try:
+        doc = yaml.load(text, Loader=StrictLoader)
+    except (yaml.YAMLError, ValueError, TypeError, RecursionError) as error:
+        first = str(error).strip().splitlines()[0] if str(error).strip() else type(error).__name__
+        return [f"YAML refused by the structure check: {first}"]
+    problems = []
+    if any(SELF_HOSTED.search(s) for s in strings(doc)):
+        problems.append("(file): self-hosted runner")
+    if not isinstance(doc, dict):
+        return problems + ["(file): the workflow is not a mapping"]
+    jobs = doc.get("jobs")
+    if not isinstance(jobs, dict) or not jobs:
+        return problems + ["jobs: missing, empty or not a mapping"]
+    for job_id, job in jobs.items():
+        place = f"jobs.{job_id}"
+        if not isinstance(job, dict):
+            problems.append(f"{place}: the job is not a mapping")
+            continue
+        if "uses" in job and not (isinstance(job["uses"], str) and LOCAL_WORKFLOW.match(job["uses"])):
+            problems.append(f"{place}.uses: reusable workflow of another repository")
+        if "runs-on" in job or "uses" not in job:
+            value = job.get("runs-on")
+            if isinstance(value, list) and len(value) == 1:
+                value = value[0]
+            if "runs-on" not in job:
+                problems.append(f"{place}.runs-on: missing (key written another way, or job with no runner)")
+            elif not (isinstance(value, str) and value in HOSTED_LABELS):
+                problems.append(f"{place}.runs-on: runner not hosted by GitHub")
+        if "container" in job:
+            container = job["container"]
+            reason = image_problem(container.get("image") if isinstance(container, dict) else container)
+            if reason:
+                problems.append(f"{place}.container: {reason}")
+        if "services" in job:
+            services = job["services"]
+            if not isinstance(services, dict):
+                problems.append(f"{place}.services: not a mapping")
+            else:
+                for service_id, service in services.items():
+                    reason = image_problem(service.get("image") if isinstance(service, dict) else service)
+                    if reason:
+                        problems.append(f"{place}.services.{service_id}: {reason}")
+        if "steps" in job:
+            steps = job["steps"]
+            if not isinstance(steps, list):
+                problems.append(f"{place}.steps: not a list")
+                continue
+            for rank, step in enumerate(steps):
+                if not isinstance(step, dict):
+                    problems.append(f"{place}.steps[{rank}]: the step is not a mapping")
+                elif "uses" in step:
+                    reason = action_problem(step["uses"])
+                    if reason:
+                        problems.append(f"{place}.steps[{rank}].uses: {reason}")
+    return problems
 
 
 def local_patterns(paths):
@@ -124,7 +494,8 @@ def main():
             continue
         problems += [f"{name}: line {n}: em or en dash" for n in find_dashes(text)]
         problems += [f"{name}: line {n}: old product name" for n in find_old_name(name, text)]
-        problems += [f"{name}: line {n}: self-hosted runner" for n in find_self_hosted(name, text)]
+        problems += [f"{name}: {hit}" for hit in find_workflow_text_problems(name, text)]
+        problems += [f"{name}: {hit}" for hit in find_workflow_structure_problems(name, text)]
         problems += [f"{name}: {hit}" for hit in find_personal_data(name, text, patterns)]
     for p in problems:
         print(p)
