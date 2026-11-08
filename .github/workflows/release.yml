@@ -1,11 +1,11 @@
 # Every version has its GitHub release, created by the CI together with the tag, with the notes
-# of its "## [X.Y.Z]" section in CHANGELOG.md (never a generic note), and the disk image of the app.
+# of its "## [X.Y.Z]" section in CHANGELOG.md (never a generic note), and the DMG of the app.
 #
 # Trigger: after a GREEN run of the "Checks" workflow on a push to main.
 # 1. Reads VERSION. 0.0.0 is the development version: nothing is released.
 # 2. If release vX.Y.Z exists and already has Brimline.dmg and Brimline.dmg.sha256, there is
 #    nothing to do (a push that keeps the same VERSION builds nothing).
-# 3. Otherwise it builds the app and its disk image (scripts/build_app.sh, scripts/build_dmg.sh)
+# 3. Otherwise it builds the app and its DMG (scripts/build_app.sh, scripts/build_dmg.sh)
 #    from the commit of the tag: the checked commit for a new version, the tagged one when the
 #    release already exists. The app is signed with Brimline's own identity, read from the secrets
 #    BRIMLINE_SIGNING_P12 (the certificate and its key, base64) and BRIMLINE_SIGNING_P12_PASSWORD,
@@ -14,8 +14,8 @@
 #    2026 on a real Mac with two signed builds in a row; see scripts/build_app.sh). Without them,
 #    nothing is released: an ad hoc build would take the permission away from every user.
 # 4. A new version: the release is created as a draft, the two files are attached, then it is
-#    published, which creates the tag on the checked commit (or uses a tag that already points
-#    there). So a release is never "latest" without its disk image: the site and the one-line
+#    published, which creates the tag on the checked commit (or takes a tag that already points
+#    there). So a release is never "latest" without its DMG: the site and the one-line
 #    installer download .../releases/latest/download/Brimline.dmg and its .sha256.
 #    An existing release that lacks a file gets both again (--clobber). A draft left by a run that
 #    stopped between creating and publishing (it has no tag yet) is completed from the checked
@@ -23,11 +23,11 @@
 #
 # 5. A release this run just published (a new version, or a draft completed) is announced in the
 #    Discord channel #prod-brimline by scripts/announce_release.py: the version, the commits since the
-#    previous release, the link of the release and of the disk image. The address of the webhook is the
+#    previous release, the link of the release and of the DMG. The address of the webhook is the
 #    secret DISCORD_RELEASES_WEBHOOK_URL, read by that step only. Without it the step says so with a
 #    warning and goes on; a failed announcement never fails the release (continue-on-error, and the
 #    script itself exits 0). Nothing is announced for 0.0.0, for a release that already existed, or
-#    when only a missing disk image is attached.
+#    when only a missing DMG is attached.
 #
 # The two jobs below read the signing secrets and both name the GitHub environment "release"
 # (`environment: release`). The secrets are still repository secrets for now: moving them into that
@@ -70,7 +70,7 @@ jobs:
       group: release
       cancel-in-progress: false
     env:
-      # The Xcode of the image named in the Checks workflow (the recent Command Line Tools have
+      # The Xcode of the runner named in the Checks workflow (the recent Command Line Tools have
       # no xcbuild, which the universal build needs: QUOTA-107).
       DEVELOPER_DIR: /Applications/Xcode_26.6.app
     steps:
@@ -134,13 +134,13 @@ jobs:
           TAG: ${{ steps.plan.outputs.tag }}
         run: git checkout --detach "$TAG"
 
-      - name: App and disk image
+      - name: App and DMG
         if: ${{ steps.plan.outputs.action != 'none' }}
         run: |
           scripts/build_app.sh
           scripts/build_dmg.sh build/Brimline.app build
 
-      - name: Create the release with its disk image
+      - name: Create the release with its DMG
         if: ${{ steps.plan.outputs.action == 'create' }}
         env:
           GH_TOKEN: ${{ github.token }}
@@ -164,7 +164,7 @@ jobs:
           gh release edit "$TAG" --draft=false --target "$HEAD_SHA"
           echo "Release $TAG published with Brimline.dmg and its SHA-256."
 
-      - name: Attach the disk image to the existing release
+      - name: Attach the DMG to the existing release
         if: ${{ steps.plan.outputs.action == 'attach' }}
         env:
           GH_TOKEN: ${{ github.token }}

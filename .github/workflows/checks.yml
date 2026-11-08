@@ -1,13 +1,15 @@
 # Checks on every push and pull request: text rules (no em or en dash, no personal data), the
 # tests of the repository scripts, then the Swift package (build, tests) and the app bundle
-# (scripts/build_app.sh, universal) and its disk image
-# (scripts/build_dmg.sh, which also needs Python 3.11 or later, already on the runner image). The
+# (scripts/build_app.sh, universal) and its DMG
+# (scripts/build_dmg.sh, which also needs Python 3.11 or later, already on the runner). The
 # release workflow starts only after a green run of this one on main.
 #
 # Runner: the runners hosted by GitHub (macos-latest), never a machine of the maintainer. The
 # repository is public and anyone can open a pull request, whose code runs in this workflow: it
 # must run in a throwaway virtual machine with no personal data. The "Text rules" step below fails
-# on the label that marks a runner as one's own (scripts/check_text.py). Pull requests from forks
+# on a runner not hosted by GitHub, an action or a Docker reference not pinned, and any workflow
+# form it cannot check (scripts/check_text.py: a line by line check, then a parse by a pinned
+# PyYAML). Pull requests from forks
 # run here like the others, with a read-only token and no secret (permissions: contents: read).
 
 name: Checks
@@ -29,10 +31,10 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     env:
-      # The Xcode 26.6 of the image, named in full so that a change of the image's default Xcode
+      # The Xcode 26.6 of the runner, named in full so that a change of the runner's default Xcode
       # changes nothing here. The Command Line Tools of the recent images (26.6, Swift 6.3.3) no
       # longer bring the Testing module (swift test: "no such module 'Testing'") nor xcbuild (the
-      # universal build of scripts/build_app.sh), both needed here; checked on the image
+      # universal build of scripts/build_app.sh), both needed here; checked on the runner version
       # macos-26-arm64 20261026.0455 (THA-2764, QUOTA-107). The app itself still builds with the
       # Command Line Tools alone on a developer's Mac (docs/install.md).
       DEVELOPER_DIR: /Applications/Xcode_26.6.app
@@ -41,11 +43,21 @@ jobs:
         with:
           persist-credentials: false
 
+      # PyYAML for the structure check of scripts/check_text.py: pinned version, checked hashes,
+      # wheel only (no build script). Without it the text rules fail.
+      - name: PyYAML, pinned
+        run: |
+          python3 -m venv "$RUNNER_TEMP/checks"
+          "$RUNNER_TEMP/checks/bin/pip" install --quiet --require-hashes --only-binary :all: \
+            -r scripts/requirements-check.txt
+
       - name: Text rules
-        run: python3 scripts/check_text.py
+        run: |
+          "$RUNNER_TEMP/checks/bin/python" scripts/check_text.py
 
       - name: Script tests
-        run: python3 -m unittest discover -s tests -v
+        run: |
+          "$RUNNER_TEMP/checks/bin/python" -m unittest discover -s tests -v
 
       - name: Swift version
         run: swift --version
@@ -59,5 +71,5 @@ jobs:
       - name: App bundle
         run: scripts/build_app.sh
 
-      - name: Disk image
+      - name: DMG
         run: scripts/build_dmg.sh
