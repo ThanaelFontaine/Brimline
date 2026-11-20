@@ -6,9 +6,18 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-11-20
+
+Brimline 0.3.5 is a security release with nothing new to see in the app: what the commands and the MCP server say about an account is filtered, `SECURITY.md` says exactly what goes out, and the public texts and the CI no longer describe the machine of the maintainer. The full notes are in [docs/releases/v0.3.5.md](docs/releases/v0.3.5.md).
+
 ### Security
 
 - **What the agents and the terminal read about an account is filtered, and `SECURITY.md` says exactly what goes out.** The organization, the plan name, the address and the label of an account were passed on as they were written in `.claude.json` and in the settings. They now go through one filter: letters of any alphabet, digits and a few signs, 64 characters at most, with control and format characters (line breaks, escape sequences, right to left and zero width characters) refused; anything else is `null`, not shortened, and an address must be a plain one. The filter applies when `.claude.json` is read **and** when an answer leaves (`list_accounts`, `get_usage`, `best_account`, `brimline accounts`, `brimline accounts --json`, `brimline status`, `brimline status --json`), so a `usage.json` written by an older version cannot get around it. `id` and `folder` stay absolute (the key of your settings and the folder to give `CLAUDE_CONFIG_DIR`). `SECURITY.md` no longer says the server and the command "expose usage numbers only": it lists what is given out, and says that `id` and `folder` carry the name of your macOS account.
+
+### Changed
+
+- **The CI runs only on the runners hosted by GitHub, and `scripts/check_text.py` enforces it.** Every `runs-on` must be one standard GitHub-hosted label, every action is pinned by a full commit SHA, checkouts keep no token, and a local action (`uses: ./<path>`) must be a tracked composite action that passes the same checks; any form the script cannot check is refused. The script needs PyYAML for this (`pip install --require-hashes --only-binary :all: -r scripts/requirements-check.txt`, written in `CONTRIBUTING.md` and `docs/install.md`). No self-hosted runner is attached to the repository any more.
+- **The public texts no longer describe the machine the CI or the checks ran on.** The audit report, the notes of 0.1.0 and 0.3.4, three fixture provenance lines, a comment of `scripts/build_app.sh` and the critical paths page now say the current state (the runners hosted by GitHub) and the checks that were done, not the machine of the maintainer.
 
 ## [0.3.4] - 2026-11-06
 
