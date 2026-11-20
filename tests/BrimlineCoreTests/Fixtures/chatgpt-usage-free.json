@@ -1,5 +1,5 @@
 {
-  "_fixture_source": "Skeleton of a real answer: GET /wham/usage of ChatGPT through Codex, free plan, seen by `brimline status --live --shape --provider chatgpt` on 27/10/2026 (Mac mini, Codex of ChatGPT.app). Keys as they were, values invented (no identifier, address or token is real). The free plan has one 30 day window and no secondary window.",
+  "_fixture_source": "Skeleton of a real answer: GET /wham/usage of ChatGPT through Codex, free plan, seen by `brimline status --live --shape --provider chatgpt` on 27/10/2026 (on a Mac, Codex of ChatGPT.app). Keys as they were, values invented (no identifier, address or token is real). The free plan has one 30 day window and no secondary window.",
   "account_id": "acct-0000-fixture",
   "additional_rate_limits": null,
   "code_review_rate_limit": null,

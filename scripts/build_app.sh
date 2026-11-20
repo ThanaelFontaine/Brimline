@@ -18,7 +18,7 @@
 # by its hash only: the permission covers that build alone. The identity is found in:
 #   BRIMLINE_SIGNING_IDENTITY and BRIMLINE_SIGNING_KEYCHAIN (the SHA-1 of the certificate and its
 #   keychain), set by the release workflow from its secrets;
-#   or, on the maintainer's Mac, ~/Library/Keychains/brimline-signing.keychain-db, unlocked with the
+#   or, for local signing, ~/Library/Keychains/brimline-signing.keychain-db, unlocked with the
 #   password kept in the login keychain under the service brimline-signing-keychain.
 # Without either (a fork, a contributor), the build is ad hoc. A certificate other than the one
 # below is refused: it would take the permission away from every user at the next update.
