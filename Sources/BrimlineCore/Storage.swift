@@ -188,6 +188,19 @@ public struct BrimlineSettings: Codable, Sendable, Equatable {
         return l
     }
 
+    /// The name an agent or a terminal reads: `label(for:)` filtered (`ProviderText.identity`). The app shows
+    /// the name as the user typed it; only what leaves for an agent or a terminal is filtered.
+    public func agentLabel(for accountID: String) -> String? {
+        ProviderText.identity(label(for: accountID))
+    }
+
+    /// The settings with every label filtered, for the commands that print through the shared texts.
+    public var labelsFiltered: BrimlineSettings {
+        var copy = self
+        copy.labels = labels.compactMapValues { ProviderText.identity($0) }
+        return copy
+    }
+
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let defaults = BrimlineSettings()
