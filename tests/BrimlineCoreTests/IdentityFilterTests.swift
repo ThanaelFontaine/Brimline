@@ -76,7 +76,7 @@ struct IdentityFilterTests {
 
     /// A cache the way an older Brimline wrote it: the identity is in it as it came from `.claude.json`.
     static func oldCache(email: String?, organization: String?) -> UsageSnapshot {
-        var claude = account("you@example.com", dir: "/Users/someone/.claude-work")
+        var claude = account("you@example.com", dir: "/opt/box/you/.claude-work")
         claude.email = email
         claude.organization = organization
         let usage = AccountUsage(account: claude, status: .ok,
@@ -153,8 +153,8 @@ struct IdentityFilterTests {
         #expect(entry["email"] as? String == "you@example.com")
         #expect(entry["organization"] as? String == "Example Team")
         #expect(entry["label"] as? String == "Work")
-        #expect(entry["id"] as? String == "claude:/Users/someone/.claude-work")
-        #expect(entry["folder"] as? String == "/Users/someone/.claude-work")
+        #expect(entry["id"] as? String == "claude:/opt/box/you/.claude-work")
+        #expect(entry["folder"] as? String == "/opt/box/you/.claude-work")
     }
 
     @Test("The JSON of the commands filters the same way")
@@ -163,8 +163,8 @@ struct IdentityFilterTests {
         let report = AgentUsageReport(snapshot: snapshot, settings: BrimlineSettings(), source: "cache", now: Self.now)
         #expect(report.accounts[0].email == nil)
         #expect(report.accounts[0].organization == nil)
-        #expect(report.accounts[0].id == "claude:/Users/someone/.claude-work")
-        #expect(report.accounts[0].folder == "/Users/someone/.claude-work")
+        #expect(report.accounts[0].id == "claude:/opt/box/you/.claude-work")
+        #expect(report.accounts[0].folder == "/opt/box/you/.claude-work")
         let json = report.jsonString()
         #expect(!json.contains("address@example.com"))
         #expect(!json.contains("Org"))
@@ -178,7 +178,7 @@ struct IdentityFilterTests {
         let filtered = snapshot.identityFiltered
         let lines = StatusText.lines(for: filtered.accounts[0], among: filtered.accounts, settings: settings.labelsFiltered,
                                      strings: Strings(.en), time: TimeFormatter(language: .en, timeZone: TimeZone(identifier: "UTC")!), now: Self.now,
-                                     home: URL(fileURLWithPath: "/Users/someone"), refreshMinutes: 5)
+                                     home: URL(fileURLWithPath: "/opt/box/you"), refreshMinutes: 5)
         let text = lines.joined(separator: "\n")
         #expect(!text.contains("\u{1B}"))
         #expect(text.contains("you@example.com"))
