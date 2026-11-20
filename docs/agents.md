@@ -100,7 +100,7 @@ Fields:
 |---|---|
 | `provider` | `claude`, `chatgpt`, `gemini`, `grok` or `cursor` |
 | `email` | The address of the account when it is a plain address (`name@domain.tld`, 200 characters at most), else `null` |
-| `organization` | The organization name Claude Code keeps for the account: letters of any alphabet, digits, spaces and `. , ' & ( ) _ - + @`, 64 characters at most, else `null` |
+| `organization` | The organization name Claude Code keeps for the account: letters of any alphabet, digits, spaces and `. , ' ’ & ( ) _ - + @`, 64 characters at most, else `null` |
 | `id` | The key of the account: the provider and the absolute path of its connection (`claude:<home>/.claude-work`). It carries the name of your macOS account, and it is the `account` argument of `get_usage` |
 | `source` | Where the official tool keeps the account's connection, written from your home folder (`~/.claude-work`). The same field for every provider. `report` for a Claude account known by its Claude Code report only |
 | `folder` | The Claude Code configuration folder, absolute (it carries the name of your macOS account, so that you can set it as `CLAUDE_CONFIG_DIR`). Claude accounts only (`null` for the others, and for a Claude account known by its report only); `source` says the same thing |
