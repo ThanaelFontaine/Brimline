@@ -54,6 +54,17 @@ public struct Account: Codable, Sendable, Hashable, Identifiable {
         self.claudeReport = claudeReport
     }
 
+    /// The same account with the texts of its identity filtered again (`ProviderText.identity`, `address`).
+    /// `id` and `source` are paths and stay as they are. The cache `usage.json` may have been written before
+    /// the filter existed, so everything that leaves the app for an agent or a terminal passes here.
+    public var identityFiltered: Account {
+        var account = self
+        account.email = ProviderText.address(email)
+        account.organization = ProviderText.identity(organization)
+        account.seatTier = ProviderText.identity(seatTier)
+        return account
+    }
+
     /// A Claude account known only by its Claude Code report: no folder on this Mac, no Keychain item.
     /// Its `source` is the report's path, its id `claude:report:<address>` (see `claudeReportID`).
     public var readsReportOnly: Bool { provider == .claude && keychainService == nil && claudeReport != nil }
@@ -243,6 +254,17 @@ public struct UsageSnapshot: Codable, Sendable {
     public var schemaVersion: Int
     public var generatedAt: Date
     public var accounts: [AccountUsage]
+
+    /// The snapshot with the identity of each account filtered (`Account.identityFiltered`).
+    public var identityFiltered: UsageSnapshot {
+        var copy = self
+        copy.accounts = accounts.map { usage in
+            var usage = usage
+            usage.account = usage.account.identityFiltered
+            return usage
+        }
+        return copy
+    }
 
     public init(generatedAt: Date, accounts: [AccountUsage]) {
         self.schemaVersion = Self.currentSchemaVersion

@@ -164,7 +164,8 @@ case "accounts":
         let entries = accounts.map {
             Entry(id: $0.id, provider: $0.provider.rawValue, source: AgentPath.source(of: $0, home: home),
                   folder: AgentPath.folder(of: $0), keychainService: $0.keychainService,
-                  email: $0.email, organization: $0.organization, label: settings.label(for: $0.id),
+                  email: ProviderText.address($0.email), organization: ProviderText.identity($0.organization),
+                  label: settings.agentLabel(for: $0.id),
                   hidden: settings.isHidden($0.id))
         }
         let encoder = JSONEncoder()
@@ -173,7 +174,7 @@ case "accounts":
     } else if accounts.isEmpty {
         print(strings.noAccountTitle + ". " + strings.noAccountBody)
     } else {
-        for a in accounts {
+        for a in accounts.map(\.identityFiltered) {
             let hidden = settings.isHidden(a.id) ? "  (hidden)" : ""
             print("\(a.email ?? a.folderName)\(hidden)")
             if let org = a.organization { print("  \(org)") }
@@ -278,16 +279,19 @@ case "status":
         print(AgentUsageReport(snapshot: snapshot, settings: settings, source: source, now: now,
                                provider: providerFilter).jsonString())
     } else {
-        let visible = snapshot.accounts.filter {
+        // The cache may be older than the filter and a terminal obeys what it reads (an ESC sequence):
+        // identities and labels are filtered again before they are printed.
+        let visible = snapshot.identityFiltered.accounts.filter {
             !settings.isHidden($0.account.id) && (providerFilter == nil || $0.account.provider == providerFilter)
         }
+        let printable = settings.labelsFiltered
         if visible.isEmpty {
             print(strings.noAccountTitle)
             hintIfEmpty(providerFilter, settings: settings)
         }
         let home = FileManager.default.homeDirectoryForCurrentUser
         for u in visible {
-            for line in StatusText.lines(for: u, among: visible, settings: settings, strings: strings, time: time,
+            for line in StatusText.lines(for: u, among: visible, settings: printable, strings: strings, time: time,
                                          now: now, home: home, refreshMinutes: settings.refreshMinutes) {
                 print(line)
             }
