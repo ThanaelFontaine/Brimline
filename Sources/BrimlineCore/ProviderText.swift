@@ -34,6 +34,8 @@ public enum ProviderText {
 
     private static func isIdentityScalar(_ scalar: Unicode.Scalar) -> Bool {
         if identityPunctuation.contains(scalar) { return true }
+        // Invisible whatever their category: variation selectors, U+034F, hangul fillers... (a hidden channel).
+        if scalar.properties.isDefaultIgnorableCodePoint { return false }
         switch scalar.properties.generalCategory {
         case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
              .nonspacingMark, .spacingMark, .enclosingMark, .decimalNumber:
