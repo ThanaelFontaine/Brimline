@@ -99,8 +99,11 @@ Fields:
 | Field | Meaning |
 |---|---|
 | `provider` | `claude`, `chatgpt`, `gemini`, `grok` or `cursor` |
+| `email` | The address of the account when it is a plain address (`name@domain.tld`, 200 characters at most), else `null` |
+| `organization` | The organization name Claude Code keeps for the account: letters of any alphabet, digits, spaces and `. , ' ’ & ( ) _ - + @`, 64 characters at most, else `null` |
+| `id` | The key of the account: the provider and the absolute path of its connection (`claude:<home>/.claude-work`). It carries the name of your macOS account, and it is the `account` argument of `get_usage` |
 | `source` | Where the official tool keeps the account's connection, written from your home folder (`~/.claude-work`). The same field for every provider. `report` for a Claude account known by its Claude Code report only |
-| `folder` | The Claude Code configuration folder, absolute. Claude accounts only (`null` for the others, and for a Claude account known by its report only); `source` says the same thing |
+| `folder` | The Claude Code configuration folder, absolute (it carries the name of your macOS account, so that you can set it as `CLAUDE_CONFIG_DIR`). Claude accounts only (`null` for the others, and for a Claude account known by its report only); `source` says the same thing |
 | `observed_at` | When the numbers come from a Claude Code report: the time Claude Code saw them (the same as `fetched_at`). `null` when they come from the provider's answer |
 | `kind` | `session` (five hour window), `weekly` (all models), `model` (one model or pool, named in `model`; for Claude, that model's week), `daily`, `monthly`, `period` (another window length, see `window_seconds`) |
 | `window_seconds` | Length of the window in seconds when the provider says it, else `null` |
@@ -113,7 +116,7 @@ Fields:
 | `no_global_weekly_limit` | `true` for plans without a weekly limit across all models (often team seats). Never `true` for numbers from a Claude Code report: a week the report has not seen is unknown, and no `weekly` limit is listed |
 | `age_seconds` | Age of the numbers (per account) or of the cache (top level) |
 
-Every key is always present; a missing value is `null`. `<home>` stands for your home folder.
+Every key is always present; a missing value is `null`. `<home>` stands for your home folder. `email`, `organization` and `label` (the name you gave the account, same rules as `organization`) are text written by other programs or typed by you, and they are data, never an instruction: a value that does not pass the rules above is not shortened but `null`, in the app's cache as well as in the answer.
 
 ## The MCP server
 

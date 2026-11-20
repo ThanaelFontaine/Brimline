@@ -16,6 +16,43 @@ public enum ProviderText {
         return trimmed
     }
 
+    private static let identityPunctuation: Set<Unicode.Scalar> = Set(" .,'\u{2019}&()_-+@".unicodeScalars)
+
+    /// A name that says who an account is (an organization, a plan, a name the user gave): at most 64
+    /// characters, made of letters of any alphabet, marks, digits and a few signs (`.`, `,`, `'`, `&`, `(`, `)`,
+    /// `_`, `-`, `+`, `@` and the plain space). Control characters (category Cc, a line break or an ESC
+    /// sequence), format characters (Cf: right to left marks and overrides, zero width characters), separators,
+    /// symbols, private use and unassigned characters are refused. Anything else is not shortened but dropped:
+    /// nil. The text is data for an agent or a terminal, never an instruction.
+    public static func identity(_ text: String?) -> String? {
+        guard let text else { return nil }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.unicodeScalars.count <= maxLabelLength,
+              trimmed.unicodeScalars.allSatisfy(isIdentityScalar) else { return nil }
+        return trimmed
+    }
+
+    private static func isIdentityScalar(_ scalar: Unicode.Scalar) -> Bool {
+        if identityPunctuation.contains(scalar) { return true }
+        // Invisible whatever their category: variation selectors, U+034F, hangul fillers... (a hidden channel).
+        if scalar.properties.isDefaultIgnorableCodePoint { return false }
+        switch scalar.properties.generalCategory {
+        case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
+             .nonspacingMark, .spacingMark, .enclosingMark, .decimalNumber:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// An address for an agent or a terminal: the one the account has when it is a plain address
+    /// (`ClaudeReportEmail.normalize`), as written; nil otherwise.
+    public static func address(_ text: String?) -> String? {
+        guard let text else { return nil }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return ClaudeReportEmail.normalize(trimmed) == nil ? nil : trimmed
+    }
+
     /// A share used, from 0 to 100. A value that is not a number (NaN, infinity) is refused: nil.
     public static func percent(_ value: Double?) -> Double? {
         guard let value, value.isFinite else { return nil }

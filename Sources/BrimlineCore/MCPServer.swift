@@ -178,9 +178,9 @@ public struct MCPServer: Sendable {
                 ]
                 entry["folder"] = AgentPath.folder(of: u.account) ?? NSNull()
                 entry["reason"] = (u.status == .notReadable || u.status == .unavailable) ? (u.reason?.rawValue ?? NSNull()) : NSNull()
-                entry["email"] = u.account.email ?? NSNull()
-                entry["organization"] = u.account.organization ?? NSNull()
-                entry["label"] = settings.label(for: u.account.id) ?? NSNull()
+                entry["email"] = ProviderText.address(u.account.email) ?? NSNull()
+                entry["organization"] = ProviderText.identity(u.account.organization) ?? NSNull()
+                entry["label"] = settings.agentLabel(for: u.account.id) ?? NSNull()
                 return entry
             }
             return .success(Self.toolResult([

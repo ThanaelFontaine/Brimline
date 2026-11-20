@@ -127,13 +127,10 @@ public struct AccountDiscovery: Sendable {
         guard let data = FileManager.default.contents(atPath: configFile),
               let file = try? JSONDecoder().decode(File.self, from: data),
               let account = file.oauthAccount else { return nil }
-        return Identity(email: account.emailAddress.flatMap(nonEmpty),
-                        organization: account.organizationName.flatMap(nonEmpty),
-                        seatTier: account.seatTier.flatMap(nonEmpty))
-    }
-
-    private static func nonEmpty(_ s: String) -> String? {
-        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
-        return t.isEmpty ? nil : t
+        // The file belongs to another program: what it says about the account is filtered before Brimline
+        // keeps it (an agent and a terminal read it later, see `ProviderText.identity`).
+        return Identity(email: ProviderText.address(account.emailAddress),
+                        organization: ProviderText.identity(account.organizationName),
+                        seatTier: ProviderText.identity(account.seatTier))
     }
 }

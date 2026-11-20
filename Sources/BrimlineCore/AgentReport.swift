@@ -111,9 +111,11 @@ public struct AgentAccount: Codable, Sendable, Equatable {
         let account = usage.account
         id = account.id
         provider = account.provider.rawValue
-        email = account.email
-        organization = account.organization
-        label = settings.label(for: account.id)
+        // Filtered here too, whatever the cache holds (see `ProviderText.identity`). `id` and `folder` stay
+        // absolute and carry the name of the macOS account (said in SECURITY.md).
+        email = ProviderText.address(account.email)
+        organization = ProviderText.identity(account.organization)
+        label = settings.agentLabel(for: account.id)
         source = AgentPath.source(of: account, home: home)
         folder = AgentPath.folder(of: account)
         hidden = settings.isHidden(account.id)

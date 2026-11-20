@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+### Security
+
+- **What the agents and the terminal read about an account is filtered, and `SECURITY.md` says exactly what goes out.** The organization, the plan name, the address and the label of an account were passed on as they were written in `.claude.json` and in the settings. They now go through one filter: letters of any alphabet, digits and a few signs, 64 characters at most, with control and format characters (line breaks, escape sequences, right to left and zero width characters) refused; anything else is `null`, not shortened, and an address must be a plain one. The filter applies when `.claude.json` is read **and** when an answer leaves (`list_accounts`, `get_usage`, `best_account`, `brimline accounts`, `brimline accounts --json`, `brimline status`, `brimline status --json`), so a `usage.json` written by an older version cannot get around it. `id` and `folder` stay absolute (the key of your settings and the folder to give `CLAUDE_CONFIG_DIR`). `SECURITY.md` no longer says the server and the command "expose usage numbers only": it lists what is given out, and says that `id` and `folder` carry the name of your macOS account.
+
 ## [0.3.4] - 2026-11-06
 
 Brimline 0.3.4 closes the window left open in 0.3.3 around `agy`: the signature of Google is now checked on the running process, before it runs a single instruction, not only on the file. Nothing changes in what the app shows. The full notes are in [docs/releases/v0.3.4.md](docs/releases/v0.3.4.md).
