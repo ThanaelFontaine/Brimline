@@ -24,7 +24,19 @@ struct IdentityFilterTests {
         String(repeating: "a", count: 65),
         "Team <script>",
         "Team `code`",
+        "Acme\u{FE0F}",
+        "Acme\u{E0100}",
+        "Acme\u{034F}",
+        "Acme\u{3164}",
+        "Acme\u{115F}",
+        "Acme\u{1160}",
+        "Acme\u{FFA0}",
+        "Acme\u{180B}",
+        "Acme" + String(repeating: "\u{FE0F}", count: 60),
     ]
+
+    /// Invisible, zero width characters that are letters or marks by category: they must not pass either.
+    static let invisible: [String] = ["\u{FE0F}", "\u{E0100}", "\u{034F}", "\u{3164}"]
 
     @Test("A plain name passes, in any alphabet, 64 characters at most")
     func plainIdentity() {
@@ -47,6 +59,17 @@ struct IdentityFilterTests {
         }
         // 64 base characters followed by 100 combining marks: the length counts scalars, not characters.
         #expect(ProviderText.identity("a" + String(repeating: "\u{0301}", count: 100)) == nil)
+    }
+
+    @Test("An invisible letter or mark (variation selector, joiner, filler) is refused, even alone or among letters")
+    func invisibleIdentity() {
+        for scalar in Self.invisible {
+            #expect(ProviderText.identity("Acme" + scalar) == nil, "U+\(scalar.unicodeScalars.first!.value) after letters")
+            #expect(ProviderText.identity(scalar) == nil)
+            #expect(ProviderText.identity("Ac" + scalar + "me") == nil)
+        }
+        // A visible combining mark still passes.
+        #expect(ProviderText.identity("Cafe\u{0301}") == "Cafe\u{0301}")
     }
 
     @Test("An address is kept when it is plain, as written, and dropped otherwise")
@@ -139,6 +162,20 @@ struct IdentityFilterTests {
             #expect(!json.contains("Ignore previous"))
             #expect(!json.contains("SYSTEM"))
             #expect(!json.contains("\\u001b"))
+        }
+    }
+
+    @Test("An invisible character in a cache written before the filter does not come out of the MCP tools")
+    func invisibleInOldCache() throws {
+        for scalar in Self.invisible {
+            let snapshot = try Self.rawCache(Self.oldCache(email: "you@example.com", organization: "Acme" + scalar))
+            #expect(snapshot.accounts[0].account.organization == "Acme" + scalar)
+            let list = try answer(Self.server(snapshot), tool: "list_accounts")
+            let entry = try #require((list["accounts"] as? [[String: Any]])?.first)
+            #expect(entry["organization"] is NSNull)
+            let usage = try answer(Self.server(snapshot), tool: "get_usage")
+            let usageEntry = try #require((usage["accounts"] as? [[String: Any]])?.first)
+            #expect(usageEntry["organization"] is NSNull)
         }
     }
 
