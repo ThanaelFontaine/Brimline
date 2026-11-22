@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Gemini card without Antigravity points to Antigravity, not to Gemini CLI.** The sentence ended with "and in Gemini CLI (/stats model)", but Google no longer serves individual Google AI Pro and Ultra plans in Gemini CLI since 18 June 2026. It now says "They are in the Gemini app (Settings, Usage limits) and in Antigravity (/usage)." (and its French version). Only the words of the card change: nothing new is read or launched.
+
 ### Security
 
 - **A Grok sign-in whose expiry date cannot be read no longer lets the token go.** When `expires_at` was there but in a form Brimline did not read (a named time zone, another precision), the date was ignored and the session token was sent as if it did not expire. The same goes for a `create_time` that counts and cannot be read. Nothing is sent now: the Grok card says the format changed.

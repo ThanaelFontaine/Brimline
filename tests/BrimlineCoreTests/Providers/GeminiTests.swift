@@ -11,8 +11,8 @@ struct GeminiTests {
         return settings
     }
 
-    static let english = "Google does not publish Gemini limits in a form Brimline can read. They are in the Gemini app (Settings, Usage limits) and in Gemini CLI (/stats model)."
-    static let french = "Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire. Elles sont dans l'app Gemini (Réglages, Limites d'utilisation) et dans Gemini CLI (/stats model)."
+    static let english = "Google does not publish Gemini limits in a form Brimline can read. They are in the Gemini app (Settings, Usage limits) and in Antigravity (/usage)."
+    static let french = "Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire. Elles sont dans l'app Gemini (Réglages, Limites d'utilisation) et dans Antigravity (/usage)."
 
     @Test("Gemini is in the registry, after Claude, and calls nothing")
     func registry() {
@@ -145,7 +145,8 @@ struct GeminiTests {
         let server = MCPServer(version: "0.0.0", load: { (snapshot, on) }, now: { now }, home: URL(fileURLWithPath: "/opt/box/you"))
         let line = try #require(server.handle(line: #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_usage","arguments":{"provider":"gemini"}}}"#))
         #expect(line.contains("consumer_plan"))
-        #expect(line.contains("Gemini CLI"))
+        #expect(line.contains("Antigravity (/usage)"))
+        #expect(!line.contains("Gemini CLI"))
     }
 
     @Test("A Gemini account is never offered as the best account")
