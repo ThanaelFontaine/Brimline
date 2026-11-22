@@ -6,7 +6,7 @@ import Foundation
 /// Rules: the file is `~/.grok/auth.json` and nothing else of the CLI is opened (no `config.toml`, no
 /// Keychain item, no program launched; `GROK_HOME`, `GROK_AUTH_PATH` and `XAI_API_KEY` are never read
 /// from the environment); only the sign-in of an xAI account is decoded (see `GrokAuth`); an expired
-/// token is never sent and never renewed (the CLI renews it when it runs); a refused token asks to
+/// token, or one whose date cannot be read, is never sent and never renewed (the CLI renews it when it runs); a refused token asks to
 /// sign in again; every other failure is `unavailable`, which the service retries with a growing delay.
 public struct GrokReader: ProviderReader {
     public var http: any HTTPClient
@@ -51,8 +51,14 @@ public struct GrokReader: ProviderReader {
             return .notReadable(reason: auth.hasAPIKey ? .apiKey : .noCLI)
         }
 
-        if let expiry = session.expiry, expiry <= now.addingTimeInterval(Self.expiryMargin) {
+        switch session.expiry {
+        case .date(let expiry) where expiry <= now.addingTimeInterval(Self.expiryMargin):
             return .expired
+        case .unreadable:
+            // A date is there and cannot be read: nothing proves the token is alive, so nothing is sent.
+            return .failure(status: .formatChanged, detail: "unreadable expiry", retryAfter: nil)
+        case .date, .none:
+            break
         }
         // A token or an id that cannot go in a header as it is (a line break, a space) is never sent.
         guard ProviderText.isHeaderToken(token) else {

@@ -29,12 +29,37 @@ struct GrokAuth: Decodable {
             case createTime = "create_time"
         }
 
+        /// What the file says about when the token stops being valid.
+        enum Expiry: Equatable {
+            /// No date at all: the server decides.
+            case none
+            /// A date that `ISODate` reads.
+            case date(Date)
+            /// A date is there, but it cannot be read: the token is never sent (rule C5).
+            case unreadable
+        }
+
         /// When the token stops being valid. The CLI gives a token with no server expiry a 30 day
-        /// lifetime from the day it was minted (its authentication guide).
-        var expiry: Date? {
-            if let expiresAt { return ISODate.parse(expiresAt) }
-            if let createTime, let date = ISODate.parse(createTime) { return date.addingTimeInterval(30 * 86_400) }
-            return nil
+        /// lifetime from the day it was minted (its authentication guide). A date that is present but
+        /// unreadable (`expires_at`, or `create_time` when it is the one that counts) is `unreadable`,
+        /// never `none`.
+        var expiry: Expiry {
+            if let expiresAt { return ISODate.parse(expiresAt).map(Expiry.date) ?? .unreadable }
+            if let createTime {
+                guard let date = ISODate.parse(createTime) else { return .unreadable }
+                return .date(date.addingTimeInterval(30 * 86_400))
+            }
+            return .none
+        }
+
+        /// Order between sign-ins: a readable date by its value, then no date, then an unreadable date
+        /// (a sign-in the reader can send wins over one it would refuse).
+        var rank: (Int, Date) {
+            switch expiry {
+            case .date(let date): return (2, date)
+            case .none: return (1, .distantPast)
+            case .unreadable: return (0, .distantPast)
+            }
         }
 
         var token: String? {
@@ -67,7 +92,12 @@ struct GrokAuth: Decodable {
             } else if name == Self.issuer || name.hasPrefix(Self.issuer + "::") {
                 let candidate = try container.decode(Session.self, forKey: key)
                 guard candidate.token != nil else { continue }
-                if best == nil || (candidate.expiry ?? .distantPast) > (best?.expiry ?? .distantPast) { best = candidate }
+                if let current = best {
+                    let (a, b) = (candidate.rank, current.rank)
+                    if a.0 > b.0 || (a.0 == b.0 && a.1 > b.1) { best = candidate }
+                } else {
+                    best = candidate
+                }
             }
         }
         session = best

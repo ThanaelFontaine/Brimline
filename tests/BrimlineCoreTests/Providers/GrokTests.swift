@@ -493,13 +493,39 @@ struct GrokTests {
             Issue.record("expected a reading")
             return
         }
-        // A date that cannot be read is no expiry: the token goes, the server decides.
-        try home.write(".grok/auth.json", authText(expires: nil, created: "long ago"))
-        let other = answering(try fixture("grok-billing-monthly"))
-        guard case .limits = await read(other, in: home) else {
-            Issue.record("expected a reading")
-            return
+    }
+
+    @Test("A date that is there and cannot be read never lets the token go: format changed, no request")
+    func unreadableExpiry() async throws {
+        // `expires_at` unreadable (a named zone, another precision, a word, an empty text), `create_time` unreadable
+        // when it is the one that counts, and an unreadable `expires_at` that a readable `create_time` does not save.
+        let cases: [(expires: String?, created: String?)] = [
+            ("2099-01-01T00:00:00 Europe/Paris", nil), ("2099-01-01T00:00:00[Europe/Paris]", nil),
+            ("2099-01-01", nil), ("2099-01-01T00:00Z", nil), ("2099", nil), ("tomorrow", nil), ("", nil),
+            (nil, "long ago"), (nil, "2026-10-20T08:15:30 Europe/Paris"), (nil, ""),
+            ("soon", "2026-10-20T08:15:30Z")
+        ]
+        for (expires, created) in cases {
+            let home = try TemporaryHome()
+            try home.write(".grok/auth.json", authText(expires: expires, created: created))
+            let http = answering(try fixture("grok-billing-monthly"))
+            guard case .failure(.formatChanged, "unreadable expiry", nil) = await read(http, in: home) else {
+                Issue.record("expected formatChanged for expires \(expires ?? "nil"), created \(created ?? "nil")")
+                return
+            }
+            #expect(http.requests.isEmpty)
         }
+    }
+
+    @Test("A sign-in with no date at all keeps its reading; an unreadable date does not win the sort")
+    func unreadableExpirySorting() async throws {
+        let text = #"{"https://auth.x.ai::bad":{"key":"tok-bad","expires_at":"2099-01-01T00:00:00 Europe/Paris"},"https://auth.x.ai::none":{"key":"tok-none"},"https://auth.x.ai::soon":{"key":"tok-soon","expires_at":"2026-12-01T00:00:00Z"}}"#
+        let auth = try JSONDecoder().decode(GrokAuth.self, from: Data(text.utf8))
+        #expect(auth.session?.token == "tok-soon")
+        let two = #"{"https://auth.x.ai::bad":{"key":"tok-bad","expires_at":"nope"},"https://auth.x.ai::none":{"key":"tok-none"}}"#
+        #expect(try JSONDecoder().decode(GrokAuth.self, from: Data(two.utf8)).session?.token == "tok-none")
+        let only = #"{"https://auth.x.ai::bad":{"key":"tok-bad","expires_at":"nope"}}"#
+        #expect(try JSONDecoder().decode(GrokAuth.self, from: Data(only.utf8)).session?.expiry == .unreadable)
     }
 
     @Test("An expired account asks to open the Grok CLI, waits for no delay and keeps its last numbers")
