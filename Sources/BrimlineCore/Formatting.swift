@@ -210,8 +210,8 @@ public struct Strings: Sendable {
     }
     /// What Google says about Gemini: the sentence of an account that has no readable limit.
     public var geminiNotReadableMessage: String {
-        t("Google does not publish Gemini limits in a form Brimline can read. They are in the Gemini app (Settings, Usage limits) and in Gemini CLI (/stats model).",
-          "Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire. Elles sont dans l'app Gemini (Réglages, Limites d'utilisation) et dans Gemini CLI (/stats model).")
+        t("Google does not publish Gemini limits in a form Brimline can read. They are in the Gemini app (Settings, Usage limits) and in Antigravity (/usage).",
+          "Google ne publie pas les limites de Gemini sous une forme que Brimline peut lire. Elles sont dans l'app Gemini (Réglages, Limites d'utilisation) et dans Antigravity (/usage).")
     }
     /// Antigravity's sign-in has expired or was refused: Google's program renews it itself when it is opened.
     public var geminiExpiredMessage: String {

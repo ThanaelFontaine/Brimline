@@ -169,7 +169,7 @@ struct PanelTextsTests {
     func splitSentence() {
         let gemini = Strings.splitSentence(en.geminiNotReadableMessage)
         #expect(gemini.first == "Google does not publish Gemini limits in a form Brimline can read.")
-        #expect(gemini.rest == "They are in the Gemini app (Settings, Usage limits) and in Gemini CLI (/stats model).")
+        #expect(gemini.rest == "They are in the Gemini app (Settings, Usage limits) and in Antigravity (/usage).")
         let grok = Strings.splitSentence(fr.grokNoCLIMessage)
         #expect(grok.first == "xAI ne publie les limites de Grok que pour le CLI Grok.")
         #expect(grok.rest == "Sans lui, elles sont dans les réglages de votre compte Grok.")
