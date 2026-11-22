@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+### Security
+
+- **A Grok sign-in whose expiry date cannot be read no longer lets the token go.** When `expires_at` was there but in a form Brimline did not read (a named time zone, another precision), the date was ignored and the session token was sent as if it did not expire. The same goes for a `create_time` that counts and cannot be read. Nothing is sent now: the Grok card says the format changed.
+
 ## [0.3.5] - 2026-11-20
 
 Brimline 0.3.5 is a security release with nothing new to see in the app: what the commands and the MCP server say about an account is filtered, `SECURITY.md` says exactly what goes out, and the public texts and the CI no longer describe the machine of the maintainer. The full notes are in [docs/releases/v0.3.5.md](docs/releases/v0.3.5.md).
