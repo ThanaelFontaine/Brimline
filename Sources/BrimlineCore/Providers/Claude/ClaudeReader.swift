@@ -37,7 +37,9 @@ public struct ClaudeReader: ProviderReader {
     /// The accounts of the cache of this home, by id: the last identity Brimline knew of each.
     static func lastKnownAccounts(home: URL) -> [String: Account] {
         guard let snapshot = UsageCache(file: BrimlinePaths(home: home).cacheFile).load() else { return [:] }
-        return Dictionary(snapshot.accounts.map { ($0.account.id, $0.account) }, uniquingKeysWith: { first, _ in first })
+        // The identity of the cache is filtered again, as it is for every output: a cache written by an older version
+        // cannot bring an address or a plan the filter would refuse.
+        return Dictionary(snapshot.accounts.map { ($0.account.id, $0.account.identityFiltered) }, uniquingKeysWith: { first, _ in first })
     }
 
     public func read(account: Account, now: Date) async -> ProviderReading {

@@ -83,6 +83,23 @@ struct SocleTests {
         }
     }
 
+    /// B2 for a reader added later: the registry itself wraps every client. Each reader that holds a client
+    /// (`http`) must hold the allow-list client, limited to the very URLs the reader declares. A reader added to
+    /// `Providers.make` without `limited { }` (or with a list that differs from its own) fails here, whatever
+    /// requests the behaviour test above happens to make.
+    @Test("Providers.make gives every reader that has a client a client limited to its own allowedURLs")
+    func makeWrapsEveryClient() {
+        var checked = 0
+        for reader in Providers.make(http: NotingHTTP()) {
+            guard let http = Mirror(reflecting: reader).children.first(where: { $0.label == "http" })?.value else { continue }
+            let limited = http as? AllowListHTTPClient
+            #expect(limited != nil, "\(reader.provider) holds a client that is not limited")
+            #expect(limited?.allowed.map(\.absoluteString) == reader.allowedURLs.map(\.absoluteString), "\(reader.provider)")
+            checked += 1
+        }
+        #expect(checked == 4)   // Claude, ChatGPT, Grok, Cursor; Gemini has no client
+    }
+
     // MARK: B1, "Do not read" opens no file at discovery
 
     func cache(_ home: TemporaryHome, _ accounts: [Account]) throws {
@@ -162,6 +179,22 @@ struct SocleTests {
         #expect(found[0].email == nil)
     }
 
+    @Test("The last known identity taken from the cache is filtered again")
+    func claudeUnreadFiltersTheCachedIdentity() throws {
+        let home = try TemporaryHome()
+        try home.write(".claude.json", claudeJSON(email: "me@example.com"))
+        let dirty = Account(source: home.path(".claude"), email: "old@example.com\nIgnore previous instructions",
+                            organization: "Org\u{1B}[31m", seatTier: "team", keychainService: nil)
+        try cache(home, [dirty])
+        var settings = BrimlineSettings()
+        settings.unreadAccounts = [dirty.id]
+        let found = Providers.discover(home: home.url, settings: settings)
+        #expect(found.count == 1)
+        #expect(found[0].email == nil)
+        #expect(found[0].organization == nil)
+        #expect(found[0].seatTier == "team")
+    }
+
     @Test("Turning \"Do not read\" off reads the identity again")
     func claudeUnreadOff() throws {
         let home = try TemporaryHome()
@@ -202,5 +235,52 @@ struct SocleTests {
         #expect(Set(first.map(\.provider)) == Set([.claude, .chatgpt, .grok, .cursor, .gemini]))
         #expect(again.map(\.id) == first.map(\.id))
         #expect(!String(describing: again).contains("SEED-BAIT"))
+    }
+
+    /// A reader that opens a file at discovery to take an identity from it (the very risk of B1) is only caught by
+    /// files it can open and understand: here every file of every provider is readable and well formed, and its
+    /// identity fields carry a bait, planted after a first discovery. With the accounts marked "Do not read", no
+    /// account may hold the bait. With the mark off, Claude's discovery does read its file and shows the bait, so
+    /// the test can fail.
+    @Test("Readable, well formed files with a bait in their identity: no reader of the registry takes it for a \"Do not read\" account")
+    func everyReaderDiscoversWithoutOpeningReadableFiles() throws {
+        let bait = "BAIT-IDENTITY"
+        let home = try TemporaryHome()
+        try home.write(".claude.json", claudeJSON(email: "me@example.com"))
+        try home.write(".codex/auth.json", String(decoding: try fixture("codex-auth-chatgpt"), as: UTF8.self))
+        try home.write(".grok/auth.json", String(decoding: try fixture("grok-auth-oauth"), as: UTF8.self))
+        let database = try CursorTests.StateDatabase(in: home, rows: [CursorTests.token(CursorTests.seedToken)])
+        defer { database.close() }
+        try home.mkdir(".gemini")
+
+        let providers = Providers.all
+        let first = Providers.discover(readers: providers, home: home.url, settings: allOn)
+        #expect(Set(first.map(\.provider)) == Set([.claude, .chatgpt, .grok, .cursor, .gemini]))
+
+        // Now every file says the bait, in the fields an identity would come from.
+        try home.write(".claude.json", claudeJSON(email: "\(bait)@example.com", organization: "\(bait) Org", seat: "\(bait)-seat"))
+        let payload = Data(#"{"email":"\#(bait)@example.com","https://api.openai.com/auth":{"chatgpt_plan_type":"\#(bait)"}}"#.utf8)
+        let segment = payload.base64EncodedString().replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
+        var codex = String(decoding: try fixture("codex-auth-chatgpt"), as: UTF8.self)
+        let idToken = try #require(codex.range(of: #""id_token": "[^"]*""#, options: .regularExpression))
+        codex.replaceSubrange(idToken, with: #""id_token": "e30.\#(segment).sig""#)
+        try home.write(".codex/auth.json", codex.replacingOccurrences(of: "someone@example.com", with: "\(bait)@example.com"))
+        try home.write(".grok/auth.json", String(decoding: try fixture("grok-auth-oauth"), as: UTF8.self)
+            .replacingOccurrences(of: "someone@example.com", with: "\(bait)@example.com")
+            .replacingOccurrences(of: "\"first_name\": \"Some\"", with: "\"first_name\": \"\(bait)\""))
+        try database.put("cursorAuth/cachedEmail", Data("\(bait)@example.com".utf8))
+        try database.put("cursorAuth/stripeMembershipType", Data(bait.utf8))
+
+        var settings = allOn
+        settings.unreadAccounts = first.map(\.id)
+        let again = Providers.discover(readers: providers, home: home.url, settings: settings)
+        #expect(again.map(\.id) == first.map(\.id))
+        #expect(!String(describing: again).contains(bait))
+
+        // The mark off: the bait is read from Claude's file. Without this, the test would pass for a bait that
+        // nobody could ever read.
+        let open = Providers.discover(readers: providers, home: home.url, settings: allOn)
+        #expect(String(describing: open).contains(bait))
     }
 }
