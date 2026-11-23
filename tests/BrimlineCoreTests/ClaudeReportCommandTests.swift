@@ -347,6 +347,11 @@ struct ClaudeReportCommandTests {
         let folder = try #require(Providers.discover(readers: service.readers, home: home.url, settings: BrimlineSettings()).first)
         #expect(folder.claudeReport != nil)
 
+        // The app has seen the folder before the user marks it: its address is in the cache ("Do not read" opens no
+        // settings file, so the identity of a marked folder is the last one known).
+        let cacheFile = BrimlinePaths(home: home.url).cacheFile
+        try UsageCache(file: cacheFile).save(UsageSnapshot(generatedAt: now, accounts: [AccountUsage(account: folder)]))
+
         var settings = BrimlineSettings()
         settings.setUnread(true, account: folder)
         #expect(settings.unreadAccounts == [folder.id, "claude:report:work@example.org"])
@@ -355,9 +360,15 @@ struct ClaudeReportCommandTests {
         let marked = Providers.discover(readers: service.readers, home: home.url, settings: settings)
         #expect(marked.count == 1 && marked[0].claudeReport == nil)
 
-        // The folder's .claude.json loses its address for a while: the report comes as an account of its own,
-        // with an id of its address, already marked, so it is not opened.
+        // The folder's .claude.json loses its address for a while: a marked folder is not opened, so it keeps the
+        // address of the cache and the report stays linked to no folder.
         try home.write(".claude-work/.claude.json", #"{"numStartups":3}"#)
+        let kept = Providers.discover(readers: service.readers, home: home.url, settings: settings)
+        #expect(kept.count == 1 && kept[0].email == "Work@Example.org" && kept[0].claudeReport == nil)
+
+        // The cache never knew the address: the report comes as an account of its own,
+        // with an id of its address, already marked, so it is not opened.
+        try FileManager.default.removeItem(at: cacheFile)
         let lost = Providers.discover(readers: service.readers, home: home.url, settings: settings)
         let reportOnly = try #require(lost.first { $0.readsReportOnly })
         #expect(reportOnly.id == Account.claudeReportID("work@example.org"))
