@@ -12,6 +12,7 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ### Security
 
+- **The closed list of URLs and the "Do not read" choice are held by the registry, not by each reader (QUOTA-44).** `Providers.make` now gives every reader a client limited to its own `allowedURLs`, so a reader that forgets to restrict its client cannot send a token to an address it did not declare, and a test makes every reader of the registry read and checks each request. A Claude folder marked "Do not read" is no longer opened when Brimline looks for accounts: only the existence of its path is checked, and its address, organization and plan are the last known ones (no longer refreshed while the box is on); a test counts the files opened during discovery (zero). Nothing new is read or sent; `SECURITY.md` and the README say it.
 - **A Grok sign-in whose expiry date cannot be read no longer lets the token go.** When `expires_at` was there but in a form Brimline did not read (a named time zone, another precision), the date was ignored and the session token was sent as if it did not expire. The same goes for a `create_time` that counts and cannot be read. Nothing is sent now: the Grok card says the format changed.
 
 ## [0.3.5] - 2026-11-20

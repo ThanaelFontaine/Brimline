@@ -11,6 +11,9 @@ public struct AccountDiscovery: Sendable {
     public var extraFolders: [String]
     /// The folder of the Claude Code reports; nil reads none.
     public var reportsDirectory: URL?
+    /// How the identity of a folder is read from its settings file: the only file this discovery opens (tests count
+    /// the calls).
+    var identityOf: @Sendable (String) -> Identity? = AccountDiscovery.readIdentity(configFile:)
 
     public init(home: URL = FileManager.default.homeDirectoryForCurrentUser, extraFolders: [String] = [],
                 reportsDirectory: URL? = nil) {
@@ -19,11 +22,22 @@ public struct AccountDiscovery: Sendable {
         self.reportsDirectory = reportsDirectory
     }
 
+    init(home: URL, extraFolders: [String] = [], reportsDirectory: URL? = nil,
+         identityOf: @escaping @Sendable (String) -> Identity?) {
+        self.init(home: home, extraFolders: extraFolders, reportsDirectory: reportsDirectory)
+        self.identityOf = identityOf
+    }
+
     /// "Do not read" closes the report of an address: the addresses in `closedReports` (marks kept by address) and
     /// the address of every folder whose id is in `unreadAccounts`. A closed report is never linked to a folder, and
     /// is listed as an account of its own only when no folder has the address (that account is marked too).
-    public func discover(closedReports: Set<String> = [], unreadAccounts: Set<String> = []) -> [Account] {
-        let folders = discoverFolders()
+    ///
+    /// A folder whose id is in `unreadAccounts` is found by the existence of its path only (`stat`): its settings
+    /// file is not opened, and its address, organization and plan are those of `lastKnown` (the accounts of the
+    /// cache, by id), nothing when the cache never knew it.
+    public func discover(closedReports: Set<String> = [], unreadAccounts: Set<String> = [],
+                         lastKnown: [String: Account] = [:]) -> [Account] {
+        let folders = discoverFolders(unreadAccounts: unreadAccounts, lastKnown: lastKnown)
         guard let reportsDirectory else { return folders }
         var closed = closedReports
         for folder in folders where unreadAccounts.contains(folder.id) {
@@ -51,7 +65,7 @@ public struct AccountDiscovery: Sendable {
         return accounts
     }
 
-    func discoverFolders() -> [Account] {
+    func discoverFolders(unreadAccounts: Set<String> = [], lastKnown: [String: Account] = [:]) -> [Account] {
         var accounts: [Account] = []
         var seen = Set<String>()
         let fm = FileManager.default
@@ -61,7 +75,15 @@ public struct AccountDiscovery: Sendable {
             let dir = KeychainServiceName.normalize(dir)
             guard !seen.contains(dir) else { return }
             seen.insert(dir)
-            let identity = configFile.flatMap(Self.readIdentity(configFile:))
+            let identity: Identity?
+            if unreadAccounts.contains(Account.id(source: dir)) {
+                // "Do not read": the file is not opened, the identity is the last one known.
+                identity = lastKnown[Account.id(source: dir)].map {
+                    Identity(email: $0.email, organization: $0.organization, seatTier: $0.seatTier)
+                }
+            } else {
+                identity = configFile.flatMap(identityOf)
+            }
             let isDefault = dir == defaultDir
             accounts.append(Account(
                 source: dir,

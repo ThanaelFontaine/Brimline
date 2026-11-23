@@ -43,7 +43,7 @@ public struct Account: Codable, Sendable, Hashable, Identifiable {
 
     public init(provider: Provider = .claude, source: String, email: String?, organization: String?,
                 seatTier: String?, keychainService: String?, addedByHand: Bool = false, claudeReport: String? = nil) {
-        self.id = "\(provider.rawValue):\(source)"
+        self.id = Self.id(provider: provider, source: source)
         self.provider = provider
         self.source = source
         self.email = email
@@ -53,6 +53,9 @@ public struct Account: Codable, Sendable, Hashable, Identifiable {
         self.addedByHand = addedByHand
         self.claudeReport = claudeReport
     }
+
+    /// The id an account of this provider and source gets.
+    public static func id(provider: Provider = .claude, source: String) -> String { "\(provider.rawValue):\(source)" }
 
     /// The same account with the texts of its identity filtered again (`ProviderText.identity`, `address`).
     /// `id` and `source` are paths and stay as they are. The cache `usage.json` may have been written before

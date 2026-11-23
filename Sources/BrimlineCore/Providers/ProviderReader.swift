@@ -45,6 +45,12 @@ public protocol ProviderReader: Sendable {
     /// is ever requested, with a token or without.
     var allowedURLs: [URL] { get }
     /// The accounts of this provider, from exact places on disk. Reads no secret.
+    ///
+    /// Contract (consent, QUOTA-44): for an account marked "Do not read" (`settings.isUnread(account.id)`), discovery
+    /// is limited to the existence of its path (`stat`): it opens no file, so no sign-in file and no settings
+    /// file. Whatever identity such an account shows (address, organization, plan) is the last known one,
+    /// taken from the cache, never read again from the provider's files. A reader whose discovery opens no
+    /// file at all (ChatGPT, Gemini, Grok, Cursor) meets the contract as it is.
     func discover(home: URL, settings: BrimlineSettings) -> [Account]
     /// Reads one account. Never throws: every outcome is a `ProviderReading`.
     func read(account: Account, now: Date) async -> ProviderReading

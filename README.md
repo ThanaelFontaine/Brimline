@@ -71,7 +71,7 @@ Brimline then lives in the menu bar, not in the Dock: look for its gauge at the 
 ## Principles
 
 - **Read only.** Brimline reads the sign-in tokens your AI tools already store on your Mac (for Claude Code, the macOS Keychain; for Codex, Grok and Cursor, a file each of them keeps). It never refreshes, rewrites or moves them, so it can never sign you out of a tool. An expired token is shown as "Session expired", not repaired behind your back. **One exception, said out loud:** to read Gemini, Brimline launches Google's own command `agy --print /usage`, and Google's program may then renew its own sign-in; Brimline neither reads nor writes that sign-in (see [SECURITY.md](SECURITY.md)).
-- **Off until you turn it on.** Claude is on; every other provider is off until you switch it on in the settings (or with `brimline providers enable <name>`), and a provider that is off is not touched at all. An account marked "Don't read this account" is never read either.
+- **Off until you turn it on.** Claude is on; every other provider is off until you switch it on in the settings (or with `brimline providers enable <name>`), and a provider that is off is not touched at all. An account marked "Don't read this account" is never read either: none of its files is opened, and the address and plan shown are the last ones known, no longer refreshed.
 - **Nothing leaves your Mac**, except the usage requests to each provider. No server, no telemetry, no token ever written to a log.
 - **One account, one line, one address.** Several accounts per provider are a first-class case, not an afterthought.
 - **Open to any provider.** Each provider is a small plugin: Claude, ChatGPT (Codex), Gemini (Antigravity), Grok and Cursor so far.
