@@ -32,7 +32,7 @@ A macOS app that runs under your user account. It reads the tokens your AI tools
 
 ### Every place Brimline looks at, in one table
 
-Detail and reasons are in the sections below; this table is what the code does, and a test or a check covers each row (`ConsentTests`, `SecretFileTests`, `HTTPAllowListTests`, the launcher tests and `LeakTests`).
+Detail and reasons are in the sections below; this table is what the code does, and a test or a check covers each row (`ConsentTests`, `SecretFileTests`, `HTTPAllowListTests`, `SocleTests`, the launcher tests and `LeakTests`).
 
 | Provider | What Brimline looks at | What it opens | What it launches | The one request |
 |---|---|---|---|---|
