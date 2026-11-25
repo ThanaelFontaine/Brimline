@@ -242,7 +242,7 @@ BrimlineGlyph.image(level: last, dimmed: true)                  // en-tête, exp
 - `favicon.ico` : 16 et 32 px.
 - `favicon-32.png`, `favicon-16.png`.
 - `apple-touch-icon.png` : 180 px, plein cadre et opaque, iOS arrondit lui-même.
-- `og.png` : 1200 x 630, fond sombre. Il porte l'icône, le nom et la promesse « See how much of every AI subscription you have left. », avec trois jauges d'exemple.
+- `og.png` : 1200 x 630, fond sombre. Il porte l'icône, le nom et la promesse « See how much of every AI subscription you have left. », avec trois jauges d'exemple, libellées « 5 h session » (34 %), « Week » (72 %) et « Week · Fable » (93 %), et la ligne « A calm macOS menu bar gauge · public source code ». Ces libellés et la mise en page sont ceux de l'`og.png` du site (dépôt brimline.thanaelfontaine.eu, `scripts/render_brand.mjs`, rendu Chromium en Inter) ; `render-icons.swift` les reproduit avec la police système, donc les lettres ne se superposent pas au pixel (mêmes positions, mêmes couleurs). L'`og.png` n'est pas suivi dans ce dépôt : celui du site fait foi.
 - Le site reprend la jauge (`.sg-gauge`) comme motif principal : une fausse fenêtre de barre des menus en tête de page vaut mieux qu'une illustration.
 
 ## Fichiers
