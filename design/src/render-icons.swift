@@ -325,28 +325,32 @@ png(180, 180, "apple-touch-icon.png", opaque: true) { ctx in
     }
 }
 
-// 3. Image de partage 1200 x 630.
+// 3. Image de partage 1200 x 630. Mise en page et libellés de l'og.png du site (brimline.thanaelfontaine.eu,
+// scripts/render_brand.mjs : HTML rendu par Chromium en Inter) : mêmes positions, mêmes libellés, mêmes couleurs.
+// Seule la police change (SF ici, Inter sur le site), donc les lettres ne se superposent pas au pixel.
 png(1200, 630, "og.png", opaque: true) { ctx in
     let p = Palette.dark
     ctx.setFillColor(rgb(p.bg)); ctx.fill(CGRect(x: 0, y: 0, width: 1200, height: 630))
-    let halo = CGGradient(colorsSpace: sRGB, colors: [rgb(0x3BBDC2, 0.10), rgb(0x3BBDC2, 0)] as CFArray, locations: nil)!
-    ctx.drawRadialGradient(halo, startCenter: CGPoint(x: 250, y: 315), startRadius: 0, endCenter: CGPoint(x: 250, y: 315), endRadius: 420, options: [])
-    unflipped(ctx, CGRect(x: 70, y: 135, width: 360, height: 360)) {
-        drawIcon(ctx, square: CGRect(x: 360 * 100 / 1024, y: 360 * 100 / 1024, width: 360 * 824 / 1024, height: 360 * 824 / 1024))
+    let halo = CGGradient(colorsSpace: sRGB, colors: [rgb(0x1C2E32), rgb(p.bg)] as CFArray, locations: nil)!
+    ctx.drawRadialGradient(halo, startCenter: CGPoint(x: 250, y: 315), startRadius: 0, endCenter: CGPoint(x: 250, y: 315), endRadius: 520, options: [])
+    // Icône : boîte de 400 px à (55, 117), carré arrondi de 824/1024 de la boîte.
+    unflipped(ctx, CGRect(x: 55, y: 117, width: 400, height: 400)) {
+        drawIcon(ctx, square: CGRect(x: 400 * 100 / 1024, y: 400 * 100 / 1024, width: 400 * 824 / 1024, height: 400 * 824 / 1024))
     }
     let x: CGFloat = 470
-    text("Brimline", x, 150, size: 76, weight: .semibold, color: p.text)
-    text("See how much of every AI subscription you have left.", x, 252, size: 38, color: p.text2, width: 660)
-    // Trois jauges d'exemple.
-    let rows: [(String, CGFloat)] = [("5-hour session", 0.34), ("Week, all models", 0.72), ("Week · Fable", 0.93)]
-    var y: CGFloat = 400
+    text("Brimline", x, 162, size: 76, weight: .semibold, color: p.text)
+    text("See how much of every AI subscription you have left.", x, 262, size: 35, color: 0x9DA6AE, width: 620)
+    // Trois jauges d'exemple : pistes simples (sans repères à 70 et 90 %), pas de 61,6 px.
+    let rows: [(String, CGFloat)] = [("5 h session", 0.34), ("Week", 0.72), ("Week · Fable", 0.93)]
+    var y: CGFloat = 392.6
     for (label, f) in rows {
         text(label, x, y, size: 22, color: p.text)
-        text("\(Int((f * 100).rounded()))%", 1130, y, size: 22, weight: .semibold, color: p.text, align: .right, mono: true)
-        gauge(ctx, CGRect(x: x, y: y + 34, width: 660, height: 10), .value(f), p)
-        y += 64
+        text("\(Int((f * 100).rounded()))%", 1130, y, size: 22, weight: .semibold, color: p.text, align: .right)
+        roundRect(ctx, CGRect(x: x, y: y + 35.6, width: 660, height: 10), 5, fill: rgb(p.track))
+        roundRect(ctx, CGRect(x: x, y: y + 35.6, width: 660 * f, height: 10), 5, fill: rgb(p.level(f)))
+        y += 61.6
     }
-    text("A calm macOS menu bar gauge · source-available", x, 590, size: 18, color: p.text2)
+    text("A calm macOS menu bar gauge · public source code", x, 588, size: 17, color: 0x8C959D)
 }
 
 // 4. Aperçu de la DA.
