@@ -11,7 +11,7 @@ The indicators built into the tools show one account at a time, without saying w
 Good tools already read these limits, and Brimline owes them a lot:
 
 - **CodexBar** (MIT) is the most complete: a macOS menu bar app for dozens of providers, with a command that prints JSON, a guard mode for scripts and a local HTTP server.
-- **ClaudeBar** (Apache 2.0) covers some twenty providers in the menu bar, Claude, Codex, Gemini and Grok among them, and lists several Codex accounts by email.
+- **ClaudeBar** (Apache 2.0) covers about thirty providers in the menu bar, Claude, Codex, Gemini and Grok among them, and follows several accounts for Claude (a `CLAUDE_CONFIG_DIR` folder per account) and for Codex.
 - **Claude Usage Tracker** (MIT) handles several Claude profiles, but switches the Claude Code credentials when you change profile.
 - **Quotio** (MIT) manages several accounts per provider, as a proxy that routes your requests.
 - **ccusage** (MIT) measures tokens and estimated cost from local logs: useful, but it does not know the real subscription limits.
@@ -20,7 +20,7 @@ Good tools already read these limits, and Brimline owes them a lot:
 
 Three needs are not met together by any of the tools we found:
 
-1. **Several accounts of the same provider, side by side, each named by its email address**, taken from where the official tool already keeps them (for Claude Code, one configuration folder per account), without switching anything. ClaudeBar does part of this for Codex; we found no tool doing it for several Claude Code accounts read in place.
+1. **Several accounts of the same provider, side by side, each named by its email address**, taken from where the official tool already keeps them (for Claude Code, one configuration folder per account), without switching anything. ClaudeBar already follows several Claude Code and Codex accounts; we found no tool that brings this together with the two needs below.
 2. **Strictly read only.** Some tools refresh tokens or swap credentials. Refreshing a token can rotate it (OAuth refresh tokens are often single use), which may sign the official tool out; swapping credentials can break a running session. Brimline never writes a credential. One thing is said out loud: to read Gemini it launches Google's own command, and that program may renew its own sign-in (Brimline neither reads nor writes it).
 3. **Made for agents too.** Besides the menu bar, a local MCP server and a JSON command give agents the same numbers, so they can pick an account with room left instead of failing.
 
