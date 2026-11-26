@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+### Changed
+
+- **The design board `design/planche.html` follows the dark theme of the system, and its checks now check something (QUOTA-10).** The page ground and text were fixed light colors, so in dark mode the legend of the app icon sat at 2.31:1 on a light ground; the ground and the text now use the board's variables (the legend is above 4.5:1 in both themes). The `:not(.forced)` switch that nothing set and the unused `.bar` style (and the exception that tolerated its colors) are gone. In `tests/test_design_tokens.py`, the "0 %" check no longer passes on "50 %" and "100 %" (every glyph and gauge level is looked for where it is drawn), the app icon check reads every color of its SVG, and four new tests cover the theme, the colors outside the tokens, the legend contrast and the dark values. Design files and tests only: nothing changes in the app.
+
 ### Fixed
 
 - **The Gemini card without Antigravity points to Antigravity, not to Gemini CLI.** The sentence ended with "and in Gemini CLI (/stats model)", but Google no longer serves individual Google AI Pro and Ultra plans in Gemini CLI since 18 June 2026. It now says "They are in the Gemini app (Settings, Usage limits) and in Antigravity (/usage)." (and its French version). Only the words of the card change: nothing new is read or launched.
