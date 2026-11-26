@@ -28,7 +28,7 @@ The journeys to replay before each release to prove that Brimline (the macOS men
 - Result on 2026-10-28: green.
 - Result on 2026-11-04: green (76 tests).
 - Result on 2026-11-06: green (76 tests).
-- Result on 2026-11-26: green (106 tests: the design board checks of QUOTA-10 add four tests to the previous ones).
+- Result on 2026-11-26: green (106 tests: 103 on `main` before QUOTA-10, plus its three design board tests).
 
 ### J3: the Swift package builds
 
