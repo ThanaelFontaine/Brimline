@@ -153,8 +153,43 @@ class TokensTest(unittest.TestCase):
             text = (DESIGN / name).read_text(encoding="utf-8")
             self.assertNotRegex(text, r"(?i)<img|<image|\.(svg|png|jpe?g|webp)[\"')]", name)
         text = (DESIGN / "planche.html").read_text(encoding="utf-8")
-        for level in ("0 %", "25 %", "50 %", "72 %", "80 %", "95 %", "100 %", "expiré"):
-            self.assertIn(level, text)
+        # "0 %" is also inside "50 %" and "100 %": each level is looked for where it is drawn
+        for level in (0, 25, 58, 72, 95):
+            self.assertIn(f'aria-label="Niveau {level} %', text, f"glyph at {level} %")
+        for level in (0, 34, 50, 80, 100):
+            self.assertIn(f'aria-valuenow="{level}"', text, f"gauge at {level} %")
+            self.assertRegex(text, rf'<span class="num">{level} %</span>', f"gauge label at {level} %")
+        self.assertRegex(text, r'class="fill\s+zero" style="width:0%"')  # the 0 % gauge draws no fill
+        self.assertIn("expiré", text)
+        self.assertIn('class="gauge down"', text)  # unavailable
+
+    def test_planche_follows_the_theme(self):
+        text = (DESIGN / "planche.html").read_text(encoding="utf-8")
+        body = re.search(r"\n\s*body \{([^}]*)\}", text).group(1)
+        self.assertIn("background: var(--bg)", body)
+        self.assertIn("color: var(--text)", body)
+        self.assertNotRegex(body, r"#[0-9A-Fa-f]{3,8}\b|\brgb")
+        # the system dark theme sets the same values as tokens.json on :root
+        media = re.search(r"@media \(prefers-color-scheme: dark\) \{ :root \{([^}]*)\}", text).group(1)
+        for role, var in (("bg", "bg"), ("surface", "surface"), ("text", "text"), ("text2", "text2"),
+                          ("border", "border"), ("track", "track"), ("accent", "accent"),
+                          ("gaugeOk", "ok"), ("gaugeWarn", "warn"), ("gaugeCrit", "crit")):
+            self.assertIn(f"--{var}:{value('dark', role)}", media, role)
+        # no theme switch is left half-wired, and no style is left unused
+        self.assertNotIn("forced", text)
+        self.assertNotRegex(text, r"\.bar\b")
+
+    def test_planche_has_no_color_outside_tokens(self):
+        # unlike the other planches, this one simulates no menu bar: no SIMULATED exception
+        allowed = {v["value"].upper() for t in THEMES for v in TOKENS["color"][t].values()}
+        used = {h.upper() for h in HEX.findall((DESIGN / "planche.html").read_text(encoding="utf-8"))}
+        self.assertFalse(used - allowed, sorted(used - allowed))
+
+    def test_planche_legends_are_readable_on_the_page_ground(self):
+        # the page ground is --bg and the legends (.sub, figcaption) are --text2, in both themes
+        for theme in THEMES:
+            ratio = contrast(value(theme, "text2"), value(theme, "bg"))
+            self.assertGreaterEqual(ratio, 4.5, f"{theme}: legend on the page = {ratio:.2f}")
 
 
 class AccountPaletteTest(unittest.TestCase):
@@ -260,10 +295,10 @@ class IconsTest(unittest.TestCase):
 
     def test_app_icon_svg_uses_token_icon_colors(self):
         svg = (DESIGN / "icons" / "app-icon.svg").read_text(encoding="utf-8")
-        icon = {v.upper() for v in TOKENS["color"]["icon"].values()}
-        for color in ("graphiteTop", "graphiteBottom", "liquidTop", "liquidBottom"):
-            self.assertIn(TOKENS["color"]["icon"][color].upper(), svg.upper(), color)
-        self.assertTrue(icon)
+        # every icon color the SVG draws; "bolt" is a token the SVG does not use
+        for color, hex_value in TOKENS["color"]["icon"].items():
+            if color != "bolt":
+                self.assertIn(hex_value.upper(), svg.upper(), color)
 
     def test_icns_is_valid(self):
         icns = (DESIGN / "icons" / "AppIcon.icns").read_bytes()

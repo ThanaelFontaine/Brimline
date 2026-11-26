@@ -10,9 +10,9 @@
 <style>
   .light, :root { --bg:#F5F6F7; --surface:#FFFFFF; --text:#15191D; --text2:#56606A; --border:#D3D8DD; --track:#E7EAED; --accent:#0B6E7A; --ok:#127A82; --warn:#9A5800; --crit:#C0302B; --muted:rgb(86 96 106 / .55); }
   .dark { --bg:#111315; --surface:#1B1E21; --text:#ECEFF2; --text2:#9BA5AF; --border:#30353A; --track:#2B3035; --accent:#5CC8D0; --ok:#3BBDC2; --warn:#EFA63A; --crit:#FF6F64; --muted:rgb(155 165 175 / .55); }
-  @media (prefers-color-scheme: dark) { :root:not(.forced) { --bg:#111315; --surface:#1B1E21; --text:#ECEFF2; --text2:#9BA5AF; --border:#30353A; --track:#2B3035; --accent:#5CC8D0; --ok:#3BBDC2; --warn:#EFA63A; --crit:#FF6F64; --muted:rgb(155 165 175 / .55); } }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111315; --surface:#1B1E21; --text:#ECEFF2; --text2:#9BA5AF; --border:#30353A; --track:#2B3035; --accent:#5CC8D0; --ok:#3BBDC2; --warn:#EFA63A; --crit:#FF6F64; --muted:rgb(155 165 175 / .55); } }
   * { box-sizing: border-box; }
-  body { margin: 0; background: #F5F6F7; color: #15191D; font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
   main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 64px; }
   h1 { font-size: clamp(2.5rem, 6vw, 4rem); line-height: 1.15; margin: 0 0 8px; }
   h2 { font-size: 22px; line-height: 1.15; margin: 48px 0 16px; }
@@ -36,8 +36,6 @@
   .sw span { display: block; padding: 4px 8px; } .sw code { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; }
   .glyphs { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-end; }
   .glyphs figure { margin: 0; text-align: center; font-size: 13px; color: var(--text2); }
-  .bar { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px; color: #15191D; background: #DADDE0; margin-bottom: 8px; }
-  .dark .bar { color: #ECEFF2; background: #2F3338; }
   .glyph { width: 18px; height: 18px; fill: currentColor; }
   .big { width: 72px; height: 72px; }
   .mono { font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
