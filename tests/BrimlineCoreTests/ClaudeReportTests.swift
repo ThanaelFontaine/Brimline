@@ -278,6 +278,53 @@ struct ClaudeReportTests {
         #expect(Strings(.fr).statuslineSummary(usage.limits + [UsageLimit(kind: .weekly, percent: 7.4, resetsAt: nil)], now: now) == "5 h 42 % · Semaine 7 %")
     }
 
+    @Test("Claude Code signed out of the folder (Keychain item with an empty token): the report of the address, if newer (QUOTA-19)")
+    func signedOutFolderFallback() async throws {
+        let home = try reportsHome(ClaudeCodeObservation(source: .statusline, fiveHour: .init(percent: 64, resetsAt: now.addingTimeInterval(3600)),
+                                                         sevenDay: .init(percent: 12, resetsAt: now.addingTimeInterval(86400))),
+                                   email: "work@example.org", at: now.addingTimeInterval(-60))
+        try home.write(".claude-work/.claude.json", claudeJSON(email: "work@example.org"))
+        let keychain = KeychainServiceName.forConfigDir(home.path(".claude-work"), isDefault: false)
+        let service = UsageService(credentials: FakeCredentials([keychain: .failure(.unreadable)]), http: FakeHTTP([:]))
+        let account = try #require(Providers.discover(readers: service.readers, home: home.url, settings: BrimlineSettings()).first)
+        #expect(account.claudeReport != nil && !account.readsReportOnly)
+
+        // The last direct reading, from before the sign-out (signed_out, kept numbers), is older than the report: the report wins.
+        var before = AccountUsage(account: account, status: .signedOut,
+                                  limits: [UsageLimit(kind: .session, percent: 1, resetsAt: nil)], fetchedAt: now.addingTimeInterval(-86400))
+        before.detail = "unreadable Keychain item"
+        let newer = await service.refresh(account: account, settings: BrimlineSettings(), previous: before, now: now)
+        #expect(newer.status == .ok)
+        #expect(newer.observedAt == now.addingTimeInterval(-60))
+        #expect(newer.sessionLimit?.percent == 64)
+        #expect(newer.weeklyLimit?.percent == 12)
+        #expect(newer.detail == nil)
+
+        // No numbers before: the report too.
+        let first = await service.refresh(account: account, settings: BrimlineSettings(), previous: nil, now: now)
+        #expect(first.status == .ok)
+        #expect(first.sessionLimit?.percent == 64)
+
+        // The last direct reading is newer than the report: its numbers stay, the account says signed out, never a mix.
+        var recent = before
+        recent.fetchedAt = now.addingTimeInterval(-30)
+        recent.limits = [UsageLimit(kind: .session, percent: 30, resetsAt: nil)]
+        let older = await service.refresh(account: account, settings: BrimlineSettings(), previous: recent, now: now)
+        #expect(older.status == .signedOut)
+        #expect(older.sessionLimit?.percent == 30)
+        #expect(older.observedAt == nil)
+
+        // No report of this address: signed out, as before, and no number.
+        let bare = try TemporaryHome()
+        try bare.write(".claude-work/.claude.json", claudeJSON(email: "work@example.org"))
+        let bareKeychain = KeychainServiceName.forConfigDir(bare.path(".claude-work"), isDefault: false)
+        let bareService = UsageService(credentials: FakeCredentials([bareKeychain: .failure(.unreadable)]), http: FakeHTTP([:]))
+        let bareAccount = try #require(Providers.discover(readers: bareService.readers, home: bare.url, settings: BrimlineSettings()).first)
+        let none = await bareService.refresh(account: bareAccount, settings: BrimlineSettings(), previous: nil, now: now)
+        #expect(none.status == .signedOut)
+        #expect(none.limits.isEmpty)
+    }
+
     @Test("A report Claude Code wrote in a format Brimline does not know is format_changed, never a number")
     func formatChangedReport() async throws {
         let home = try TemporaryHome()

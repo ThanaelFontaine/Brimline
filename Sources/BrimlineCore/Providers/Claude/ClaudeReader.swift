@@ -7,7 +7,8 @@ import Foundation
 ///
 /// An account may also have a Claude Code report (`brimline report claude`): the numbers Claude Code saw
 /// itself. An account known by its report only is read from it; an account with a folder keeps the direct
-/// reading, and falls back on its report when its session has expired or its Keychain item is missing.
+/// reading, and falls back on its report when its session has expired, or when its Keychain item is missing or holds no
+/// sign-in (Claude Code signed out of the folder).
 public struct ClaudeReader: ProviderReader {
     public var credentials: any CredentialReading
     public var http: any HTTPClient
@@ -55,7 +56,9 @@ public struct ClaudeReader: ProviderReader {
             case .notFound:
                 return fallback(account, now: now, otherwise: .failure(status: .signedOut, detail: "no Keychain item", retryAfter: nil))
             case .unreadable:
-                return .failure(status: .signedOut, detail: "unreadable Keychain item", retryAfter: nil)
+                // Claude Code signed out of this folder: the item is still there, with an empty token (seen on
+                // 23 November 2026). Like a missing item, it falls back on the report of the address.
+                return fallback(account, now: now, otherwise: .failure(status: .signedOut, detail: "unreadable Keychain item", retryAfter: nil))
             case .toolFailed(let code):
                 return .failure(status: .unavailable, detail: "security exited with \(code)", retryAfter: nil)
             }

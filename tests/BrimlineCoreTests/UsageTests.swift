@@ -12,6 +12,7 @@ struct UsageTests {
         #expect(credential.expiresAt == Date(timeIntervalSince1970: 1_761_360_000))
         #expect(!String(describing: Mirror(reflecting: credential).children.map(\.label)).contains("refresh"))
         #expect(ClaudeCredential.decode(Data(#"{"claudeAiOauth":{}}"#.utf8)) == nil)
+        #expect(ClaudeCredential.decode(Data(#"{"claudeAiOauth":{"accessToken":"","expiresAt":0}}"#.utf8)) == nil)
         #expect(ClaudeCredential.decode(Data("not json".utf8)) == nil)
     }
 
