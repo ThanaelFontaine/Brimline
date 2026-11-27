@@ -6,9 +6,15 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-11-27
+
+Brimline 0.3.6 is a release of fixes, two security hardenings and finishing touches, with nothing new to see in the app: the Gemini card without Antigravity says where the limits really are, a Grok sign-in with an unreadable expiry date sends nothing, and a Claude folder marked "Do not read" is no longer opened. The full notes are in [docs/releases/v0.3.6.md](docs/releases/v0.3.6.md).
+
 ### Changed
 
 - **The design board `design/planche.html` follows the dark theme of the system, and its checks now check something (QUOTA-10).** The page ground and text were fixed light colors, so in dark mode the legend of the app icon sat at 2.31:1 on a light ground; the ground and the text now use the board's variables (the legend is above 4.5:1 in both themes). The `:not(.forced)` switch that nothing set and the unused `.bar` style are gone, and `planche.html` no longer relies on the menu bar exception of the color check (the other planches still do). In `tests/test_design_tokens.py`, the "0 %" check no longer passes on "50 %" and "100 %" (every glyph and gauge level is looked for where it is drawn), the app icon check looks for each icon color of the tokens in its SVG (the bolt, which the SVG does not draw, excepted), and three new tests cover the theme (with its dark values), the colors outside the tokens and the legend contrast. Design files and tests only: nothing changes in the app.
+- **`design/src/render-icons.swift` takes the labels and the layout of the site's `og.png` (QUOTA-7).** The labels are now "5 h session", "Week", "Week · Fable" and "public source code", and the icon, the texts and the gauges sit at the positions and colors of the site's `scripts/render_brand.mjs` (rendered by Chromium in Inter); only the font differs. `design/DA.md` says it. Design files only: nothing changes in the app.
+- **`docs/why.md` says what ClaudeBar does now (QUOTA-14).** ClaudeBar covers about thirty providers and already follows several accounts for Claude (a `CLAUDE_CONFIG_DIR` folder per account) and for Codex; the gap is now said as "no tool that brings this together with the two needs below". Documentation only.
 
 ### Fixed
 
