@@ -6,6 +6,10 @@ The version lives in the `VERSION` file. `0.0.0` is the development version: not
 
 ## [Unreleased]
 
+### Fixed
+
+- **An account whose Claude Code signed out of its folder falls back on its report (QUOTA-19).** When Claude Code signs out of a folder, it keeps the Keychain item with an empty token (seen on 23 November 2026 for the default folder). Brimline took that item for unreadable and showed "Not signed in" with the numbers of the day of the sign-out, even when the report of the same address (`brimline report claude`) was days newer: only a missing item or an expired session fell back on the report. An unreadable item now does too, under the same rule: the report is used only if it is newer than the last numbers read, the numbers say they come from the report with their age, and an account with no report is still "Not signed in". Nothing new is read or sent, and Brimline still never renews a sign-in.
+
 ## [0.3.6] - 2026-11-27
 
 Brimline 0.3.6 is a release of fixes, two security hardenings and finishing touches, with nothing new to see in the app: the Gemini card without Antigravity says where the limits really are, a Grok sign-in with an unreadable expiry date sends nothing, and a Claude folder marked "Do not read" is no longer opened. The full notes are in [docs/releases/v0.3.6.md](docs/releases/v0.3.6.md).
